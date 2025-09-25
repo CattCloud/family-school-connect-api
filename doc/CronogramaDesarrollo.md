@@ -10,9 +10,9 @@
 
 - Análisis detallado de problemática y contexto
 - Identificación y caracterización de usuarios (roles y permisos)
-- Redacción de historias de usuario por módulo (30+ historias)
+- Redacción de historias de usuario por módulo (20+ historias)
 - Definición del alcance del MVP y funcionalidades futuras
-- Matriz de trazabilidad requisitos-funcionalidades
+- Definicion de entidades del sistema
 
 ---
 
