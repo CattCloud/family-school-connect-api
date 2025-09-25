@@ -1,235 +1,297 @@
+# **CRONOGRAMA DE DESARROLLO - 14 SEMANAS**
+**Plataforma de Comunicación y Seguimiento Académico - I.E.P. Las Orquídeas**
+
+## **METODOLOGÍA: Incremental e Iterativa (Scrum/Agile Modularizado)**
+
+### **Principios aplicados:**
+- **Incremental:** Desarrollo por módulos funcionales completos
+- **Iterativo:** Cada módulo sigue el mismo ciclo de 7 pasos
+- **Priorización por dependencias:** Módulos base primero
+- **Integración continua:** Cada módulo se integra al completarse
+
+---
+
 ## **FASE I: ANÁLISIS Y DISEÑO TÉCNICO**
 
-### **Semana 1: Análisis de Requisitos  (HOY)**
-
+### **Semana 1: Análisis de Requisitos (COMPLETADO)**
 **Objetivo:** Definir completamente los requisitos funcionales y no funcionales del sistema
 
-**Entregable:** Documento de Especificación de Requisitos (SRS) con historias de usuario
-
-**Actividades:**
-
-- Análisis detallado de problemática y contexto
-- Identificación y caracterización de usuarios (roles y permisos)
-- Redacción de historias de usuario por módulo (20+ historias)
-- Definición del alcance del MVP y funcionalidades futuras
-- Definicion de entidades del sistema
+**Entregables:**
+- Documento de Especificación de Requisitos (SRS)
+- 20+ Historias de Usuario detalladas
+- Modelo de entidades de base de datos
 
 ---
 
-### **Semana 2: Diseño Funcional y Técnico**
-
+### **Semana 2: Diseño Funcional y Técnico (ACTUAL)**
 **Objetivo:** Crear el diseño completo de la arquitectura del sistema y experiencia de usuario
 
-**Entregable:** Documento de Diseño del Sistema + Wireframes + Diagramas
-
-**Actividades:**
-
-- Definición de arquitectura del sistema (frontend-backend separado)
+**Entregables:**
+- Arquitectura funcional del frontend
+- Arquitectura del sistema y stack tecnologico
 - Diseño completo de base de datos (modelo ER con todas las entidades)
-- Creación de wireframes para todas las pantallas principales
-- Mapa de navegación y flujos de usuario por rol
-- Diagramas de componentes y arquitectura técnica
 
 ---
 
-### **Semana 3: Setup del Proyecto y Configuración**
+## **FASE II: DESARROLLO INCREMENTAL POR MÓDULOS**
 
-**Objetivo:** Configurar completamente el entorno de desarrollo y estructura base
+### **Semana 3: Setup del Proyecto y Módulo de Autenticación - Parte 1**
 
-**Entregable:** Proyecto base funcionando + Repositorio configurado + Documentación técnica
+**Objetivo:** Configurar entorno + iniciar módulo crítico de autenticación
+
+**Actividades (Setup - 2 días):**
+- Creación de repositorio GitHub con estructura de ramas
+- Setup backend (Express + Neon PostgreSQL)
+- Setup frontend (React + Vite + Tailwind)
+- Configuración de variables de entorno y herramientas de calidad
+
+**Actividades (Autenticación - 3 días):**
+- **Refinación HU:** Criterios de aceptación para autenticación
+- **Diseño API REST:** Endpoints de login, logout, recuperación
+- **Wireframes:** Pantallas de login y recuperación refinadas
+
+**Entregables:**
+- Proyecto base ejecutándose
+- API de autenticación diseñada
+- Wireframes de autenticación listos
+
+---
+
+### **Semana 4: Módulo de Autenticación - Parte 2 (Completar)**
+
+**Objetivo:** Completar sistema de autenticación funcional
 
 **Actividades:**
+- **Codificación Backend:** JWT, middleware de autenticación, endpoints
+- **Test Backend:** Pruebas unitarias y de integración
+- **Codificación Frontend:** Login, recuperación, gestión de sesiones
+- **Test Frontend:** Pruebas de componentes y e2e
+- **Integración:** Flujo completo frontend-backend
 
-- Creación de repositorio GitHub con estructura de ramas (main, dev, feature/*)
-- Setup completo del backend (Express + conexión a Neon PostgreSQL)
-- Setup completo del frontend (React + Vite + Tailwind)
-- Configuración de variables de entorno y scripts de desarrollo
-- Primer commit con proyecto base ejecutándose correctamente
-
----
-
-## **FASE II: DESARROLLO ÁGIL POR SPRINTS**
-
-### **Sprint 1 - Semanas 4-5: Autenticación y Base del Sistema**
-
-**Objetivo:** Implementar sistema de autenticación completo con roles diferenciados
-
-**Entregable:** Login funcional + Dashboard base + Documentación del sprint
-
-**Semana 4 - Backend Autenticación:**
-
-- Modelo de datos para usuarios (padres, docentes, admin)
-- APIs de registro y login con JWT
-- Middleware de autenticación y autorización por roles
-- Endpoints de perfil de usuario y gestión de sesiones
-
-**Semana 5 - Frontend Autenticación:**
-
-- Pantallas de login responsive
-- Dashboard diferenciado por tipo de usuario
-- Navegación principal con menús por rol
-- Manejo de estados de autenticación (login/logout)
-- Rutas protegidas por rol
+**Entregables:**
+- Sistema de autenticación 100% funcional
+- Documentación técnica del módulo
+- Pruebas automatizadas
 
 ---
 
-### **Sprint 2 - Semanas 6-7: Módulo de Información Académica**
+### **Semana 5: Módulo de Gestión de Usuarios**
 
-**Objetivo:** Desarrollar visualización completa de calificaciones y asistencia
+**Objetivo:** Sistema de usuarios y permisos granulares
 
-**Entregable:** Sistema completo de consulta académica + Demo funcional
+**Actividades (Ciclo completo en 1 semana):**
+- **Refinación HU:** Gestión de usuarios y permisos
+- **Diseño API REST:** Endpoints CRUD de usuarios y asignación de permisos
+- **Wireframes:** Pantallas de gestión refinadas
+- **Codificación Backend:** Endpoints de gestión y permisos
+- **Test Backend:** Validación de lógica de permisos
+- **Codificación Frontend:** Interfaces de gestión de usuarios
+- **Test Frontend + Integración:** Flujo completo funcional
 
-**Semana 6 - Backend Académico:**
-
-- Modelo de datos para estudiantes, cursos, calificaciones y asistencia
-- APIs para consulta de notas por bimestre y componentes
-- APIs para registro y consulta de asistencia diaria
-- Sistema de alertas automáticas (inasistencias, bajo rendimiento)
-
-**Semana 7 - Frontend Académico:**
-
-- Dashboard académico para padres con gráficos
-- Tablas interactivas de calificaciones por bimestre
-- Calendario de asistencia con estados visuales
-- Panel de alertas y notificaciones académicas
-- Filtros por fecha, curso y bimestre
+**Entregables:**
+- Sistema de gestión de usuarios completo
+- Permisos granulares implementados
 
 ---
 
-### **Sprint 3 - Semanas 8-9: Comunicación Institucional**
+### **Semanas 6-7: Módulo de Datos Académicos (Crítico - 2 semanas)**
 
-**Objetivo:** Implementar sistema de comunicados y avisos oficiales
+**Objetivo:** Sistema completo de calificaciones y asistencia
 
-**Entregable:** Gestión completa de comunicados + Sistema de notificaciones
+**Semana 6:**
+- **Refinación HU:** Carga y visualización de datos académicos
+- **Diseño API REST:** Endpoints complejos de calificaciones/asistencia
+- **Wireframes:** Interfaces de carga y consulta refinadas
+- **Codificación Backend:** Lógica de validación de archivos Excel/CSV
+- **Test Backend:** Validación exhaustiva de carga masiva
 
-**Semana 8 - Backend Comunicados:**
+**Semana 7:**
+- **Codificación Frontend:** Interfaces de carga y visualización
+- **Implementación:** Sistema de alertas automáticas post-carga
+- **Test Frontend:** Pruebas de subida de archivos y visualización
+- **Integración:** Flujo completo de carga → procesamiento → alertas
+- **Optimización:** Performance para manejo de archivos grandes
 
-- Modelo de datos para comunicados y destinatarios
-- APIs para creación, edición y publicación de comunicados
-- Sistema de segmentación de audiencia (por grado, nivel, rol)
-- APIs para notificaciones y seguimiento de lectura
-
-**Semana 9 - Frontend Comunicados:**
-
-- Panel administrativo para gestión de comunicados
-- Vista de comunicados para padres con filtros
-- Sistema de notificaciones en tiempo real
-- Interfaz para marcar como leído y feedback
-- Editor de comunicados con preview
-
----
-
-### **Sprint 4 - Semanas 10-11: Mensajería y Soporte**
-
-**Objetivo:** Crear sistema de comunicación directa y soporte técnico
-
-**Entregable:** Mensajería completa + Centro de soporte funcional
-
-**Semana 10 - Backend Mensajería:**
-
-- Modelo de datos para conversaciones y mensajes
-- APIs para envío, recepción y historial de mensajes
-- Sistema de notificaciones de mensajes nuevos
-- APIs para tickets de soporte y FAQ
-
-**Semana 11 - Frontend Mensajería:**
-
-- Interfaz de mensajería tipo chat
-- Bandeja de entrada con filtros y búsqueda
-- Centro de ayuda con FAQ categorizado
-- Sistema de tickets de soporte con seguimiento
-- Notificaciones en tiempo real para mensajes
+**Entregables:**
+- Sistema de datos académicos 100% funcional
+- Validación robusta de archivos
+- Alertas automáticas implementadas
 
 ---
 
-### **Semana 12: Encuestas e Integración General**
+### **Semana 8: Módulo de Notificaciones + Integración WhatsApp**
 
-**Objetivo:** Completar módulo de encuestas e integrar todos los componentes
+**Objetivo:** Sistema híbrido de notificaciones (plataforma + WhatsApp)
 
-**Entregable:** Sistema completo integrado + Módulo de encuestas
+**Actividades (Ciclo acelerado):**
+- **Refinación HU:** Notificaciones y alertas automáticas
+- **Diseño API REST:** Endpoints de notificaciones y integración WhatsApp
+- **Codificación Backend:** Motor de notificaciones + API WhatsApp
+- **Test Backend:** Pruebas de envío dual (plataforma + WhatsApp)
+- **Codificación Frontend:** Centro de notificaciones
+- **Test Frontend + Integración:** Validación de flujo híbrido
+
+**Entregables:**
+- Sistema de notificaciones completo
+- Integración WhatsApp funcional
+- Centro de notificaciones en frontend
+
+---
+
+### **Semana 9: Módulo de Comunicación - Mensajería**
+
+**Objetivo:** Sistema de mensajería bidireccional con archivos
 
 **Actividades:**
+- **Refinación HU:** Mensajería entre padres-docentes-director
+- **Diseño API REST:** Endpoints de conversaciones y mensajes
+- **Codificación Backend:** Lógica de mensajería + integración Cloudinary
+- **Test Backend:** Pruebas de conversaciones y archivos adjuntos
+- **Codificación Frontend:** Interface de chat y conversaciones
+- **Test Frontend + Integración:** Flujo completo de mensajería
 
-- Desarrollo completo del módulo de encuestas (backend + frontend)
-- Integración de todos los módulos desarrollados
-- Pruebas de integración entre componentes
-- Ajustes de interfaz y experiencia de usuario
-- Optimización de rendimiento y corrección de bugs
+**Entregables:**
+- Sistema de mensajería funcional
+- Soporte para archivos adjuntos
+- Supervisión para director implementada
 
 ---
 
-## **FASE III: CONSOLIDACIÓN Y PRESENTACIÓN**
+### **Semana 10: Módulo de Comunicación - Comunicados**
 
-### **Semana 13: Testing y Deploy**
-
-**Objetivo:** Realizar pruebas exhaustivas y desplegar en producción
-
-**Entregable:** Sistema desplegado + Documentación de pruebas + Manual de usuario
+**Objetivo:** Sistema de comunicados institucionales
 
 **Actividades:**
+- **Refinación HU:** Comunicados con segmentación de audiencia
+- **Diseño API REST:** Endpoints de comunicados y lectura
+- **Codificación Backend:** Lógica de segmentación y publicación
+- **Test Backend:** Validación de permisos y audiencias
+- **Codificación Frontend:** Editor de comunicados y visualización
+- **Test Frontend + Integración:** Flujo de creación → publicación → lectura
 
-- Pruebas funcionales completas de todos los módulos
-- Pruebas de integración y flujos de usuario end-to-end
-- Deploy del backend en Render/Railway
-- Deploy del frontend en Render/Railway
-- Configuración de base de datos de producción en Neon
-- Creación de manual de usuario con capturas de pantalla
+**Entregables:**
+- Sistema de comunicados completo
+- Segmentación por grado/nivel/rol
+- Indicadores de lectura implementados
 
 ---
 
-### **Semana 14: Documentación Final y Presentación**
+### **Semana 11: Módulo de Encuestas**
 
-**Objetivo:** Completar documentación del proyecto y preparar presentación final
-
-**Entregable:** Documentación técnica completa + Presentación + Video demo
+**Objetivo:** Sistema de encuestas con análisis de resultados
 
 **Actividades:**
+- **Refinación HU:** Creación y respuesta de encuestas
+- **Diseño API REST:** Endpoints de encuestas y respuestas (JSON dinámico)
+- **Codificación Backend:** Motor de encuestas flexible + análisis
+- **Test Backend:** Validación de tipos de preguntas y resultados
+- **Codificación Frontend:** Constructor de encuestas + análisis visual
+- **Test Frontend + Integración:** Flujo de creación → respuesta → análisis
 
-- Documentación técnica completa (README, API docs, guías)
-- Documentación académica final del proyecto
-- Creación de presentación para sustentación
-- Grabación de video demo del sistema funcionando
-- Preparación de respuestas para posibles preguntas
-- Backup del proyecto y entregables finales
+**Entregables:**
+- Sistema de encuestas completo
+- 5 tipos de preguntas soportadas
+- Dashboard de análisis con gráficos
 
 ---
 
-# 📊 **DIAGRAMA DE GANTT (Formato Texto)**
+### **Semana 12: Módulo de Soporte Técnico + Centro de Ayuda**
+
+**Objetivo:** Sistema de tickets y autoayuda
+
+**Actividades:**
+- **Refinación HU:** Tickets de soporte y FAQ
+- **Diseño API REST:** Endpoints de tickets y conversación
+- **Codificación Backend:** Sistema de tickets con estados y prioridades
+- **Test Backend:** Validación de flujo de atención
+- **Codificación Frontend:** Centro de ayuda + sistema de tickets
+- **Test Frontend + Integración:** Flujo de creación → atención → resolución
+
+**Entregables:**
+- Sistema de soporte técnico completo
+- FAQ interactivo
+- Panel administrativo para tickets
+
+---
+
+### **Semana 13: Integración Final + Dashboard Principal + Optimización**
+
+**Objetivo:** Unificar todos los módulos + optimizar performance
+
+**Actividades:**
+- **Dashboard Principal:** Implementación de centro de navegación por rol
+- **Integración Módulos:** Conexión de todos los flujos inter-módulos
+- **Pruebas E2E:** Testing de flujos completos por tipo de usuario
+- **Optimización:** Performance, carga de datos, consultas
+- **Corrección de Bugs:** Resolución de issues encontrados en integración
+- **Documentación:** Actualización de documentación técnica completa
+
+**Entregables:**
+- Dashboard funcional para todos los roles
+- Sistema completamente integrado
+- Performance optimizada
+- Documentación técnica actualizada
+
+---
+
+## **FASE III: DEPLOY Y PRESENTACIÓN**
+
+### **Semana 14: Deploy a Producción + Presentación Final**
+
+**Objetivo:** Desplegar sistema + preparar presentación académica
+
+**Actividades:**
+- **Deploy Backend:** Configuración en Render/Railway con variables de producción
+- **Deploy Frontend:** Configuración de build y deployment
+- **Base de Datos:** Configuración final en Neon PostgreSQL con datos de prueba
+- **Testing Producción:** Pruebas en ambiente real
+- **Manual de Usuario:** Creación con capturas y flujos por rol
+- **Presentación Académica:** Preparación de slides y demo en vivo
+- **Video Demo:** Grabación de funcionalidades principales
+- **Documentación Final:** README, guías de instalación, API docs
+
+**Entregables:**
+- Sistema desplegado y funcional en producción
+- Manual de usuario completo
+- Presentación académica lista
+- Video demo de 10-15 minutos
+- Documentación técnica completa
+
+---
+
+## **CRONOGRAMA VISUAL COMPACTADO**
 
 ```
-SEMANAS: 1    2    3    4    5    6    7    8    9   10   11   12   13   14
-         |    |    |    |    |    |    |    |    |    |    |    |    |    |
-
-FASE I - ANÁLISIS Y DISEÑO:
-├─ Análisis Requisitos    [████]
-├─ Diseño Técnico              [████]
-└─ Setup Proyecto                   [████]
-
-FASE II - DESARROLLO ÁGIL:
-├─ Sprint 1: Autenticación               [████████]
-├─ Sprint 2: Info Académica                       [████████]
-├─ Sprint 3: Comunicados                                   [████████]
-├─ Sprint 4: Mensajería                                             [████████]
-└─ Integración                                                               [████]
-
-FASE III - CONSOLIDACIÓN:
-├─ Testing y Deploy                                                               [████]
-└─ Documentación Final                                                                 [████]
-
-ENTREGABLES SEMANALES:
-S1:  SRS + Historias Usuario
-S2:  Diseño Sistema + Wireframes
-S3:  Proyecto Base Funcionando
-S4:  Backend Autenticación
-S5:  Login + Dashboard Base
-S6:  Backend Académico
-S7:  Vista Calificaciones + Asistencia
-S8:  Backend Comunicados
-S9:  Gestión Comunicados + Notificaciones
-S10: Backend Mensajería + Soporte
-S11: Chat + Centro Ayuda
-S12: Encuestas + Integración Completa
-S13: Deploy + Testing + Manual Usuario
-S14: Documentación Final + Presentación
-
+Semana 1: [ANÁLISIS] ✅
+Semana 2: [DISEÑO] ← ACTUAL
+Semana 3: [SETUP + AUTENTICACIÓN 1/2]
+Semana 4: [AUTENTICACIÓN 2/2] 
+Semana 5: [GESTIÓN USUARIOS]
+Semana 6: [DATOS ACADÉMICOS 1/2]
+Semana 7: [DATOS ACADÉMICOS 2/2] 
+Semana 8: [NOTIFICACIONES + WHATSAPP]
+Semana 9: [MENSAJERÍA]
+Semana 10: [COMUNICADOS]
+Semana 11: [ENCUESTAS]
+Semana 12: [SOPORTE TÉCNICO]
+Semana 13: [INTEGRACIÓN + DASHBOARD]
+Semana 14: [DEPLOY + PRESENTACIÓN]
 ```
+
+## **DEPENDENCIAS CRÍTICAS RESPETADAS**
+
+1. **Autenticación** → Base para todos los módulos (Semanas 3-4)
+2. **Gestión de Usuarios** → Define permisos para otros módulos (Semana 5)
+3. **Datos Académicos** → Alimenta notificaciones automáticas (Semanas 6-7)
+4. **Notificaciones** → Depende de datos académicos para alertas (Semana 8)
+5. **Comunicación** → Utiliza sistema de notificaciones (Semanas 9-10)
+6. **Módulos Independientes** → Encuestas y Soporte pueden desarrollarse en paralelo conceptual
+
+## **ESTRATEGIAS DE COMPACTACIÓN APLICADAS**
+
+- **Módulos simples en 1 semana:** Gestión de usuarios, notificaciones, mensajería, comunicados, encuestas, soporte
+- **Módulos complejos en 2 semanas:** Solo datos académicos (por validación de archivos y lógica de alertas)
+- **Integración continua:** Cada módulo se integra al completarse, no al final
+- **Paralelización conceptual:** Wireframes y APIs se refinan mientras se codifica el módulo anterior
+- **Testing integrado:** Se hace en la misma semana, no en fase separada
+
