@@ -71,7 +71,7 @@
 | --- | --- | --- |
 | **Fetch API** | HTTP Client | Llamadas REST nativas con interceptors custom |
 | **React Query** | Cache & Sync | Invalidación inteligente, refetch automático |
-
+|Helmet | Security |Middleware para configurar cabeceras de seguridad HTTP |
 ---
 
 ## **3. STACK TECNOLÓGICO BACKEND**
@@ -287,3 +287,4 @@ proyecto-orquideas/
 - **File Upload:** Validación MIME estricta
 - **SQL Injection:** Prisma ORM protection
 - **Rate Limiting:** Express rate limiter (futuro)
+- **Helmet**: Middleware para configurar cabeceras de seguridad HTTP (protección contra ataques comunes como XSS, clickjacking y sniffing de contenido).

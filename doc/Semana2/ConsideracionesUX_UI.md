@@ -13,7 +13,7 @@
 **Responsabilidad:** Control de acceso, gestión de credenciales y recuperación de contraseñas.
 
 **Componentes principales:**
-- **Login/Logout:** Autenticación con email/contraseña
+- **Login/Logout:** Autenticación con whatsapp/contraseña
 - **Recuperación de contraseña:** Flujo completo con token por Whatsapp
 - **Cambio de contraseña obligatorio:** Para docentes en primer acceso
 - **Gestión de sesión:** Control JWT, sesiones únicas, timeout automático

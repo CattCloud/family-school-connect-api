@@ -22,7 +22,7 @@
 - Validación de formularios en tiempo real
 - Redirección automática según rol de usuario
 - Manejo de errores de autenticación
-- Interfaz de recuperación por email
+- Interfaz de recuperación por whatsapp
 
 ---
 

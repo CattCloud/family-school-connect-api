@@ -59,7 +59,7 @@ El sistema permitirá mejorar significativamente:
 - Responder encuestas institucionales
 - Crear solicitudes de soporte técnico
 - Recibir notificaciones automáticas por whattsap y en plataforma
-- Recuperación de contraseña automatizada por email
+- Recuperación de contraseña automatizada por whatsapp
 
 ### **Rol: Docente**
 
@@ -128,7 +128,7 @@ El sistema permitirá mejorar significativamente:
 
 | ID | Historia de Usuario | Prioridad | Criterios de Aceptación Específicos |
 | --- | --- | --- | --- |
-| HU-01 | Como padre, quiero iniciar sesión y seleccionar entre mis hijos mediante dropdown en header | Alta | - Login con credenciales únicas<br>- Dropdown en header cambia todo el dashboard<br>- Sesión única activa<br>- Recuperación de contraseña por email automático |
+| HU-01 | Como padre, quiero iniciar sesión y seleccionar entre mis hijos mediante dropdown en header | Alta | - Login con credenciales únicas<br>- Dropdown en header cambia todo el dashboard<br>- Sesión única activa<br>- Recuperación de contraseña por whatsapp automático |
 | HU-02 | Como padre, quiero ver calificaciones con 5 componentes fijos por trimestre para hacer seguimiento académico | Alta | - Componentes: Examen, Participación, Revisión cuaderno, Revisión libro, Comportamiento<br>- Filtros por año académico, trimestre, curso<br>- Histórico multi-año disponible |
 | HU-03 | Como padre, quiero consultar asistencia diaria con 5 estados específicos | Alta | - Estados: Presente, Tardanza, Permiso, Falta Justificada, Falta Injustificada<br>- Vista calendario con estados visuales<br>- Registro por día completo |
 | HU-04 | Como padre, quiero recibir notificaciones de asistencia y alertas críticas específicas | Alta | - Notificación inmediata por tardanza vía WhatsApp + plataforma<br>- Alerta por falta injustificada con solicitud de justificación<br>- Alerta por 3+ faltas injustificadas consecutivas<br>- Confirmación diaria de asistencia presente |
@@ -145,7 +145,7 @@ El sistema permitirá mejorar significativamente:
 | HU-10 | Como docente, quiero cargar calificaciones mediante plantilla Excel exacta | Alta | - Plantilla con formato fijo obligatorio<br>- Validación estricta de columnas y orden<br>- Solo cursos asignados a mi perfil<br>- Selección previa de contexto (nivel/grado/curso) |
 | HU-11 | Como docente, quiero cargar asistencia diaria con los 5 estados definidos | Alta | - Estados: Presente, Tardanza, Permiso, Falta Justificada, Falta Injustificada<br>- Procesamiento con reporte de errores<br>- Registro por día completo |
 | HU-12 | Como docente, quiero que se procesen registros válidos y se reporten errores específicos | Alta | - Procesar datos correctos aunque haya errores<br>- Generar archivo TXT con detalle de errores<br>- Especificar fila y tipo de error exacto |
-| HU-13 | Como docente, quiero recibir notificaciones de mensajes de padres | Alta | - Notificaciones email + plataforma<br>- Historial conversacional por estudiante |
+| HU-13 | Como docente, quiero recibir notificaciones de mensajes de padres | Alta | - Notificaciones whatsapp + plataforma<br>- Historial conversacional por estudiante |
 | HU-14 | Como docente, quiero crear comunicados solo para grados donde tengo permisos | Media | - Permisos granulares asignados por director<br>- Segmentación por grado específico |
 | HU-15 | Como docente, quiero crear encuestas para mis niveles autorizados | Baja | - Control de permisos por nivel<br>- Visualización completa de resultados propios |
 
@@ -185,14 +185,14 @@ El sistema permitirá mejorar significativamente:
 
 **Recuperación de Contraseñas:**
 
-- Endpoint de solicitud de reset con validación de email
+- Endpoint de solicitud de reset con validación de whatsapp
 - Generación de token temporal único (válido 1 hora)
 - Envío automatizado via servicio Resend
 - Interface de cambio de contraseña con token
 
 **Gestión de Perfiles:**
 
-- Padres: perfil de solo consulta (nombre, email, teléfono)
+- Padres: perfil de solo consulta (nombre, whatsapp, teléfono)
 - Docentes: cambio obligatorio de contraseña inicial
 - Selector de hijo: dropdown en header que actualiza todo el dashboard
 - Dashboard diferenciado por rol con módulos específicos
@@ -473,6 +473,7 @@ Plantilla de items de evaluacion por trimestre predispuestas a cambios por parte
 | RN-06 | Sesiones únicas | Un usuario solo puede tener una sesión activa |
 | RN-07 | Cambio de contraseña inicial | Docentes deben cambiar contraseña en primer login |
 | RN-08 | Recuperación automatizada | Reset de contraseña por whatsapp con token temporal |
+| RN-08 | Transmisión segura obligatoria | Todo intercambio de datos entre cliente y servidor debe realizarse mediante HTTPS (TLS 1.2 o superior) para garantizar confidencialidad e integridad. |
 
 ### 5.2 Reglas de Carga de Datos Académicos
 
@@ -676,7 +677,7 @@ Plantilla de items de evaluacion por trimestre predispuestas a cambios por parte
 
 ---
 
-## 9. CRITERIOS DE ACEPTACIÓN GENERALES ACTUALIZADOS
+## 9. CRITERIOS DE ACEPTACIÓN GENERALES 
 
 ### 9.1 Criterios Técnicos
 
@@ -685,6 +686,7 @@ Plantilla de items de evaluacion por trimestre predispuestas a cambios por parte
 - Tiempo de carga < 3 segundos para cualquier pantalla
 - Manejo de hasta 150 usuarios concurrentes (estimado real para institución)
 - Archivos adjuntos limitados a 5MB, tipos PDF/JPG/PNG
+- Todo tráfico entre frontend, backend y servicios externos se debe realizar mediante protocolo seguro HTTPS con certificado válido.
 
 ### 9.2 Criterios Funcionales
 

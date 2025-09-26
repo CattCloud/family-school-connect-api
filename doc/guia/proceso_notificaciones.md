@@ -71,5 +71,5 @@ Revisión mensual, reuniones con padres, seguimiento académico.
 | --- | --- | --- | --- | --- |
 | Notificación al login | Plataforma | 1 vez por sesión | Baja | Inicio claro y editorializado |
 | Polling cada 5 min | Plataforma | Durante sesión | Media | Flujo continuo sin saturación |
-| Email por evento crítico | Externo (SMTP) | Según evento | Baja | Refuerzo externo y trazabilidad |
+| Whatsapp por evento crítico | Externo (SMTP) | Según evento | Baja | Refuerzo externo y trazabilidad |
 | Historial de notificaciones | Plataforma | Permanente | Media | Revisión y auditoría |

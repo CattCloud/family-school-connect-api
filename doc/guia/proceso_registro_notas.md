@@ -319,7 +319,7 @@ Una sola definición para todo el año.: Sera unica e igual en todos los trimest
 
 - Cuando un docente registre una nota, ¿quieres que el padre reciba una **notificación inmediata**?
     
-    **Sí, notificación push/email instantánea.**
+    **Sí, notificación push/whatsapp instantánea.**
     
     Esto es consistente con nuestra decisión de hacer que el sistema sea un canal de comunicación en tiempo real. La notificación instantánea de una calificación, especialmente si es baja, es un evento crítico que los padres necesitan conocer de inmediato.
     
