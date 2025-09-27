@@ -488,6 +488,14 @@ Sirve como punto intermedio entre **estudiantes** y **asignaciones\_docente\_cur
 - **fecha_expiracion** - Control de validez
 - **usado** - marcar si ya fue consumido, false por defecto
 
+### **1.22 Entidad: tokens_blacklist**
+**Propósito:** Almacena los tokens ya usados(Tokens JWT al cerrar sesion)
+
+**Atributos:**
+- **id** - Identificador único (clave primaria)
+- **token** - el JWT completo.
+- **usuario_id** - referencia al usuario que cerró sesión
+- **fecha_creacion** - Registro de cuándo se insertó en blacklist.
 
 ---
 

@@ -63,7 +63,7 @@
 | --- | --- | --- |
 | **React Icons** | Iconografía | Lucide, Heroicons para interfaz consistente |
 | **React Dropzone** | Upload de Archivos | Drag & drop para Excel/CSV, validación de tipos |
-| **Notify (Toast)** | Feedback UI | Notificaciones, alertas, confirmaciones de acciones |
+| **Notyf (Toast)** | Feedback UI | Notificaciones, alertas, confirmaciones de acciones |
 
 ### **2.5 Comunicación con Backend**
 
@@ -139,6 +139,7 @@
 | --- | --- | --- |
 | **date-fns** | Manipulación de Fechas | Filtros de calendarios, formateo de fechas académicas |
 | **clsx** | Conditional Classes | Tailwind CSS condicional, estados dinámicos |
+| **uuid** |  Generar identificadores universalmente únicos (UUID) | Para generar tokens |
 
 ### **4.4 Development Tools**
 
