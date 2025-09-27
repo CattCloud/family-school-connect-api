@@ -477,6 +477,18 @@ Sirve como punto intermedio entre **estudiantes** y **asignaciones\_docente\_cur
 - **Control temporal:** Permisos con fecha de vencimiento opcionales
 - **Auditoría:** Registro de quién otorga cada permiso
 
+
+### **1.21 Entidad: password_reset_tokens**
+**Propósito:** Almacena los tokens generados por la solicitud de cambio de contraseña
+
+**Atributos:**
+- **id** - Identificador único (clave primaria)
+- **id_usuario** - identificador único (UUID).
+- **fecha_creacion** 
+- **fecha_expiracion** - Control de validez
+- **usado** - marcar si ya fue consumido, false por defecto
+
+
 ---
 
 ## **2. RELACIONES ENTRE ENTIDADES**
@@ -542,11 +554,10 @@ Sirve como punto intermedio entre **estudiantes** y **asignaciones\_docente\_cur
 - Un padre puede tener múltiples hijos, un estudiante solo puede tener un responsable
 - Campos adicionales: apoderado_principal_id,tipo_relacion, estado_activo
 
-
+**usuarios ↔ password_reset_tokens**
+- Un usuario puede tener multiples solicitudes de cambio de password, pero solo uno estara activo
 
 ### **2.2 Relaciones N:M (Muchos a Muchos)**
-
-
 
 **docentes ↔ cursos**
 - Tabla intermedia: asignaciones_docente_curso

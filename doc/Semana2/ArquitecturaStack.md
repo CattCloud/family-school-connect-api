@@ -288,3 +288,26 @@ proyecto-orquideas/
 - **SQL Injection:** Prisma ORM protection
 - **Rate Limiting:** Express rate limiter (futuro)
 - **Helmet**: Middleware para configurar cabeceras de seguridad HTTP (protección contra ataques comunes como XSS, clickjacking y sniffing de contenido).
+
+## **9. Manejo de Estados**
+
+### **Frontend**
+
+
+```bash
+┌─────────────────────┐
+│   React Query       │  ← Server State (API data, cache)
+│   (Server State)    │
+└─────────────────────┘
+
+┌─────────────────────┐
+│   React useState    │  ← Local State (forms, UI state)
+│   (Component State) │
+└─────────────────────┘
+
+┌─────────────────────┐
+│   LocalStorage      │  ← Session State (user session)
+│   (Session State)   │
+└─────────────────────┘
+
+```

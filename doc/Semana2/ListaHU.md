@@ -6,10 +6,12 @@ Este documento presenta las Historias de Usuario (HU) organizadas por tipo de us
 
 ### Módulo de Autenticación y Perfiles
 
-1. Como padre, quiero iniciar sesión con mis credenciales únicas para acceder al sistema de forma segura.
+1 Como padre, quiero iniciar sesión con mis credenciales únicas para acceder al sistema de forma segura.
 2. Como padre, quiero seleccionar entre mis hijos mediante un dropdown en el header para visualizar la información específica de cada uno.
 3. Como padre, quiero recuperar mi contraseña mediante un proceso automatizado para recuperar el acceso en caso de olvido.
 4. Como padre, quiero cerrar sesión para garantizar la seguridad de mi cuenta cuando no estoy usando el sistema.
+
+### Módulo de Dashboard
 5. Como padre, quiero visualizar mi perfil para verificar mi información de contacto registrada.
 
 ### Módulo de Calificaciones y Asistencia
