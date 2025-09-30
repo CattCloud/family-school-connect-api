@@ -60,6 +60,8 @@ El sistema permitirá mejorar significativamente:
 - Crear solicitudes de soporte técnico
 - Recibir notificaciones automáticas por whattsap y en plataforma
 - Recuperación de contraseña automatizada por whatsapp
+- Cambio obligatorio de contraseña en primer login
+
 
 ### **Rol: Docente**
 
@@ -82,12 +84,13 @@ El sistema permitirá mejorar significativamente:
 
 **Funcionalidades disponibles:**
 
-- Asignar permisos granulares por grado/nivel a docentes
+- Asignar permisos a docentes
 - Gestionar todos los módulos del sistema
 - Supervisar comunicaciones del sistema (lectura completa de mensajes)
 - Cargar datos académicos de cualquier curso/sección
 - Dashboard con vista general de actividad
 - Configuración de umbrales de alertas
+- Cambio obligatorio de contraseña en primer login
 
 ### **Rol: Administrador del Sistema**
 
@@ -105,6 +108,7 @@ El sistema permitirá mejorar significativamente:
 - Gestionar solicitudes de soporte técnico
 - Configuración técnica del sistema
 - Gestión de backups y exportación de datos
+- Cambio obligatorio de contraseña en primer login
 
 ### 2.2 Matriz de Acceso por Rol
 
@@ -118,7 +122,7 @@ El sistema permitirá mejorar significativamente:
 | Notificaciones | Recibir | Recibir | Configurar | Configurar |
 | Soporte Técnico | Crear tickets | Crear tickets | - | Gestionar tickets |
 | Gestión Usuarios | - | - | Permisos docentes | Crear usuarios |
-- Según permisos granulares otorgados por el director
+- Según permisos generales otorgados por el director
 
 ---
 
@@ -146,14 +150,14 @@ El sistema permitirá mejorar significativamente:
 | HU-11 | Como docente, quiero cargar asistencia diaria con los 5 estados definidos | Alta | - Estados: Presente, Tardanza, Permiso, Falta Justificada, Falta Injustificada<br>- Procesamiento con reporte de errores<br>- Registro por día completo |
 | HU-12 | Como docente, quiero que se procesen registros válidos y se reporten errores específicos | Alta | - Procesar datos correctos aunque haya errores<br>- Generar archivo TXT con detalle de errores<br>- Especificar fila y tipo de error exacto |
 | HU-13 | Como docente, quiero recibir notificaciones de mensajes de padres | Alta | - Notificaciones whatsapp + plataforma<br>- Historial conversacional por estudiante |
-| HU-14 | Como docente, quiero crear comunicados solo para grados donde tengo permisos | Media | - Permisos granulares asignados por director<br>- Segmentación por grado específico |
+| HU-14 | Como docente, quiero crear comunicados, si tengo permisos o no | Media | - Permisos asignados por director<br>- Segmentación por grado específico |
 | HU-15 | Como docente, quiero crear encuestas para mis niveles autorizados | Baja | - Control de permisos por nivel<br>- Visualización completa de resultados propios |
 
 ### 3.3 Historias de Usuario - Director
 
 | ID | Historia de Usuario | Prioridad | Criterios de Aceptación Específicos |
 | --- | --- | --- | --- |
-| HU-16 | Como director, quiero asignar permisos específicos de comunicados/encuestas por grado a docentes | Alta | - Panel de gestión con vista de docentes<br>- Permisos granulares por grado y nivel<br>- Activación/desactivación individual |
+| HU-16 | Como director, quiero asignar permisos específicos de comunicados/encuestas  | Alta | - Panel de gestión con vista de docentes<br>- Permisos (permiso activo o desactivado)<br>- Activación/desactivación individual |
 | HU-17 | Como director, quiero leer todos los mensajes del sistema para supervisión | Media | - Acceso completo de solo lectura<br>- Vista organizada por conversaciones<br>- Sin capacidad de edición o eliminación |
 | HU-18 | Como director, quiero cargar datos académicos de cualquier curso sin restricciones | Alta | - Acceso total a todos los cursos/secciones<br>- Mismo proceso de validación que docentes<br>- Capacidad de aprobar cierre de trimestre |
 | HU-19 | Como director, quiero configurar umbrales de alertas académicas y estructura de evaluación | Alta | - Configuración de nota mínima (actual: 11)<br>- Configuración de faltas consecutivas (actual: 3)<br>- Definición de estructura de evaluación (5 ítems máximo)<br>- Asignación de pesos a cada componente de evaluación |
@@ -321,7 +325,7 @@ Plantilla de items de evaluacion por trimestre predispuestas a cambios por parte
 
 **Funcionalidades de Creación:**
 
-- Permisos granulares por director: específicos por grado
+- Permisos dados por director: en general
 - Editor de texto básico con preview
 - Segmentación de audiencia: por grado, nivel o rol
 - Programación opcional de fecha de publicación
@@ -471,7 +475,7 @@ Plantilla de items de evaluacion por trimestre predispuestas a cambios por parte
 | RN-04 | Acceso familiar único | Un padre con una cuenta accede a todos sus hijos vía dropdown |
 | RN-05 | Apoderado principal único | Solo un apoderado principal por estudiante |
 | RN-06 | Sesiones únicas | Un usuario solo puede tener una sesión activa |
-| RN-07 | Cambio de contraseña inicial | Docentes deben cambiar contraseña en primer login |
+| RN-07 | Cambio de contraseña inicial | Todo usuario debe cambiar contraseña en primer login |
 | RN-08 | Recuperación automatizada | Reset de contraseña por whatsapp con token temporal |
 | RN-08 | Transmisión segura obligatoria | Todo intercambio de datos entre cliente y servidor debe realizarse mediante HTTPS (TLS 1.2 o superior) para garantizar confidencialidad e integridad. |
 
@@ -514,7 +518,7 @@ Plantilla de items de evaluacion por trimestre predispuestas a cambios por parte
 
 | ID | Regla | Descripción |
 | --- | --- | --- |
-| RN-29 | Permisos granulares docentes | Crear comunicados/encuestas según grados asignados |
+| RN-29 | Permisos generales docentes | Crear comunicados/encuestas segun permiso |
 | RN-30 | Supervisión completa director | Lectura de todos los mensajes sin edición |
 | RN-31 | Conversaciones por estudiante | Mensajes agrupados por estudiante específico |
 | RN-32 | Respuesta única en encuestas | No modificación después de envío |

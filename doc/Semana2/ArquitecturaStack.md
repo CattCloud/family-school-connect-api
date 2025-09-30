@@ -238,7 +238,6 @@ Se encarga de interactuar directamente con la base de datos.
 ```
 proyecto-orquideas/
 ├── frontend/                 # React SPA
-│   ├── src/
 │   │   ├── components/      # Componentes reutilizables
 │   │   ├── pages/          # Páginas principales
 │   │   ├── hooks/          # Custom hooks
@@ -256,7 +255,6 @@ proyecto-orquideas/
 ```
 proyecto-orquideas/
 ├── backend/                 # Express API
-│   ├── src/
 │   │   ├── controllers/    # Express controllers
 │   │   ├── services/       # Business logic
 │   │   ├── models/         # Prisma schemas

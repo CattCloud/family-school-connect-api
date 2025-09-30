@@ -43,8 +43,6 @@
 - **apellido** - Apellido completo del estudiante (requerido)
 - **nivel_grado_id** - Referencia al nivel y grado del estudiante (FK a nivel_grado)
 - **año_academico** - Año lectivo de matriculación (integer, requerido)
-- **apoderado_principal_id** - Referencia al padre/apoderado principal (FK a usuarios)
-- **tipo_relacion** - Tipo de parentesco del apoderado: "padre", "madre", "apoderado", "tutor" (enum, requerido)
 - **estado_matricula** - Estado actual: "activo", "retirado", "trasladado" (enum, default: "activo")
 
 **Justificación técnica:**
@@ -55,15 +53,17 @@
 ---
 
 ### **1.3 Entidad: relaciones_familiares**
-**Propósito:** Vincula padres/apoderados con estudiantes, permitiendo que un padre tenga múltiples hijos.
+**Propósito:** Vincula padres/apoderados con estudiantes, permitiendo que un padre tenga múltiples hijos. Solo se registran apoderados principales 
 
 **Atributos:**
 - **id** - Identificador único de la relación (clave primaria)
-- **padre_id** - Referencia al usuario padre (FK a usuarios)
+- **apoderado_id** - Referencia al usuario apoderado (FK a usuarios)
 - **estudiante_id** - Referencia al estudiante (FK a estudiantes)
 - **tipo_relacion** - Tipo de parentesco: "padre", "madre", "apoderado", "tutor" (enum, requerido)
 - **fecha_asignacion** - Cuándo se estableció la relación (timestamp, auto-generado)
 - **estado_activo** - Relación vigente (boolean, default: true)
+- **año_academico** - Año lectivo vigente (integer, requerido)
+
 
 **Justificación técnica:**
 - **Tabla intermedia necesaria:** Relación muchos a muchos entre padres e hijos
@@ -457,19 +457,16 @@ Sirve como punto intermedio entre **estudiantes** y **asignaciones\_docente\_cur
 ---
 
 ### **1.20 Entidad: permisos_docentes**
-**Propósito:** Define permisos granulares de docentes para crear comunicados y encuestas por grado/nivel.
+**Propósito:** Define los permisos globales de los docentes para crear comunicados y encuestas.
 
 **Atributos:**
-- **id** - Identificador único del permiso (clave primaria)
-- **docente_id** - Usuario docente (FK a usuarios)
-- **tipo_permiso** - Tipo: "comunicados", "encuestas" (enum, requerido)
-- **grado** - Grado autorizado (string, requerido)
-- **nivel** - Nivel autorizado: "primaria", "secundaria" (enum, requerido)
-- **estado_activo** - Permiso vigente (boolean, default: true)
-- **otorgado_por** - Usuario director que otorgó (FK a usuarios)
-- **fecha_otorgamiento** - Cuándo se otorgó (timestamp, auto-generado)
-- **fecha_vencimiento** - Fecha límite del permiso (timestamp, nullable)
-- **año_academico** - Año lectivo (integer, requerido)
+* **id** → Identificador único del permiso (PK).
+* **docente_id** → Usuario docente (FK a `usuarios`).
+* **tipo_permiso** → Tipo: `"comunicados"`, `"encuestas"` (enum, requerido).
+* **estado_activo** → Permiso vigente (boolean, default: true).
+* **fecha_otorgamiento** → Cuándo se otorgó (timestamp, auto-generado).
+* **año_academico** → Año lectivo (integer, requerido).
+
 
 **Justificación técnica:**
 - **Granularidad específica:** Control por grado/nivel individual
@@ -555,7 +552,7 @@ Sirve como punto intermedio entre **estudiantes** y **asignaciones\_docente\_cur
 - FK: comunicado_id en comunicados_lecturas
 
 **usuarios → permisos_docentes**
-- Un docente puede tener múltiples permisos granulares
+- Un docente puede tener permiso de comunicado o de encuesta
 - FK: docente_id en permisos_docentes
 
 **usuarios (padres) ↔ estudiantes**

@@ -66,7 +66,7 @@
 
 ### **Reglas de Negocio del Módulo**
 
-- RN-ENC-01: Solo directores y docentes con permisos granulares pueden crear encuestas.
+- RN-ENC-01: Solo docentes con permisos  pueden crear encuestas o comunicados.
 - RN-ENC-02: Cada usuario solo puede responder una vez y no puede modificar su respuesta.
 - RN-ENC-03: Una encuesta vencida no admite nuevas respuestas.
 - RN-ENC-04: Solo el creador de la encuesta puede acceder a resultados completos.

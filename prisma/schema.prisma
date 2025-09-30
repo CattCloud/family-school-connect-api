@@ -1,0 +1,66 @@
+// Prisma schema base - Autenticación (usuarios, password_reset_tokens, tokens_blacklist)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Enumeración de roles de usuario
+enum Rol {
+  apoderado
+  docente
+  director
+  administrador
+}
+
+/// Tabla: usuarios
+model Usuario {
+  id                    String    @id @default(uuid()) @db.Uuid
+  tipo_documento        String
+  nro_documento         String    @db.VarChar(20)
+  password_hash         String
+  rol                   Rol
+  nombre                String
+  apellido              String
+  telefono              String    @db.VarChar(20)
+  fecha_creacion        DateTime  @default(now())
+  fecha_ultimo_login    DateTime?
+  estado_activo         Boolean   @default(true)
+  debe_cambiar_password Boolean   @default(false)
+
+  // Relaciones
+  resetTokens        PasswordResetToken[]
+  blacklistedTokens  TokenBlacklist[]
+
+  @@unique([tipo_documento, nro_documento], name: "usuarios_documento_unique")
+  @@map("usuarios")
+}
+
+/// Tabla: password_reset_tokens
+model PasswordResetToken {
+  id               String    @id @default(uuid()) @db.Uuid
+  token            String    @unique
+  id_usuario       String    @db.Uuid
+  usuario          Usuario   @relation(fields: [id_usuario], references: [id])
+  fecha_creacion   DateTime  @default(now())
+  fecha_expiracion DateTime
+  usado            Boolean   @default(false)
+
+  @@index([id_usuario, fecha_creacion], name: "idx_reset_tokens_usuario_fecha")
+  @@map("password_reset_tokens")
+}
+
+/// Tabla: tokens_blacklist
+model TokenBlacklist {
+  id             String   @id @default(uuid()) @db.Uuid
+  token          String   @unique
+  usuario_id     String?  @db.Uuid
+  usuario        Usuario? @relation(fields: [usuario_id], references: [id])
+  fecha_creacion DateTime @default(now())
+
+  @@map("tokens_blacklist")
+}

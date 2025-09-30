@@ -2,7 +2,7 @@
 
 El módulo de **Comunicados y Avisos** permite a la institución educativa mantener una comunicación fluida y organizada con padres de familia, estudiantes y docentes.
 
-Su diseño incorpora **permisos granulares**, **segmentación flexible de audiencia** y un **editor enriquecido** para la creación de comunicados, asegurando que la información llegue de manera oportuna y estructurada a los destinatarios correspondientes.
+Su diseño incorpora **permisos**, **segmentación flexible de audiencia** y un **editor enriquecido** para la creación de comunicados, asegurando que la información llegue de manera oportuna y estructurada a los destinatarios correspondientes.
 
 ---
 

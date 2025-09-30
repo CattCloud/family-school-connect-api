@@ -77,7 +77,7 @@
 
 ### **Semana 5: Módulo de Gestión de Usuarios**
 
-**Objetivo:** Sistema de usuarios y permisos granulares
+**Objetivo:** Sistema de usuarios y permisos 
 
 **Actividades (Ciclo completo en 1 semana):**
 - **Refinación HU:** Gestión de usuarios y permisos
@@ -90,7 +90,7 @@
 
 **Entregables:**
 - Sistema de gestión de usuarios completo
-- Permisos granulares implementados
+- Permisos  implementados
 
 ---
 
