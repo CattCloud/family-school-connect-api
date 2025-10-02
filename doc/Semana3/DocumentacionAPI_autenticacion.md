@@ -9,8 +9,8 @@
 
 ## **Base URL y Configuración**
 
-- **Base URL (local):** `http://localhost:3000/api`
-- **Base URL (producción):** `https://app-orquideas.com/api`
+- **Base URL (local):** `http://localhost:3000`
+- **Base URL (producción):** `https://app-orquideas.com`
 
 ### **Autenticación JWT**
 - La API usa tokens JWT de corta duración (24 horas)

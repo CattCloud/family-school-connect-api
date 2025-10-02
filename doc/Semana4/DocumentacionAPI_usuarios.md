@@ -9,7 +9,7 @@
 
 ## **Base URL y Configuración**
 
-- **Base URL (local):** `http://localhost:3000/api`
+- **Base URL (local):** `http://localhost:3000`
 - **Base URL (producción):** ``
 
 ### **Autenticación JWT**
@@ -712,7 +712,7 @@ archivo: [Excel/CSV File]
         }
       }
     ],
-    "archivo_errores_url": "/api/admin/import/val_20250210_001/errores.txt"
+    "archivo_errores_url": "/admin/import/val_20250210_001/errores.txt"
   }
 }
 ```
@@ -770,7 +770,7 @@ archivo: [Excel/CSV File]
       "estudiantes_creados": 0
     },
     "credenciales_generadas": true,
-    "archivo_credenciales_url": "/api/admin/import/imp_20250210_001/credenciales",
+    "archivo_credenciales_url": "/admin/import/imp_20250210_001/credenciales",
     "fecha_importacion": "2025-02-10T15:30:00Z"
   }
 }
@@ -933,154 +933,131 @@ archivo: [Excel/CSV File]
 
 ---
 
-## **SECCIÓN 4: GESTIÓN DE CREDENCIALES**
 
-### **15. Generar Credenciales de Acceso**
+# 🚀 **SECCIÓN 4: GESTIÓN DE CREDENCIALES**
 
-**Endpoint:** `POST /admin/import/{import_id}/credentials`  
-**Descripción:** Genera credenciales para usuarios recién importados  
-**Autenticación:** Bearer token (Rol: Administrador)  
+### **15. Generar Credenciales Iniciales**
+
+**Endpoint:** `POST /admin/import/generate-credentials`
+**Descripción:** Genera credenciales iniciales para los usuarios recién importados.
+**Autenticación:** Bearer token (Rol: Administrador)
 
 #### **Request Body:**
+
 ```json
 {
+  "import_id": "imp_20250210_001",
+  "incluir_excel": true,
   "incluir_whatsapp": false,
-  "incluir_pdfs": true
+  "incluir_pdfs": false
 }
 ```
 
 #### **Response Success (200):**
+
 ```json
 {
   "success": true,
   "data": {
     "credentials_id": "cred_20250210_001",
-    "total_credenciales": 43,
-    "archivo_excel_url": "/api/admin/import/cred_20250210_001/download",
-    "pdfs_generados": 43,
-    "pdfs_zip_url": "/api/admin/import/cred_20250210_001/pdfs.zip",
-    "fecha_generacion": "2025-02-10T16:30:00Z"
+    "total_credenciales": 45,
+    "archivo_excel_url": " /admin/import/credentials/cred_20250210_001/download",
+    "pdfs_zip_url": null,
+    "fecha_generacion": "2025-10-01T12:30:00Z"
   }
 }
 ```
 
 ### **Reglas de Negocio:**
-- **RN-42:** Contraseñas aleatorias de 8-10 caracteres alfanuméricos
-- **RN-43:** Archivo Excel con diseño institucional
-- **RN-44:** PDFs individuales con instrucciones de primer acceso
+
+* **RN-42:** Contraseñas aleatorias (8–10 caracteres alfanuméricos).
+* **RN-43:** Contraseñas se guardan como hash bcrypt.
+* **RN-44:** Marcar `debe_cambiar_password = true` en BD.
+* **RN-45:** Solo usuarios con `estado_activo = true`.
+* **RN-46:** No re-generar credenciales si ya tienen contraseña personalizada.
+* **RN-47:** Registrar log de generación de credenciales.
 
 ---
 
 ### **16. Descargar Archivo de Credenciales**
 
-**Endpoint:** `GET /admin/import/{credentials_id}/download`  
-**Descripción:** Descarga Excel con credenciales generadas  
-**Autenticación:** Bearer token (Rol: Administrador)  
+**Endpoint:** `GET /admin/import/credentials/{credentials_id}/download`
+**Descripción:** Descarga archivo Excel con credenciales.
+**Autenticación:** Bearer token (Rol: Administrador)
 
-#### **Response Success (200):**
-```
-Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
-Content-Disposition: attachment; filename="credenciales_20250210.xlsx"
-
-[Binary Excel File]
-```
-
-**Contenido del Excel:**
-| Nombre Completo | Rol | Usuario | Contraseña | Teléfono | Fecha Creación |
-|----------------|-----|---------|------------|----------|----------------|
-| Juan Pérez López | Padre | 12345678 | aB9xT3qZ | +51987654321 | 10/02/2025 |
+📌 **Formato:** Excel con columnas: Nombre completo, Rol, Documento, Usuario, Contraseña inicial, Teléfono, Fecha creación, Estado.
 
 ---
 
 ### **17. Enviar Credenciales por WhatsApp**
 
-**Endpoint:** `POST /admin/import/{credentials_id}/send-whatsapp`  
-**Descripción:** Envío masivo de credenciales vía WhatsApp  
-**Autenticación:** Bearer token (Rol: Administrador)  
+**Endpoint:** `POST /admin/import/credentials/{credentials_id}/send-whatsapp`
+**Descripción:** Envío masivo de credenciales vía WhatsApp.
+**Autenticación:** Bearer token (Rol: Administrador)
 
 #### **Request Body:**
+
 ```json
 {
-  "usuarios_seleccionados": ["usr_001", "usr_002"]  // Opcional, vacío = todos
+  "usuarios_seleccionados": ["usr_001", "usr_002"] 
 }
 ```
 
 #### **Response Success (200):**
+
 ```json
 {
   "success": true,
   "data": {
-    "total_envios": 43,
-    "exitosos": 41,
+    "total_envios": 45,
+    "exitosos": 43,
     "fallidos": 2,
     "detalles_fallidos": [
       {
         "usuario_id": "usr_999",
-        "nombre": "Pedro Sánchez",
         "telefono": "+51999999999",
-        "error": "Número de teléfono inválido"
-      }
-    ],
-    "tiempo_procesamiento": "2 minutos 15 segundos"
-  }
-}
-```
-
-**Formato del Mensaje WhatsApp:**
-```
-Bienvenido a I.E.P. Las Orquídeas 🏫
-
-Accede a la plataforma educativa:
-🔗 https://plataforma.orquideas.edu.pe
-
-👤 Usuario: 12345678
-🔑 Contraseña inicial: aB9xT3qZ
-
-⚠️ Por seguridad, cambia tu contraseña en tu primer ingreso.
-
-📱 ¿Necesitas ayuda? Contacta con soporte técnico +51 999999999.
-```
-
-### **Reglas de Negocio:**
-- **RN-45:** Validar formato de teléfono antes de enviar
-- **RN-46:** Rate limiting: Máximo 50 mensajes por minuto
-- **RN-47:** Registrar log de envíos exitosos/fallidos
-
----
-
-### **18. Generar PDFs Individuales**
-
-**Endpoint:** `POST /admin/import/{credentials_id}/generate-pdfs`  
-**Descripción:** Genera PDFs de credenciales por usuario  
-**Autenticación:** Bearer token (Rol: Administrador)  
-
-#### **Response Success (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "total_pdfs": 43,
-    "zip_url": "/api/admin/import/cred_20250210_001/pdfs.zip",
-    "zip_size_mb": 8.5,
-    "pdfs_individuales": [
-      {
-        "usuario_id": "usr_001",
-        "nombre": "Juan Pérez López",
-        "pdf_url": "/api/admin/import/cred_20250210_001/pdf/usr_001.pdf"
+        "error": "Número inválido"
       }
     ]
   }
 }
 ```
 
-**Contenido del PDF:**
-- Logo institucional
-- Nombre completo del usuario
-- Rol
-- Usuario (nro_documento)
-- Contraseña inicial
-- Teléfono registrado
-- Instrucciones de primer acceso
+---
+
+### **18. Generar PDFs Individuales**
+
+**Endpoint:** `POST /admin/import/credentials/{credentials_id}/generate-pdfs`
+**Descripción:** Genera PDFs de credenciales (uno por usuario) con Puppeteer.
+**Autenticación:** Bearer token (Rol: Administrador)
+
+#### **Response Success (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "total_pdfs": 45,
+    "zip_url": " /admin/import/credentials/cred_20250210_001/pdfs.zip",
+    "pdfs_individuales": [
+      {
+        "usuario_id": "usr_001",
+        "pdf_url": " /admin/import/credentials/cred_20250210_001/usr_001.pdf"
+      }
+    ]
+  }
+}
+```
+
+📌 **Contenido de cada PDF:**
+
+* Logo institucional.
+* Nombre completo.
+* Rol.
+* Usuario (nro_documento).
+* Contraseña inicial.
+* Teléfono registrado.
+* Instrucciones de primer acceso.
 
 ---
 

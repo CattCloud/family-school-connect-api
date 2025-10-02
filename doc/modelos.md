@@ -1,5 +1,6 @@
-// Prisma schema base - Autenticación (usuarios, password_reset_tokens, tokens_blacklist)
+Lo que si visualiza a continuacion es modelo de datos Prisma definido en el backend
 
+```js
 generator client {
   provider = "prisma-client-js"
 }
@@ -93,12 +94,6 @@ enum EvalTipo {
   recurrente
 }
 
-enum Nivel {
-  Inicial
-  Primaria
-  Secundaria
-}
-
 /// Tabla: permisos_docentes (permisos generales por docente y año)
 model PermisoDocente {
   id               String      @id @default(uuid()) @db.Uuid
@@ -134,7 +129,7 @@ model PermisoDocenteLog {
 /// Tabla: nivel_grado (datos maestros)
 model NivelGrado {
   id            String   @id @default(uuid()) @db.Uuid
-  nivel         Nivel
+  nivel         String
   grado         String
   descripcion   String?
   estado_activo Boolean  @default(true)
@@ -245,3 +240,4 @@ model RelacionesFamiliares {
   @@index([estudiante_id], name: "idx_relaciones_estudiante")
   @@map("relaciones_familiares")
 }
+```

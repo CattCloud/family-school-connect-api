@@ -4,7 +4,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import app from '../index.js';
 
 describe('Auth API', () => {
-  const base = '/api';
+  const base = '';
   const validUser = {
     tipo_documento: 'DNI',
     nro_documento: '12345678', // sembrado en prisma/seed.js
@@ -13,7 +13,7 @@ describe('Auth API', () => {
 
   let bearer = '';
 
-  it('POST /api/auth/login - debe autenticar con credenciales válidas', async () => {
+  it('POST /auth/login - debe autenticar con credenciales válidas', async () => {
     const res = await request(app).post(`${base}/auth/login`).send(validUser);
 
     expect(res.status).toBe(200);
@@ -24,7 +24,7 @@ describe('Auth API', () => {
     bearer = `Bearer ${res.body.data.token}`;
   });
 
-  it('POST /api/auth/login - debe fallar con credenciales inválidas', async () => {
+  it('POST /auth/login - debe fallar con credenciales inválidas', async () => {
     const res = await request(app)
       .post(`${base}/auth/login`)
       .send({ ...validUser, password: 'WrongPass123' });
@@ -34,7 +34,7 @@ describe('Auth API', () => {
     expect(res.body?.error?.code).toBe('INVALID_CREDENTIALS');
   });
 
-  it('GET /api/auth/validate-token - debe validar token emitido', async () => {
+  it('GET /auth/validate-token - debe validar token emitido', async () => {
     const res = await request(app)
       .get(`${base}/auth/validate-token`)
       .set('Authorization', bearer);
@@ -45,7 +45,7 @@ describe('Auth API', () => {
     expect(res.body?.data?.user?.rol).toBe('apoderado');
   });
 
-  it('POST /api/auth/forgot-password - responde mensaje genérico', async () => {
+  it('POST /auth/forgot-password - responde mensaje genérico', async () => {
     const res = await request(app)
       .post(`${base}/auth/forgot-password`)
       .send({ tipo_documento: validUser.tipo_documento, nro_documento: validUser.nro_documento });
@@ -55,13 +55,13 @@ describe('Auth API', () => {
     expect(res.body?.data?.message).toContain('Si el número de documento existe');
   });
 
-  it('POST /api/auth/logout - invalida token (blacklist)', async () => {
+  it('POST /auth/logout - invalida token (blacklist)', async () => {
     const res = await request(app).post(`${base}/auth/logout`).set('Authorization', bearer);
     expect(res.status).toBe(200);
     expect(res.body?.success).toBe(true);
   });
 
-  it('GET /api/auth/validate-token - debe fallar con token en blacklist', async () => {
+  it('GET /auth/validate-token - debe fallar con token en blacklist', async () => {
     const res = await request(app)
       .get(`${base}/auth/validate-token`)
       .set('Authorization', bearer);

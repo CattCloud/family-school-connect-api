@@ -46,7 +46,7 @@
     - Botones: "Confirmar" y "Cancelar"
 * **CA-04:** Al Confirmar un permiso:
   * Si no existe ese tipo de permiso para el docente, se registra el permiso en `permisos_docentes` con 
-	- `tipo_permiso` = comunicado` o `encuesta`
+	- `tipo_permiso` = comunicados` o `encuestas`
 	- `estado_activo` = true
 	- `docente_id` = docente al que se le dio el permiso
 	- `fecha_otorgamiento` = now()
@@ -139,51 +139,55 @@
   * `PUT /teachers/{id}/permissions` → Actualizar permiso de docente
 
 ---
-
-
 ## **HU-USERS-02** — Definir Estructura de Evaluación Institucional (Director)
 
 **Título:** Configuración global de componentes de calificación
 
 **Historia:**
+
 > Como director, quiero definir la estructura de evaluación para todo el colegio para estandarizar el proceso de calificación y garantizar coherencia institucional en las evaluaciones académicas.
+> 
 
 **Criterios de Aceptación:**
 
 **Condiciones Funcionales:**
-- **CA-01:** Acceso al módulo "Configuración de Evaluación" desde dashboard del director
-- **CA-02:** Pantalla principal muestra la estructura actual del año:
-  - Lista de componentes de evaluación definidos (máximo 5)
-  - Por cada componente:
-    - Nombre del ítem (ej: "Examen", "Participación")
-    - Peso porcentual asignado
-    - Tipo de evaluación (única/recurrente)
-    - Orden de visualización
-    - Estado (Activo/Inactivo)
-  - Total de pesos debe sumar 100%
-  - Indicador visual si configuración está incompleta
-- **CA-03:** Botón "Editar Estructura" abre modal con formulario:
-  - **Para cada componente (máximo 5):**
-    - Campo "Nombre del ítem" (texto, max 50 caracteres)
-    - Campo "Peso %" (numérico, 0-100)
-    - Select "Tipo de evaluación" (Única, Recurrente)
-    - Campo "Orden de visualización" (numérico 1-5)
-    - Toggle "Activo/Inactivo"
-  - Validación en tiempo real: Suma de pesos = 100%
-  - Botones: "Agregar componente" (hasta 5), "Eliminar componente"
-  - Botones finales: "Guardar Configuración", "Cancelar"
-- **CA-04:** Al guardar configuración:
-  - Insertar/actualizar registros en `estructura_evaluacion`:
-    - `año_academico = actual`
-    - `nombre_item`, `peso_porcentual`, `tipo_evaluacion`, `orden_visualizacion`
-    - `fecha_configuracion = now()`
-  - Validar que la suma de pesos = 100% exacto
-  - Mostrar confirmación: "Estructura de evaluación registrada correctamente"
-  - Enviar notificación a todos los docentes informando que la estructura quedó definida
-  - Una vez confirmada, la configuración queda **bloqueada para todo el año académico**
 
+- **CA-01:** Acceso al módulo "Configuración de Evaluación" desde dashboard del director
+- **CA-02:** Pantalla principal muestra la estructura actual del año en caso halla sido definido:
+    - Lista de componentes de evaluación definidos (máximo 5)
+    - Por cada componente:
+        - Nombre del ítem (ej: "Examen", "Participación")
+        - Peso porcentual asignado
+        - Tipo de evaluación (única/recurrente)
+        - Orden de visualización
+        - Estado (Activo/Inactivo)
+    - Total de pesos debe sumar 100%
+    - Indicador visual si configuración está incompleta
+- **CA-03:** Si no hay una estructura definida , Botón "Crear Estructura" abre modal con formulario:
+    - **Para cada componente (máximo 5):**
+        - Campo "Nombre del ítem" (texto, max 50 caracteres)
+        - Campo "Peso %" (numérico, 0-100)
+        - Select "Tipo de evaluación" (Única, Recurrente)
+        - Campo "Orden de visualización" (numérico 1-5)
+        - Toggle "Activo/Inactivo"
+    - Validación en tiempo real: Suma de pesos = 100%
+    - Botones: "Agregar componente" (hasta 5), "Eliminar componente"
+    - Boton “Plantilla predefinida” elimina los componentes creados y carga la plantilla en el formulario
+    - Botones finales: "Aceptar", "Cancelar"
+    - Una vez se cierra el modal, se observa un preview de suma de componentes
+    - Boton “Guardar Configuración” abre un mensaje de confirmacion “Esta seguro de crear la estructura de evaluacion, una vez generado no se podra cambiar hasta fin de año”
+- **CA-04:** Al guardar configuración:
+    - Validar que la suma de pesos = 100% exacto
+    - Insertar/actualizar registros en `estructura_evaluacion`:
+        - `año_academico = actual`
+        - `nombre_item`, `peso_porcentual`, `tipo_evaluacion`, `orden_visualizacion`
+        - `fecha_configuracion = now()`
+    - Mostrar confirmación: "Estructura de evaluación registrada correctamente"
+    - Enviar notificación a todos los docentes informando que la estructura quedó definida
+    - Una vez confirmada, la configuración queda **bloqueada para todo el año académico**
 
 **Validaciones de Negocio:**
+
 - **VN-01:** Solo director puede modificar (`usuarios.rol = 'director'`)
 - **VN-02:** Suma de pesos debe ser exactamente 100%
 - **VN-03:** Mínimo 1 componente, máximo 5 componentes
@@ -194,68 +198,71 @@
 - **VN-08:** Cambios solo aplican a partir de la fecha de modificación (no retroactivos)
 
 **UI/UX:**
-- **UX-01:** Vista actual con diseño de tarjetas:
-  - Card por cada componente con ícono representativo
-  - Barra de progreso visual del peso porcentual
-  - Badge de tipo de evaluación
-- **UX-02:** Modal de edición con drag & drop:
-  - Arrastra componentes para reordenar
-  - Sliders visuales para ajustar pesos con validación en tiempo real
-  - Indicador grande: "Suma actual: XX% / 100%"
-  - Colores: Verde si = 100%, Rojo si ≠ 100%
-- **UX-03:** Ejemplos predefinidos (templates):
-  - Botón "Usar plantilla predeterminada" carga estructura común:
-    - Examen: 40%
-    - Participación: 20%
-    - Revisión de Cuaderno: 15%
-    - Revisión de Libro: 15%
-    - Comportamiento: 10%
-- **UX-04:** Previsualización en tiempo real:
-  - Muestra cómo se verán las calificaciones con la nueva estructura
-  - Ejemplo de tabla de notas con los componentes configurados
-- **UX-05:** Historial de cambios:
-  - Botón "Ver historial" muestra timeline de configuraciones anteriores
-  - Solo consulta (no permite revertir ni modificar en el mismo año académico)
 
+- **UX-01:** Vista actual con diseño de tarjetas:
+    - Card por cada componente con ícono representativo
+    - Barra de progreso visual del peso porcentual
+    - Badge de tipo de evaluación
+- **UX-02:** Modal de edición con drag & drop:
+    - Arrastra componentes para reordenar
+    - Sliders visuales para ajustar pesos con validación en tiempo real
+    - Indicador grande: "Suma actual: XX% / 100%"
+    - Colores: Verde si = 100%, Rojo si ≠ 100%
+- **UX-03:** Ejemplos predefinidos (templates):
+    - Botón "Usar plantilla predeterminada" carga estructura común:
+        - Examen: 40%
+        - Participación: 20%
+        - Revisión de Cuaderno: 15%
+        - Revisión de Libro: 15%
+        - Comportamiento: 10%
+- **UX-04:** Previsualización en tiempo real:
+    - Muestra cómo se verán las calificaciones con la nueva estructura
+    - Ejemplo de tabla de notas con los componentes configurados
+- **UX-05:** Historial de cambios:
+    - Botón "Ver historial" muestra timeline de configuraciones anteriores
+    - Solo consulta (no permite revertir ni modificar en el mismo año académico)
 
 **Estados y Flujo:**
+
 - **EF-01:** Estado inicial: Cargando estructura actual del año académico
 - **EF-02:** Estado de edición: Modal abierto con formulario interactivo
 - **EF-03:** Estado de validación: Verificando que suma = 100%
 - **EF-04:** Estado de confirmación: Modal de advertencia antes de guardar, recordando que la configuración quedará fija todo el año
 - **EF-05:** Estado final: Estructura guardada, bloqueada y notificaciones enviadas
 
-
 **Validaciones de Entrada:**
+
 - **VE-01:** Nombres de componentes: Solo letras, espacios, máx 50 caracteres
 - **VE-02:** Pesos: Números enteros o decimales con máx 2 decimales (ej: 33.33%)
 - **VE-03:** Suma exacta de 100% requerida para habilitar botón "Guardar"
 - **VE-04:** Al menos 1 componente activo obligatorio
 
 **Mensajes de Error:**
+
 - "La suma de pesos debe ser exactamente 100%. Actual: XX%"
 - "Ya existe un componente con ese nombre. Use otro nombre."
 - "Debe tener al menos 1 componente de evaluación activo."
 
-
 **HU Relacionadas:**
+
 - **HU Previas:** HU-AUTH-01 (Autenticación como director)
 - **HU Siguientes:** HU-USERS-03 (Asignar pesos), HU-10 (Docente carga calificaciones con estructura definida)
 
 **Componentes y Estructura:**
+
 - **Tipo:** Página completa (`/dashboard/configuracion-evaluacion`)
 - **Componentes principales:**
-  - `EvaluationStructureView`: Vista actual de la estructura
-  - `EvaluationStructureModal`: Modal de edición
-  - `ComponentCard`: Card de componente individual
-  - `WeightSlider`: Slider de peso con validación
-  - `TemplateSelector`: Selector de plantillas predefinidas
-  - `HistoryTimeline`: Timeline de cambios históricos
+    - `EvaluationStructureView`: Vista actual de la estructura
+    - `EvaluationStructureModal`: Modal de edición
+    - `ComponentCard`: Card de componente individual
+    - `WeightSlider`: Slider de peso con validación
+    - `TemplateSelector`: Selector de plantillas predefinidas
+    - `HistoryTimeline`: Timeline de cambios históricos
 - **Endpoints API:**
-  - `GET /estructura-evaluacion?año={año}` - Estructura actual
-  - `PUT /estructura-evaluacion` - Actualizar estructura
-  - `GET /estructura-evaluacion/history` - Historial de cambios
-  - `GET /estructura-evaluacion/templates` - Plantillas predefinidas
+    - `GET /estructura-evaluacion?año={año}` - Estructura actual
+    - `PUT /estructura-evaluacion` - Actualizar estructura
+    - `GET /estructura-evaluacion/history` - Historial de cambios
+    - `GET /estructura-evaluacion/templates` - Plantillas predefinidas
 
 ---
 
@@ -410,6 +417,7 @@ PROMEDIO FINAL = 16.45
 
   * Mostrar resumen: "XX registros válidos, YY con errores"
   * Botón "Procesar registros válidos"
+  * Boton “Cancelar” en caso decida no continuar con el proceso
   * Opción de descargar archivo TXT con errores detallados
 
 * **CA-06:** Al confirmar procesamiento, ejecutar transacción SQL:
@@ -526,7 +534,7 @@ PROMEDIO FINAL = 16.45
 ### **HU Relacionadas**
 
 * **HU Previas:** Ninguna (primera configuración del sistema)
-* **HU Siguientes:** HU-USERS-07 (Vincular relaciones familiares), HU-USERS-08 (Generar credenciales), HU-AUTH-01 (Usuarios pueden hacer login)
+* **HU Siguientes:** HU-USERS-05 (Vincular relaciones familiares), HU-USERS-06 (Generar credenciales), HU-AUTH-01 (Usuarios pueden hacer login)
 
 ---
 

@@ -160,9 +160,9 @@
   - `QuickAccessGrid`: Grid de accesos rápidos
   - `EmptyStateMessage`: Mensaje cuando no hay datos
 - **Endpoints API:**
-  - `GET /api/students/{id}/summary` (resumen académico)
-  - `GET /api/students/{id}/attendance/recent` (asistencia reciente)
-  - `GET /api/notifications/recent?limit=5` (notificaciones)
+  - `GET /students/{id}/summary` (resumen académico)
+  - `GET /students/{id}/attendance/recent` (asistencia reciente)
+  - `GET /notifications/recent?limit=5` (notificaciones)
 
 ---
 
@@ -241,9 +241,9 @@
   - `PermissionsPanel`: Panel lateral con permisos y herramientas
   - `QuickActionButton`: Botones de acceso rápido
 - **Endpoints API:**
-  - `GET /api/teachers/{id}/assignments` (asignaciones)
-  - `GET /api/teachers/{id}/permissions` (permisos granulares)
-  - `GET /api/conversations/recent?limit=5` (mensajes)
+  - `GET /teachers/{id}/assignments` (asignaciones)
+  - `GET /teachers/{id}/permissions` (permisos granulares)
+  - `GET /conversations/recent?limit=5` (mensajes)
 
 ---
 
@@ -334,9 +334,9 @@
   - `KPICard`: Card individual para cada métrica
   - `AlertItem`: Componente de alerta individual
 - **Endpoints API:**
-  - `GET /api/institutional/kpis` (métricas institucionales)
-  - `GET /api/activity/recent` (actividad del sistema)
-  - `GET /api/alerts/critical` (alertas urgentes)
+  - `GET /institutional/kpis` (métricas institucionales)
+  - `GET /activity/recent` (actividad del sistema)
+  - `GET /alerts/critical` (alertas urgentes)
 
 ---
 
@@ -428,9 +428,9 @@
   - `AdminToolsGrid`: Grid de herramientas administrativas
   - `SystemMetricCard`: Card de métrica técnica
 - **Endpoints API:**
-  - `GET /api/system/status` (estado del sistema)
-  - `GET /api/tickets?status={status}` (tickets por estado)
-  - `GET /api/users/stats` (estadísticas de usuarios)
+  - `GET /system/status` (estado del sistema)
+  - `GET /tickets?status={status}` (tickets por estado)
+  - `GET /users/stats` (estadísticas de usuarios)
 
 ---
 

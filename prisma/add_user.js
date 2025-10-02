@@ -71,7 +71,7 @@ async function main() {
       activo: user.estado_activo,
     },
   ]);
-  console.log('Listo. Puedes probar POST /api/auth/forgot-password con el documento indicado.');
+  console.log('Listo. Puedes probar POST /auth/forgot-password con el documento indicado.');
 }
 
 main()

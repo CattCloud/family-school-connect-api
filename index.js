@@ -10,6 +10,9 @@ const { errorHandler } = require('./middleware/errorHandler');
 const { notFoundHandler } = require('./middleware/notFound');
 const logger = require('./utils/logger');
 const authRoutes = require('./routes/auth');
+const teachersRoutes = require('./routes/teachers');
+const evaluationRoutes = require('./routes/evaluation');
+const adminRoutes = require('./routes/admin');
 let devRoutes = null;
 if (process.env.ENABLE_DEV_ROUTES === 'true' && process.env.NODE_ENV !== 'production') {
   try {
@@ -32,15 +35,16 @@ app.use(express.json());
 
 // Rutas API
 app.use('/', authRoutes);
-
-
+app.use('/', teachersRoutes);
+app.use('/', evaluationRoutes);
+app.use('/', adminRoutes);
 
 if (devRoutes) {
   app.use('/', devRoutes);
 }
 
 // Healthcheck
-app.get('/', (_req, res) => {
+app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 

@@ -5,7 +5,7 @@ const { sendTemplateMessage } = require('../services/whatsappService');
 
 const router = Router();
 
-// GET /api/dev/wa-template?to=+51XXXXXXXXX&template=hello_world
+// GET /dev/wa-template?to=+51XXXXXXXXX&template=hello_world
 // Envía un mensaje de template (debe estar aprobado en tu WABA).
 // Útil para abrir la ventana de 24h y luego poder enviar mensajes de texto.
 router.get('/dev/wa-template', async (req, res) => {

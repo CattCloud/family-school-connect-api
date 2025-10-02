@@ -8,7 +8,22 @@ const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
 const SALT_ROUNDS = 12;
 
-async function upsertUsuario({ tipo_documento, nro_documento, password, rol, nombre, apellido, telefono, debe_cambiar_password = false, estado_activo = true }) {
+function currentYear() {
+  const y = process.env.ACADEMIC_YEAR && parseInt(process.env.ACADEMIC_YEAR, 10);
+  return Number.isFinite(y) ? y : new Date().getFullYear();
+}
+
+async function upsertUsuario({
+  tipo_documento,
+  nro_documento,
+  password,
+  rol,
+  nombre,
+  apellido,
+  telefono,
+  debe_cambiar_password = false,
+  estado_activo = true,
+}) {
   const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
 
   return prisma.usuario.upsert({
@@ -37,6 +52,46 @@ async function upsertUsuario({ tipo_documento, nro_documento, password, rol, nom
       telefono,
       estado_activo,
       debe_cambiar_password,
+    },
+  });
+}
+
+async function ensureNivelGrado({ nivel, grado, descripcion }) {
+  // Prisma upsert requiere selector único; usamos find/create por claridad
+  const found = await prisma.nivelGrado.findFirst({ where: { nivel, grado } });
+  if (found) return found;
+  return prisma.nivelGrado.create({
+    data: { nivel, grado, descripcion, estado_activo: true },
+  });
+}
+
+async function ensureCurso({ nombre, codigo_curso, nivel_grado_id, year }) {
+  const existing = await prisma.curso.findFirst({ where: { codigo_curso } });
+  if (existing) return existing;
+  return prisma.curso.create({
+    data: {
+      nombre,
+      codigo_curso,
+      nivel_grado_id,
+      año_academico: year,
+      estado_activo: true,
+    },
+  });
+}
+
+async function ensureAsignacionDocenteCurso({ docente_id, curso_id, nivel_grado_id, year }) {
+  const existing = await prisma.asignacionDocenteCurso.findFirst({
+    where: { docente_id, curso_id, año_academico: year },
+  });
+  if (existing) return existing;
+  return prisma.asignacionDocenteCurso.create({
+    data: {
+      docente_id,
+      curso_id,
+      nivel_grado_id,
+      año_academico: year,
+      fecha_asignacion: new Date(),
+      estado_activo: true,
     },
   });
 }
@@ -85,6 +140,22 @@ async function main() {
     telefono: '+51123456789',
   });
 
+  // Datos maestros mínimos para pruebas de permisos
+  const year = currentYear();
+  const ng = await ensureNivelGrado({ nivel: 'Primaria', grado: '3', descripcion: '3ro de Primaria' });
+  const curso = await ensureCurso({
+    nombre: 'Matemáticas',
+    codigo_curso: `C-PRI-3-001`,
+    nivel_grado_id: ng.id,
+    year,
+  });
+  await ensureAsignacionDocenteCurso({
+    docente_id: docente.id,
+    curso_id: curso.id,
+    nivel_grado_id: ng.id,
+    year,
+  });
+
   console.log('Usuarios sembrados:');
   console.table([
     { rol: admin.rol, doc: admin.nro_documento },
@@ -93,6 +164,7 @@ async function main() {
     { rol: apoderado.rol, doc: apoderado.nro_documento },
   ]);
 
+  console.log('Catálogos básicos creados: Nivel/Grado y Curso con asignación al docente.');
   console.log('Seed completado.');
 }
 
