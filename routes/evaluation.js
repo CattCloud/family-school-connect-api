@@ -14,6 +14,14 @@ const {
 } = require('../controllers/evaluationController');
 
 const router = Router();
+ 
+// Alias Semana 5: ver estructura actual por año (Docente/Director)
+router.get(
+  '/estructura-evaluacion',
+  auth,
+  authorizeRole(['docente', 'director']),
+  getEvaluationStructure
+);
 
 // Director: ver estructura actual por año
 router.get(

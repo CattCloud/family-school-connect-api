@@ -1,0 +1,31 @@
+{
+  "id": "val_cal_1759464730491",
+  "created_at": "2025-10-03T04:12:10.494Z",
+  "expires_at": "2025-10-04T04:12:10.494Z",
+  "payload": {
+    "context": {
+      "curso_id": "e123a84b-9720-4f3b-b89e-e2784d0a262f",
+      "nivel_grado_id": "85e41a88-3046-45f7-a46e-2d7997c8e8a1",
+      "trimestre": 1,
+      "componente_id": "dc1bf005-715e-4b77-bb45-4095b8abbd3e",
+      "año_academico": 2025,
+      "fecha_evaluacion": "2025-10-03"
+    },
+    "registros_validos": [
+      {
+        "fila": 6,
+        "codigo_estudiante": "PRI3-902",
+        "nombre_completo": "Ana Diaz",
+        "calificacion": 10,
+        "observaciones": null
+      },
+      {
+        "fila": 7,
+        "codigo_estudiante": "PRI3-901",
+        "nombre_completo": "Juan Lopez",
+        "calificacion": 12,
+        "observaciones": null
+      }
+    ]
+  }
+}

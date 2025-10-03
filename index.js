@@ -12,6 +12,10 @@ const logger = require('./utils/logger');
 const authRoutes = require('./routes/auth');
 const teachersRoutes = require('./routes/teachers');
 const evaluationRoutes = require('./routes/evaluation');
+const academicsRoutes = require('./routes/academics');
+const gradesRoutes = require('./routes/grades');
+const attendanceRoutes = require('./routes/attendance');
+const templatesRoutes = require('./routes/templates');
 const adminRoutes = require('./routes/admin');
 let devRoutes = null;
 if (process.env.ENABLE_DEV_ROUTES === 'true' && process.env.NODE_ENV !== 'production') {
@@ -37,6 +41,10 @@ app.use(express.json());
 app.use('/', authRoutes);
 app.use('/', teachersRoutes);
 app.use('/', evaluationRoutes);
+app.use('/', academicsRoutes);
+app.use('/', gradesRoutes);
+app.use('/', attendanceRoutes);
+app.use('/', templatesRoutes);
 app.use('/', adminRoutes);
 
 if (devRoutes) {

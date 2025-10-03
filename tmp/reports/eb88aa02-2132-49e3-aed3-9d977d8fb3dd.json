@@ -1,0 +1,16 @@
+{
+  "report_id": "eb88aa02-2132-49e3-aed3-9d977d8fb3dd",
+  "kind": "calificaciones",
+  "filename": "Errores_Calificaciones_val_cal_1759464698407.txt",
+  "mime": "text/plain; charset=utf-8",
+  "size": 244,
+  "created_at": "2025-10-03T04:11:38.428Z",
+  "expires_at": "2025-10-04T04:11:38.420Z",
+  "extra": {
+    "curso_id": "e123a84b-9720-4f3b-b89e-e2784d0a262f",
+    "nivel_grado_id": "85e41a88-3046-45f7-a46e-2d7997c8e8a1",
+    "trimestre": 1,
+    "componente_id": "dc1bf005-715e-4b77-bb45-4095b8abbd3e",
+    "año_academico": 2025
+  }
+}

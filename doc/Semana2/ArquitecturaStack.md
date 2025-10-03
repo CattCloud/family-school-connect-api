@@ -64,6 +64,7 @@
 | **React Icons** | Iconografía | Lucide, Heroicons para interfaz consistente |
 | **React Dropzone** | Upload de Archivos | Drag & drop para Excel/CSV, validación de tipos |
 | **Notyf (Toast)** | Feedback UI | Notificaciones, alertas, confirmaciones de acciones |
+|Recharts | Graficos| Gráficos simples de validación y resumen|
 
 ### **2.5 Comunicación con Backend**
 

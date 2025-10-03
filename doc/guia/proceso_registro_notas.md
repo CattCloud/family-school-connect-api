@@ -122,27 +122,38 @@ Incluye el cálculo automático del promedio ponderado del trimestre.
 
 Vista simplificada y clara, por curso y trimestre.
 
-Se muestran:
+Puede visualizar las siguiente tablas:
 
-- Tabla por categoría (ej. Participación) → Todas las actividades registradas con fecha y nota.
-    - Notas diarias en tablas por categoría (ej. todas las participaciones con fecha y nota).
-    - Promedio preliminar del ítem (ej. Participación 14.6 ⭐).
-- Promedio preliminar del trimestre.
+- **1. Tablas por tipo de evaluación (trimestre actual):** (ej. Participación,Examen Final)
+    - Filtros de búsqueda curso y demas
+    - Seleccionable de trimestre
+    - Seleccionable tipo de evaluacion
+    - Para  tipo de evaluación **recurrentes** (ej. Participación, Tareas):
+        - Tabla con todas las notas registradas en el trimestre.
+        - Cada columna = una nota individual (con fecha).
+        - Promedio preliminar del componente, (calculo en vivo cada vez que se sube la nota sin esperar a tener todas las notas) (ej. Participación → 14.6 ⭐).
+    - Para componentes **únicos** (ej. Examen Trimestral):
+        - Tabla con única columna de nota y fecha de registro.
+    - Notas preliminares → marcadas con rótulo “(Preliminar)” o color gris/amarillo.
+    - Notas finales → resaltadas en verde/azul tras cierre del trimestre.
+- **2. Resumen de notas del trimestre (por curso):**
     - Se visualiza la formula de calculo de nota(pesos de cada categoria)
-    - Resumen de items del trimestre → Nota promedio por item del trimestre → Aplicacion de la formula para calculo del promedio del trimestre
+    - Listado de promedios por componente (ej. Participación: 14.6, Examen: 15.8)
+    - Aplicacion de la formula para calculo del promedio del trimestre
+    - Promedio preliminar del trimestre
     
-    Diferenciación visual:
+    Curso: Matemáticas - Trimestre 1
+    Participación (20%) → 14.6
+    Tareas (30%) → 15.2
+    Examen Trimestral (50%) → 16.8
+    ➜ Promedio Preliminar Trimestre 1: 15.9
     
-    Notas preliminares → se muestran con un rótulo “(Preliminar)” o color diferente.
-    
-    Notas finales → se confirman al cierre del trimestre y se muestran resaltadas.
-    
-- Tabla de notas finales
+- **3. Tabla de notas finales**
     - Presenta los promedios finales de cada trimestre.
     - Incluye el cálculo automático de la nota final del año (promedio de los 3 trimestres).
     - Estado del curso: Aprobado / Desaprobado.
     
-    Ejemplo de tabla final (para padres y director):
+    Ejemplo de tabla final:
     
     Curso	Trimestre 1	Trimestre 2	Trimestre 3	Nota Final Año	Estado
     
@@ -237,7 +248,7 @@ observaciones
 
 ### ¿Quieres que el director pueda **editar la configuración de ítems en medio del año escolar** o solo al inicio?
 
-Para el MVP, la opción más segura es que el director **defina la estructura al inicio del año académico** y esta se mantenga fija. 
+Para el MVP, la opción más segura es que el director **defina la estructura al inicio del año académico** y esta se mantenga fija.
 
 ### ¿Los ítems serán **iguales en todos los trimestres** o el director debe definir la estructura **por cada trimestre**?
 

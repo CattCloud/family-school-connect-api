@@ -90,26 +90,8 @@ async function validateUsers(tipo, registros = []) {
   if (tipo === 'padres' || tipo === 'docentes') {
     const slice = registros.slice(0, 2);
 
-    // Detectar duplicados dentro del mismo lote (mismo tipo_documento + nro_documento)
+    // Duplicados dentro del mismo lote (mismo tipo_documento + nro_documento)
     const seen = new Set();
-    // Preparar claves para verificación masiva en BD
-    const keys = [];
-    for (const r of slice) {
-      if (!r) continue;
-      const td = r.tipo_documento;
-      const nd = r?.nro_documento != null ? String(r.nro_documento) : undefined;
-      if (td && nd) keys.push({ tipo_documento: td, nro_documento: nd });
-    }
-
-    // Consultar existencia previa en BD (usuarios)
-    let existing = [];
-    if (keys.length > 0) {
-      existing = await prisma.usuario.findMany({
-        where: { OR: keys },
-        select: { tipo_documento: true, nro_documento: true },
-      });
-    }
-    const existingSet = new Set(existing.map((e) => `${e.tipo_documento}|${e.nro_documento}`));
 
     slice.forEach((r, i) => {
       const { tipo_documento, nro_documento, nombre, apellido, telefono } = r || {};
@@ -121,14 +103,6 @@ async function validateUsers(tipo, registros = []) {
 
       // Duplicado dentro del archivo
       if (seen.has(key)) return pushError(i, `Documento duplicado en archivo: ${String(nro_documento)}`, r);
-      // Duplicado contra la BD
-      if (existingSet.has(key)) {
-        return pushError(
-          i,
-          `Documento duplicado. Ya existe un usuario con nro_documento ${String(nro_documento)}`,
-          r
-        );
-      }
 
       seen.add(key);
       validos.push({ tipo_documento, nro_documento: String(nro_documento), nombre, apellido, telefono });
@@ -247,8 +221,23 @@ async function executeImport(tipo, registrosValidos = []) {
       try {
         const password = randomPassword(9);
         const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
-        const user = await prisma.usuario.create({
-          data: {
+        const user = await prisma.usuario.upsert({
+          where: {
+            usuarios_documento_unique: {
+              tipo_documento: r.tipo_documento,
+              nro_documento: r.nro_documento,
+            },
+          },
+          update: {
+            password_hash,
+            rol,
+            nombre: r.nombre,
+            apellido: r.apellido,
+            telefono: r.telefono,
+            estado_activo: true,
+            debe_cambiar_password: true,
+          },
+          create: {
             tipo_documento: r.tipo_documento,
             nro_documento: r.nro_documento,
             password_hash,
@@ -273,6 +262,34 @@ async function executeImport(tipo, registrosValidos = []) {
         const canonicalNivel = normalizeNivel(r.nivel);
         if (!canonicalNivel) throw new Error('Nivel inválido. Valores válidos: Inicial, Primaria, Secundaria');
 
+        const hasCode = !!r.codigo_estudiante;
+
+        if (hasCode) {
+          const ng = await ensureNivelGrado({ nivel: canonicalNivel, grado: String(r.grado) });
+          const codigo = String(r.codigo_estudiante);
+          const est = await prisma.estudiante.upsert({
+            where: { codigo_estudiante: codigo },
+            update: {
+              nombre: r.nombre,
+              apellido: r.apellido,
+              nivel_grado_id: ng.id,
+              año_academico: year,
+              estado_matricula: 'activo',
+            },
+            create: {
+              codigo_estudiante: codigo,
+              nombre: r.nombre,
+              apellido: r.apellido,
+              nivel_grado_id: ng.id,
+              año_academico: year,
+              estado_matricula: 'activo',
+            },
+            select: { id: true, codigo_estudiante: true, nombre: true, apellido: true },
+          });
+          exitosos.push(est);
+          continue;
+        }
+
         // Verificación defensiva en BD: unicidad por nombre + apellido en el año académico actual (case-insensitive)
         const dup = await prisma.estudiante.findFirst({
           where: {
@@ -293,7 +310,7 @@ async function executeImport(tipo, registrosValidos = []) {
         }
 
         const ng = await ensureNivelGrado({ nivel: canonicalNivel, grado: String(r.grado) });
-        const codigo = r.codigo_estudiante || (await autoCodigoEstudiante(canonicalNivel, String(r.grado)));
+        const codigo = await autoCodigoEstudiante(canonicalNivel, String(r.grado));
         const est = await prisma.estudiante.create({
           data: {
             codigo_estudiante: codigo,
