@@ -75,6 +75,17 @@ const attendanceLoadLimiter = rateLimit({
   message: msg('RATE_LIMIT_EXCEEDED', 'Demasiadas cargas de asistencias en 10 minutos'),
 });
 
+// Lectura de calificaciones/asistencias para padres (visualización)
+// 60 requests por minuto por usuario/IP
+const parentsReadLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 min
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: userOrIpKey,
+  message: msg('RATE_LIMIT_EXCEEDED', 'Límite de consultas alcanzado. Intente en 1 minuto'),
+});
+
 module.exports = {
   adminWhatsAppLimiter,
   templatesLimiter,
@@ -82,4 +93,5 @@ module.exports = {
   gradesLoadLimiter,
   attendanceValidateLimiter,
   attendanceLoadLimiter,
+  parentsReadLimiter,
 };

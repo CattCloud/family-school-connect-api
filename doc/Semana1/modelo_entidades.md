@@ -254,6 +254,9 @@ Sirve como punto intermedio entre **estudiantes** y **asignaciones\_docente\_cur
 - **fecha_inicio** - Cuándo se creó la conversación (timestamp, auto-generado)
 - **fecha_ultimo_mensaje** - Última actividad (timestamp, actualizado automáticamente)
 - **año_academico** - Año lectivo (integer, requerido)
+- **tipo_conversacion** - Define el contexto: "padre_docente", "docente_director", "padre_director", "soporte" (enum, default: "padre_docente")
+- **creado_por** - Usuario que inició la conversación (FK a usuarios)
+
 
 **Justificación técnica:**
 - **Agrupación por estudiante:** Mantiene contexto académico de cada conversación
@@ -273,6 +276,8 @@ Sirve como punto intermedio entre **estudiantes** y **asignaciones\_docente\_cur
 - **fecha_envio** - Cuándo se envió (timestamp, auto-generado)
 - **estado_lectura** - Si fue leído: "enviado", "entregado", "leido" (enum, default: "enviado")
 - **fecha_lectura** - Cuándo se marcó como leído (timestamp, nullable)
+- **tiene_adjuntos** - Boolean para rendimiento (true si existen archivos asociados)
+
 
 **Justificación técnica:**
 - **Estructura simple:** Cada mensaje es independiente dentro de su conversación

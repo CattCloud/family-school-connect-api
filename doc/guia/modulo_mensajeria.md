@@ -72,9 +72,152 @@ Se ha decidido implementar solo el manejo de archivos adjuntos en los módulos d
 
 ---
 
-### **Reglas de Negocio del Módulo**
+Excelente pregunta, Erick 😎 — y muy oportuna, porque aclara el **paradigma del módulo de mensajería** dentro de tu plataforma.
 
-- RN-MSG-01: Solo padres y docentes pueden iniciar conversaciones; director puede iniciar con cualquiera.
-- RN-MSG-02: Los padres solo pueden hablar con los docentes que enseñan cursos a su hijo y el director
-- RN-MSG-03: Máximo 3 archivos adjuntos por mensaje, con validación de tipo y tamaño.
-- RN-MSG-04: Los directores/administradores tienen acceso a todo el historial, en modo solo lectura.
+Vamos a verlo con claridad: tu módulo **NO es como Gmail**, pero **sí toma inspiración en ese estilo de comunicación**, adaptado al contexto educativo.
+Te explico exactamente **cómo es el módulo de mensajes según toda tu documentación hasta ahora.**
+
+---
+
+## 💬 **Concepto del Módulo de Mensajería**
+
+> Es un sistema de mensajería **1 a 1 (privado)** entre **padres y docentes**, centrado en la comunicación sobre un **estudiante específico**, con adjuntos y notificaciones integradas.
+
+---
+
+## 🧠 **Visión General**
+
+Imagina una mezcla entre:
+
+* **WhatsApp (por su simpleza y flujo conversacional)**
+* y **Gmail (por su estructura de conversaciones con asunto y agrupación temática)**
+
+Tu módulo combina lo mejor de ambos:
+✅ **Conversaciones temáticas** (como Gmail)
+✅ **Mensajes tipo chat con adjuntos** (como WhatsApp)
+
+---
+
+## 🧩 **Estructura funcional (según tus HU y entidades)**
+
+### 1. **Conversaciones**
+
+Cada conversación es como un “hilo” o **chat temático**, y contiene:
+
+* Un **asunto** (“Consulta sobre tareas de matemáticas”)
+* Un **padre y un docente** (roles definidos)
+* Opcionalmente, un **estudiante vinculado** (para contextualizar)
+* Estado de conversación: *activa* o *cerrada*
+* Tipo de conversación: `"padre_docente"`, `"padre_director"`, `"soporte"`, etc.
+
+> 🔹 Ejemplo visual:
+>
+> ```
+> [Conversación: Consulta sobre tareas de Matemáticas]
+> Padre: "Buenos días, profe, ¿podría aclararme la tarea?"
+> Docente: "Claro, se trata del ejercicio 5 del libro. Adjunto imagen 📎"
+> Padre: "Perfecto, gracias 🙏"
+> ```
+
+---
+
+### 2. **Mensajes**
+
+Dentro de cada conversación hay varios mensajes (como burbujas de chat).
+
+Cada mensaje tiene:
+
+* Texto (`contenido`)
+* Emisor (`emisor_id`)
+* Fecha (`fecha_envio`)
+* Estado de lectura (`enviado`, `entregado`, `leído`)
+* Hasta **3 archivos adjuntos** (PDF, JPG, PNG)
+
+> 🔹 Flujo típico:
+>
+> * Padre envía un mensaje → Estado: “enviado”
+> * Docente abre la conversación → Estado: “leído”
+> * Plataforma actualiza `fecha_lectura`
+
+---
+
+### 3. **Archivos Adjuntos**
+
+Cada mensaje puede tener archivos (subidos a **Cloudinary**):
+
+* Ej: tareas escaneadas, boletas, fotos de actividades.
+* Límite: **3 archivos**, máx. **5MB cada uno**
+* Tipos permitidos: PDF, JPG, PNG
+* Guardados en la entidad `archivos_adjuntos`
+
+---
+
+### 4. **Notificaciones**
+
+El sistema notifica automáticamente:
+
+* 🔔 En la **plataforma** (badge rojo en el icono de mensajes)
+* 💬 En **WhatsApp** (opcional, vía integración)
+
+> Ejemplo:
+> “📩 Nuevo mensaje de Prof. Juan Pérez sobre Matemáticas — Trimestre 2”
+
+Estas notificaciones se gestionan desde la tabla `notificaciones`, vinculadas al `mensaje_id` o `conversacion_id`.
+
+---
+
+### 5. **Interfaz esperada (según HU y estructura UI/UX)**
+
+El flujo de uso es así:
+
+| Rol                              | Vista                                        | Descripción                                                      |
+| -------------------------------- | -------------------------------------------- | ---------------------------------------------------------------- |
+| 👨‍👩‍👧 **Padre**               | Panel “Mensajes” con lista de conversaciones | Puede ver cada docente con quien ha hablado y abrir el historial |
+| 🧑‍🏫 **Docente**                | Panel “Mensajes” agrupado por estudiante     | Puede responder, adjuntar archivos, marcar mensajes leídos       |
+| 👨‍💼 **Director**               | Vista de supervisión (solo lectura)          | Puede revisar las conversaciones, sin intervenir                 |
+| 🧑‍💻 **Backend/Notificaciones** | Dispara alertas                              | Cuando hay nuevo mensaje o respuesta                             |
+
+> 🔹 **Diseño visual:**
+>
+> * Sidebar izquierdo → lista de conversaciones
+> * Panel derecho → mensajes tipo chat
+> * Campo inferior → caja de texto + botón “Enviar” + ícono de clip 📎
+> * Estado de lectura → doble check ✓✓ o color del badge
+
+---
+
+## ⚙️ **Arquitectura técnica**
+
+**Tablas involucradas:**
+
+* `conversaciones` → agrupa los hilos
+* `mensajes` → almacena cada mensaje
+* `archivos_adjuntos` → maneja los archivos
+* `notificaciones` → integra alertas internas y externas
+
+**Flujo simplificado:**
+
+1. Padre envía mensaje → se guarda en `mensajes`
+2. Si es primer mensaje → se crea `conversacion`
+3. Backend dispara `notificacion`
+4. Docente responde → mismo `conversacion_id`
+5. Estado del mensaje cambia a “leído” cuando el receptor abre la vista
+
+---
+
+## 🧭 **En resumen**
+
+| Elemento       | Inspiración                       | Implementación         |
+| -------------- | --------------------------------- | ---------------------- |
+| Conversaciones | Gmail (por “asunto” y agrupación) | `conversaciones`       |
+| Mensajes       | WhatsApp (por chat y estados)     | `mensajes`             |
+| Adjuntos       | Gmail/WhatsApp                    | `archivos_adjuntos`    |
+| Notificaciones | Sistema central                   | `notificaciones`       |
+| Estructura MVP | Simplicidad + contexto académico  | Perfectamente definida |
+
+---
+
+👉 En conclusión:
+Tu **módulo de mensajería** es un **híbrido optimizado** entre un **chat educativo contextualizado** y un **correo simplificado con adjuntos y estados**.
+Perfecto para comunicación clara y rastreable entre padres y docentes.
+

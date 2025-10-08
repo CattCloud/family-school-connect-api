@@ -193,11 +193,137 @@ GET    /plantillas/guias/{tipo}/pdf            # Descargar guía en PDF
 * HU-ACAD-06 (Ver calificaciones)
 * HU-ACAD-07 (Consultar asistencia)
 * HU-ACAD-10 (Promedios trimestral y anual)
-* HU-ACAD-12 (Boletas PDF)
+
 
 **Fase 2 (mejora de usabilidad y profundidad):**
 
 * HU-ACAD-08 (Filtros avanzados de búsqueda)
 * HU-ACAD-09 (Historial multi-año)
 * HU-ACAD-11 (Vista numérica/letras)
+* HU-ACAD-12 (Boletas PDF)
 
+**A FUTURO VISUALIZACIÓN PARA DOCENTE/DIRECTOR**
+- HU-ACAD-13 — Visualizar promedio de estudiantes por componente y trimestre (Docente)
+(HU-41 del SRS)
+
+Vista consolidada del rendimiento del grupo
+Estadísticas por componente de evaluación
+
+- HU-ACAD-14 — Ver reportes consolidados de rendimiento (Director)
+(HU-72 del SRS)
+
+Reportes por curso, grado y nivel
+Métricas institucionales de desempeño
+
+- HU-ACAD-15 — Generar alertas automáticas de asistencia
+(HU-04 del SRS)
+
+Tardanza individual (inmediata)
+Falta injustificada (solicitud de justificación)
+3+ faltas injustificadas consecutivas (alerta crítica)
+Confirmación diaria de asistencia presente
+
+- HU-ACAD-16 — Generar alertas automáticas por bajo rendimiento
+(HU-05 del SRS)
+
+Calificación < 11 en cualquier componente
+Notificación vía WhatsApp + plataforma
+Detalle específico (curso, componente, fecha)
+---
+
+## **HU DEL MÓDULO DE MENSAJERÍA (Semana 9)**
+
+### **🔹 MENSAJERÍA BIDIRECCIONAL (Padre ↔ Docente)**
+
+**MVP - PRIORIZADAS:**
+
+**HU-MSG-01** — Enviar mensajes con archivos adjuntos *(Padre)*  
+**HU-21 del SRS**
+- Enviar mensajes a docentes del hijo
+- Adjuntar hasta 3 archivos (PDF, JPG, PNG)
+- Máximo 5MB por archivo
+- Almacenamiento en Cloudinary
+- Selección del estudiante relacionado (conversación contextualizada)
+
+**HU-MSG-02** — Ver historial de conversaciones *(Padre)*  
+**HU-22 del SRS**
+- Lista de conversaciones organizadas por estudiante
+- Ver historial completo de mensajes
+- Estados de mensaje: enviado, entregado, leído
+- Búsqueda por contenido, fecha, docente
+
+**HU-MSG-04** — Enviar mensajes con archivos adjuntos *(Docente)*  
+**HU-50 del SRS**
+- Responder consultas de padres
+- Adjuntar hasta 3 archivos
+- Conversaciones organizadas por estudiante
+
+**HU-MSG-05** — Ver historial de conversaciones organizadas por estudiante *(Docente)*  
+**HU-51 del SRS**
+- Vista agrupada por estudiante
+- Historial completo con timestamps
+- Búsqueda por apoderado, contenido, fecha
+
+
+**HU-MSG-03** — Recibir notificaciones de nuevos mensajes *(Padre)*  
+**HU-23 del SRS**
+- Notificación inmediata (WhatsApp + plataforma)
+- Badge de mensajes no leídos
+- Contador de conversaciones pendientes
+
+
+**HU-MSG-06** — Recibir notificaciones de mensajes de padres *(Docente)*  
+**HU-52 del SRS**
+- Notificación WhatsApp + plataforma
+- Contador de mensajes pendientes
+- Badge por conversación
+
+
+### **🔸 FUNCIONALIDADES FUTURAS (Post-MVP)**
+
+**HU-MSG-07** — Supervisar todas las conversaciones del sistema *(Director)*  
+**HU-78 del SRS**
+- Acceso completo de solo lectura
+- Vista organizada por participantes y estudiantes
+- Sin capacidad de edición o eliminación
+- Panel de reportes de comunicación
+
+**HU-MSG-08** — Buscar mensajes por contenido, fecha o participantes *(Todos)*  
+**HU-24 y HU-53 del SRS**
+- Filtros avanzados
+- Búsqueda en tiempo real
+- Resultados resaltados
+
+**HU-MSG-09** — Editar mensajes enviados *(Futuro)*
+- Editar dentro de 5 minutos del envío
+- Indicador "editado" con timestamp
+- Historial de versiones
+
+**HU-MSG-10** — Eliminar mensajes enviados *(Futuro)*
+- Eliminar dentro de 5 minutos
+- Aparece como "Mensaje eliminado"
+- No se puede recuperar
+
+**HU-MSG-11** — Reaccionar a mensajes con emojis *(Futuro)*
+- Reacciones rápidas (👍 ❤️ 👏)
+- Contador de reacciones
+- Lista de quién reaccionó
+
+**HU-MSG-12** — Mensajes de voz *(Futuro)*
+- Grabar audio (máx 2 minutos)
+- Reproducir dentro de la plataforma
+- Almacenamiento en Cloudinary
+
+**HU-MSG-13** — Ver reportes de comunicación *(Director - Futuro)*  
+**HU-79 del SRS**
+- Frecuencia de comunicación
+- Temas más consultados
+- Tiempos de respuesta promedio
+- Gráficos y métricas
+
+**HU-MSG-14** — Archivar conversaciones *(Futuro)*
+- Mover a archivo para limpiar bandeja
+- Búsqueda en archivados
+- Restaurar si es necesario
+
+**HU-MSG-15** — Marcar conversaciones como importantes/urg

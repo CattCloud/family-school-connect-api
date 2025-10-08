@@ -1,0 +1,14 @@
+{
+  "id": "val_asist_1759511469864",
+  "created_at": "2025-10-03T17:11:09.866Z",
+  "expires_at": "2025-10-04T17:11:09.866Z",
+  "payload": {
+    "context": {
+      "curso_id": "e123a84b-9720-4f3b-b89e-e2784d0a262f",
+      "nivel_grado_id": "85e41a88-3046-45f7-a46e-2d7997c8e8a1",
+      "fecha": "2025-10-03",
+      "año_academico": 2025
+    },
+    "registros_validos": []
+  }
+}

@@ -8,15 +8,16 @@ function normalizeError(err) {
   const code = err.code || 'INTERNAL_SERVER_ERROR';
   const message = err.message || 'Error interno del servidor';
 
-  // Manejo de errores de validación (Zod)
+  // Manejo de errores de validación (Zod) - respetar code mapeado por controladores
   if (err.name === 'ZodError') {
+    const code = err.code || 'INVALID_PARAMETERS';
     return {
       status: 400,
       body: {
         success: false,
         error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Datos inválidos',
+          code,
+          message: code === 'INVALID_PARAMETERS' ? 'Parámetros inválidos' : 'Datos inválidos',
           details: err.issues?.map((i) => ({
             path: i.path?.join('.') || '',
             message: i.message,

@@ -212,6 +212,11 @@ async function validateAttendanceFile({ curso_id, nivel_grado_id, fecha, año_ac
     archivo_errores_url = `/asistencias/reporte-errores/${report.report_id}`;
   }
 
+  // Desglose por estado basado en registros válidos
+  const desglose_por_estado = { presente: 0, tardanza: 0, permiso: 0, falta_justificada: 0, falta_injustificada: 0 };
+  for (const r of parsed.registros_validos || []) {
+    if (desglose_por_estado[r.estado] != null) desglose_por_estado[r.estado]++;
+  }
   return {
     validacion_id,
     contexto: {
@@ -219,6 +224,7 @@ async function validateAttendanceFile({ curso_id, nivel_grado_id, fecha, año_ac
       fecha,
     },
     resumen: parsed.resumen,
+    desglose_por_estado,
     registros_validos: parsed.registros_validos,
     registros_con_errores: parsed.registros_con_errores,
     advertencias,

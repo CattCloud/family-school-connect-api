@@ -1,0 +1,9 @@
+REPORTE DE ERRORES - CARGA DE CALIFICACIONES
+===========================================
+Fecha: 2025-10-03T23:13:33.977Z
+Curso: Matemáticas - 3 Primaria
+
+Fila 6: Código PRI3-902 - Ana Diaz
+  ❌ calificacion: Calificación es obligatoria (valor: )
+Fila 7: Código PRI3-901 - Juan Lopez
+  ❌ calificacion: Calificación es obligatoria (valor: )

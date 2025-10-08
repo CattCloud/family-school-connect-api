@@ -1,0 +1,9 @@
+REPORTE DE ERRORES - CARGA DE ASISTENCIAS
+=========================================
+Fecha: 2025-10-03T17:01:14.161Z
+Curso: Matemáticas - 3 Primaria
+
+Fila 6: Código PRI3-902 - Ana Diaz
+  ❌ hora_llegada: Hora de llegada es obligatoria para tardanzas (HH:MM) (valor: )
+Fila 7: Código PRI3-901 - Juan Lopez
+  ❌ hora_llegada: Hora de llegada es obligatoria para tardanzas (HH:MM) (valor: )
