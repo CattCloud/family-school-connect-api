@@ -20,6 +20,9 @@ const gradesViewRoutes = require('./routes/gradesView');
 const academicSummaryRoutes = require('./routes/academicSummary');
 const attendanceViewRoutes = require('./routes/attendanceView');
 const calendarRoutes = require('./routes/calendar');
+const messagingRoutes = require('./routes/messaging');
+const usersRoutes = require('./routes/users');
+const coursesRoutes = require('./routes/courses');
 const adminRoutes = require('./routes/admin');
 let devRoutes = null;
 if (process.env.ENABLE_DEV_ROUTES === 'true' && process.env.NODE_ENV !== 'production') {
@@ -53,6 +56,9 @@ app.use('/', attendanceViewRoutes);
 app.use('/', calendarRoutes);
 app.use('/', attendanceRoutes);
 app.use('/', templatesRoutes);
+app.use('/', usersRoutes);
+app.use('/', coursesRoutes);
+app.use('/', messagingRoutes);
 app.use('/', adminRoutes);
 
 if (devRoutes) {

@@ -117,7 +117,3 @@ De esta manera, los padres, docentes o estudiantes reciben la información **en 
 - Experiencia de usuario optimizada tanto en escritorio como en móvil.
 
 ---
-
-👉 Erick, esto ya es **documentación completa del módulo**, como para poner en tu documento de requerimientos o SRS.
-
-¿Quieres que lo prepare también en **formato de tabla tipo especificaciones funcionales** (con ID de requisito, descripción, prioridad, etc.) para que encaje aún más técnico?

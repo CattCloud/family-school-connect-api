@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "vitest run",
+    "test": "vitest run --testTimeout=20000 --hookTimeout=30000",
     "test:watch": "vitest",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",

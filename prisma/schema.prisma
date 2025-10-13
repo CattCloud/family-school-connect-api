@@ -56,6 +56,13 @@ model Usuario {
   evaluacionesRegistradas Evaluacion[]
   asistenciasRegistradas  Asistencia[]
 
+  // Mensajería: back-relations
+  conversacionesComoPadre   Conversacion[]   @relation("ConversacionPadre")
+  conversacionesComoDocente Conversacion[]   @relation("ConversacionDocente")
+  conversacionesCreadas     Conversacion[]   @relation("ConversacionCreador")
+  mensajesEmitidos          Mensaje[]        @relation("MensajeEmisor")
+  adjuntosSubidos           ArchivoAdjunto[] @relation("ArchivoAdjuntoSubidor")
+
   @@unique([tipo_documento, nro_documento], name: "usuarios_documento_unique")
   @@map("usuarios")
 }
@@ -162,8 +169,9 @@ model Curso {
   año_academico Int
   estado_activo  Boolean    @default(true)
 
-  asignaciones AsignacionDocenteCurso[]
-  evaluaciones Evaluacion[]
+  asignaciones   AsignacionDocenteCurso[]
+  evaluaciones   Evaluacion[]
+  conversaciones Conversacion[]
 
   @@map("cursos")
 }
@@ -234,6 +242,7 @@ model Estudiante {
   relacionesFamiliares RelacionesFamiliares[]
   evaluaciones         Evaluacion[]
   asistencias          Asistencia[]
+  conversaciones       Conversacion[]
 
   @@index([nivel_grado_id, año_academico])
   @@map("estudiantes")
@@ -325,4 +334,116 @@ model Asistencia {
   @@index([estado, fecha], name: "idx_asistencias_estado_fecha")
   @@index([fecha, año_academico], name: "idx_asistencias_fecha_anio")
   @@map("asistencias")
+}
+
+// ------------------------------------------------------------
+// MENSAJERÍA (HU-MSG-00/01/03) - Conversaciones, Mensajes, Adjuntos
+// ------------------------------------------------------------
+
+enum ConversacionEstado {
+  activa
+  cerrada
+}
+
+enum TipoConversacion {
+  padre_docente
+  docente_director
+  padre_director
+  soporte
+}
+
+enum MensajeLecturaEstado {
+  enviado
+  entregado
+  leido
+}
+
+model Conversacion {
+  id String @id @default(uuid()) @db.Uuid
+
+  // Contexto académico (opcionales)
+  estudiante_id String?     @db.Uuid
+  estudiante    Estudiante? @relation(fields: [estudiante_id], references: [id])
+
+  curso_id String? @db.Uuid
+  curso    Curso?  @relation(fields: [curso_id], references: [id])
+
+  // Participantes (padre/docente) - opcionales según tipo_conversacion
+  padre_id String?  @db.Uuid
+  padre    Usuario? @relation("ConversacionPadre", fields: [padre_id], references: [id])
+
+  docente_id String?  @db.Uuid
+  docente    Usuario? @relation("ConversacionDocente", fields: [docente_id], references: [id])
+
+  // Metadatos de conversación
+  asunto               String
+  estado               ConversacionEstado @default(activa)
+  fecha_inicio         DateTime           @default(now())
+  fecha_ultimo_mensaje DateTime           @default(now())
+  año_academico       Int
+  tipo_conversacion    TipoConversacion   @default(padre_docente)
+
+  // Auditoría de creación
+  creado_por String  @db.Uuid
+  creador    Usuario @relation("ConversacionCreador", fields: [creado_por], references: [id])
+
+  // Relación con mensajes
+  mensajes Mensaje[]
+
+  // Índices para bandeja (orden por último mensaje y filtros por participante/estado)
+  @@index([padre_id, estado, fecha_ultimo_mensaje], name: "idx_conv_padre_estado_fecha")
+  @@index([docente_id, estado, fecha_ultimo_mensaje], name: "idx_conv_docente_estado_fecha")
+  @@index([estudiante_id, estado, fecha_ultimo_mensaje], name: "idx_conv_estudiante_estado_fecha")
+  @@index([estado, fecha_ultimo_mensaje], name: "idx_conv_estado_fecha")
+  @@map("conversaciones")
+}
+
+model Mensaje {
+  id String @id @default(uuid()) @db.Uuid
+
+  conversacion_id String       @db.Uuid
+  conversacion    Conversacion @relation(fields: [conversacion_id], references: [id])
+
+  emisor_id String  @db.Uuid
+  emisor    Usuario @relation("MensajeEmisor", fields: [emisor_id], references: [id])
+
+  contenido   String
+  fecha_envio DateTime @default(now())
+
+  // Estados de lectura estilo WhatsApp
+  estado_lectura MensajeLecturaEstado @default(enviado)
+  fecha_lectura  DateTime?
+
+  tiene_adjuntos Boolean @default(false)
+
+  // Relación con adjuntos
+  archivos ArchivoAdjunto[]
+
+  // Índices para paginación, no leídos, polling
+  @@index([conversacion_id, fecha_envio], name: "idx_mensajes_conv_fecha")
+  @@index([conversacion_id, estado_lectura], name: "idx_mensajes_conv_estado")
+  @@index([conversacion_id, emisor_id, estado_lectura], name: "idx_mensajes_conv_emisor_estado")
+  @@map("mensajes")
+}
+
+model ArchivoAdjunto {
+  id String @id @default(uuid()) @db.Uuid
+
+  mensaje_id String  @db.Uuid
+  mensaje    Mensaje @relation(fields: [mensaje_id], references: [id])
+
+  nombre_original String
+  nombre_archivo  String
+  url_cloudinary  String
+  // Se valida MIME real en la aplicación (permitidos: application/pdf, image/jpeg, image/png)
+  tipo_mime       String
+  tamaño_bytes   Int
+  es_imagen       Boolean @default(false)
+
+  fecha_subida DateTime @default(now())
+  subido_por   String   @db.Uuid
+  subidor      Usuario  @relation("ArchivoAdjuntoSubidor", fields: [subido_por], references: [id])
+
+  @@index([mensaje_id], name: "idx_adjuntos_mensaje")
+  @@map("archivos_adjuntos")
 }

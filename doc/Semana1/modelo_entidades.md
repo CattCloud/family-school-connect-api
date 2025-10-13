@@ -210,7 +210,7 @@ Sirve como punto intermedio entre **estudiantes** y **asignaciones\_docente\_cur
 - **niveles_objetivo** - Niveles específicos (JSON array, nullable para "todos")
 - **fecha_publicacion** - Cuándo se publicó (timestamp, auto-generado)
 - **fecha_programada** - Fecha programada de publicación (timestamp, nullable)
-- **estado** - Estado actual: "borrador", "publicado", "archivado" (enum, default: "borrador")
+- **estado** - Estado actual: "borrador", "publicado", "archivado","programado" (enum, default: "borrador")
 - **editado** - Si fue modificado después de publicación (boolean, default: false)
 - **fecha_edicion** - Última modificación (timestamp, nullable)
 - **autor_id** - Usuario que creó el comunicado (FK a usuarios)

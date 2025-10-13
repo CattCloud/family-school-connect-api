@@ -8,6 +8,8 @@ const {
   getTeachersPermissions,
   patchTeacherPermission,
   getTeacherPermissionHistory,
+  // HU-MSG-01
+  getTeachersByCourseController,
 } = require('../controllers/teachersController');
 
 const router = Router();
@@ -34,6 +36,15 @@ router.get(
   auth,
   authorizeRole(['director']),
   getTeacherPermissionHistory
+);
+
+// HU-MSG-01 — Docentes por curso (selección de destinatario)
+// GET /docentes/curso/:curso_id
+router.get(
+  '/docentes/curso/:curso_id',
+  auth,
+  authorizeRole(['apoderado']),
+  getTeachersByCourseController
 );
 
 module.exports = router;

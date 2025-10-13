@@ -1,6 +1,7 @@
 'use strict';
 
 const multer = require('multer');
+const { ALLOWED_MIME, MAX_BYTES } = require('../services/cloudinaryService');
 
 // MIME types aceptados para Excel
 const EXCEL_MIMES = new Set([
@@ -36,14 +37,47 @@ function createUploadExcel(fieldName = 'archivo', maxMB = 10) {
   return uploader.single(fieldName);
 }
 
+/**
+ * Filtro de archivos adjuntos para mensajería (PDF, JPG, PNG)
+ */
+function attachmentsFileFilter(_req, file, cb) {
+  if (ALLOWED_MIME.has(file.mimetype)) {
+    return cb(null, true);
+  }
+  const err = new Error('Solo se permiten archivos PDF, JPG y PNG');
+  err.code = 'FILE_TYPE_NOT_ALLOWED';
+  err.status = 400;
+  return cb(err);
+}
+
+/**
+ * Crea un middleware Multer para subir adjuntos de mensajería (hasta maxFiles).
+ * - fieldName: nombre del campo form-data (por doc: "archivos")
+ * - maxFiles: cantidad máxima de archivos (default 3)
+ * - maxBytes: tamaño máximo por archivo (default 5MB)
+ */
+function createUploadAttachments(fieldName = 'archivos', maxFiles = 3, maxBytes = MAX_BYTES) {
+  const limits = {
+    fileSize: maxBytes,
+    files: maxFiles,
+  };
+  const uploader = multer({ storage, fileFilter: attachmentsFileFilter, limits });
+  return uploader.array(fieldName, maxFiles);
+}
+
 // Exports específicos por HU:
 // - Calificaciones: 10MB
 // - Asistencias: 5MB
 const uploadGradesExcel = createUploadExcel('archivo', 10);
 const uploadAttendanceExcel = createUploadExcel('archivo', 5);
 
+// Mensajería: adjuntos (hasta 3 archivos, 5MB c/u)
+const uploadMessagingAttachments = createUploadAttachments('archivos', 3, MAX_BYTES);
+
 module.exports = {
   createUploadExcel,
   uploadGradesExcel,
   uploadAttendanceExcel,
+  createUploadAttachments,
+  uploadMessagingAttachments,
 };

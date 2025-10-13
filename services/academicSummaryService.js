@@ -312,56 +312,60 @@ async function getAcademicSummaryAnual({ estudiante_id, año }) {
     throw httpError('NO_GRADES_FOUND', `No hay calificaciones registradas para el año ${año}`, 404);
   }
 
-  const tabla = [];
-  for (const cid of cursosIds) {
-    const curso = await getCursoInfo(cid);
-    const t1 = await computeCourseTrimAverage({
-      estudiante_id,
-      curso_id: cid,
-      año,
-      trimestre: 1,
-      componentes,
-    });
-    const t2 = await computeCourseTrimAverage({
-      estudiante_id,
-      curso_id: cid,
-      año,
-      trimestre: 2,
-      componentes,
-    });
-    const t3 = await computeCourseTrimAverage({
-      estudiante_id,
-      curso_id: cid,
-      año,
-      trimestre: 3,
-      componentes,
-    });
+  // Construcción paralela para evitar timeouts en test: se computan T1/T2/T3 en paralelo por curso
+  const tabla = await Promise.all(
+    cursosIds.map(async (cid) => {
+      const curso = await getCursoInfo(cid);
+      const [t1, t2, t3] = await Promise.all([
+        computeCourseTrimAverage({
+          estudiante_id,
+          curso_id: cid,
+          año,
+          trimestre: 1,
+          componentes,
+        }),
+        computeCourseTrimAverage({
+          estudiante_id,
+          curso_id: cid,
+          año,
+          trimestre: 2,
+          componentes,
+        }),
+        computeCourseTrimAverage({
+          estudiante_id,
+          curso_id: cid,
+          año,
+          trimestre: 3,
+          componentes,
+        }),
+      ]);
 
-    let promedio_final = null;
-    // Por especificación: (T1 + T2 + T3) / 3
-    if ([t1, t2, t3].every((v) => typeof v === 'number')) {
-      promedio_final = round2((t1 + t2 + t3) / 3);
-    } else {
-      // Si no están los 3 trimestres, dejamos promedio_final null
-      promedio_final = null;
-    }
+      let promedio_final = null;
+      // Por especificación: (T1 + T2 + T3) / 3
+      if ([t1, t2, t3].every((v) => typeof v === 'number')) {
+        promedio_final = round2((t1 + t2 + t3) / 3);
+      } else {
+        // Si no están los 3 trimestres, dejamos promedio_final null
+        promedio_final = null;
+      }
 
-    const promedio_letra = promedio_final != null ? toLetter(promedio_final) : null;
-    const estado =
-      promedio_final != null ? (promedio_final >= 11 ? 'aprobado' : 'desaprobado') : 'pendiente';
+      const promedio_letra = promedio_final != null ? toLetter(promedio_final) : null;
+      const estado =
+        promedio_final != null ? (promedio_final >= 11 ? 'aprobado' : 'desaprobado') : 'pendiente';
 
-    tabla.push({
-      curso_id: cid,
-      curso_nombre: curso?.nombre || 'Curso',
-      trimestre_1: t1 != null ? t1 : null,
-      trimestre_2: t2 != null ? t2 : null,
-      trimestre_3: t3 != null ? t3 : null,
-      promedio_final,
-      promedio_letra,
-      estado,
-      estado_badge: estado === 'aprobado' ? '✅' : estado === 'desaprobado' ? '❌' : '⏳',
-    });
-  }
+      return {
+        curso_id: cid,
+        curso_nombre: curso?.nombre || 'Curso',
+        trimestre_1: t1 != null ? t1 : null,
+        trimestre_2: t2 != null ? t2 : null,
+        trimestre_3: t3 != null ? t3 : null,
+        promedio_final,
+        promedio_letra,
+        estado,
+        estado_badge: estado === 'aprobado' ? '✅' : estado === 'desaprobado' ? '❌' : '⏳',
+      };
+    })
+  );
 
   // Estadísticas generales
   const withFinal = tabla.filter((r) => typeof r.promedio_final === 'number');

@@ -10,6 +10,7 @@ const {
   getPermissionHistory,
   getTeacherWithPermissions,
 } = require('../services/permissionsService');
+const { getActiveTeachersForCourse } = require('../services/teachersService');
 
 const PaginationQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -28,6 +29,20 @@ const PatchPermissionSchema = z.object({
   ),
   // Acepta "true"/"false" (string) y los convierte a boolean
   estado_activo: z.coerce.boolean(),
+});
+
+// HU-MSG-01: Schemas para listar docentes por curso
+const TeachersByCourseParamsSchema = z.object({
+  curso_id: z.string().trim().min(1, 'curso_id requerido'),
+});
+
+const TeachersByCourseQuerySchema = z.object({
+  año: z
+    .preprocess(
+      (v) => (v != null && String(v).trim() !== '' ? Number(v) : undefined),
+      z.number().int()
+    )
+    .optional(),
 });
 
 // GET /teachers/permissions
@@ -72,7 +87,6 @@ async function patchTeacherPermission(req, res, next) {
     const year = getCurrentAcademicYear();
 
     const docente = await ensureTeacherExists(docente_id);
-
 
     const permiso = await upsertPermission({
       docenteId: docente_id,
@@ -119,8 +133,32 @@ async function getTeacherPermissionHistory(req, res, next) {
   }
 }
 
+// HU-MSG-01 — GET /docentes/curso/:curso_id
+async function getTeachersByCourseController(req, res, next) {
+  try {
+    const user = req.user;
+    if (!user) {
+      const e = new Error('Usuario no autenticado');
+      e.status = 401;
+      e.code = 'INVALID_TOKEN';
+      throw e;
+    }
+    const { curso_id } = TeachersByCourseParamsSchema.parse(req.params || {});
+    const { año } = TeachersByCourseQuerySchema.parse(req.query || {});
+    const data = await getActiveTeachersForCourse({ user, curso_id, año });
+    return res.status(200).json({ success: true, data });
+  } catch (err) {
+    if (err.name === 'ZodError') {
+      err.status = 400;
+      err.code = 'INVALID_PARAMETERS';
+    }
+    next(err);
+  }
+}
+
 module.exports = {
   getTeachersPermissions,
   patchTeacherPermission,
   getTeacherPermissionHistory,
+  getTeachersByCourseController,
 };

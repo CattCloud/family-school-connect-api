@@ -86,6 +86,36 @@ const parentsReadLimiter = rateLimit({
   message: msg('RATE_LIMIT_EXCEEDED', 'Límite de consultas alcanzado. Intente en 1 minuto'),
 });
 
+ // Bandeja de mensajería (padres/docentes): lectura/polling
+const messagingReadLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 min
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: userOrIpKey,
+  message: msg('RATE_LIMIT_EXCEEDED', 'Límite de consultas de mensajería alcanzado. Intente en 1 minuto'),
+});
+
+// Mensajería: creación/envío (padres) - 20 solicitudes por 15 min
+const messagingCreateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 min
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: userOrIpKey,
+  message: msg('RATE_LIMIT_EXCEEDED', 'Límite de envíos de mensajes alcanzado. Intente más tarde'),
+});
+
+// Mensajería: envío en conversación (padres/docentes) - 60 por minuto
+const messagingSendLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 min
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: userOrIpKey,
+  message: msg('RATE_LIMIT_EXCEEDED', 'Límite de envío de mensajes alcanzado. Intente en 1 minuto'),
+});
+
 module.exports = {
   adminWhatsAppLimiter,
   templatesLimiter,
@@ -94,4 +124,7 @@ module.exports = {
   attendanceValidateLimiter,
   attendanceLoadLimiter,
   parentsReadLimiter,
+  messagingReadLimiter,
+  messagingCreateLimiter,
+  messagingSendLimiter,
 };
