@@ -116,6 +116,16 @@ const messagingSendLimiter = rateLimit({
   message: msg('RATE_LIMIT_EXCEEDED', 'Límite de envío de mensajes alcanzado. Intente en 1 minuto'),
 });
 
+// Comunicados: creación/publicación - 10 solicitudes por 15 minutos
+const comunicadosLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 min
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: userOrIpKey,
+  message: msg('RATE_LIMIT_EXCEEDED', 'Límite de creación de comunicados alcanzado. Intente más tarde'),
+});
+
 module.exports = {
   adminWhatsAppLimiter,
   templatesLimiter,
@@ -127,4 +137,5 @@ module.exports = {
   messagingReadLimiter,
   messagingCreateLimiter,
   messagingSendLimiter,
+  comunicadosLimiter,
 };

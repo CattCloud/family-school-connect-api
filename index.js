@@ -21,6 +21,7 @@ const academicSummaryRoutes = require('./routes/academicSummary');
 const attendanceViewRoutes = require('./routes/attendanceView');
 const calendarRoutes = require('./routes/calendar');
 const messagingRoutes = require('./routes/messaging');
+const comunicadosRoutes = require('./routes/comunicados');
 const usersRoutes = require('./routes/users');
 const coursesRoutes = require('./routes/courses');
 const adminRoutes = require('./routes/admin');
@@ -60,6 +61,7 @@ app.use('/', usersRoutes);
 app.use('/', coursesRoutes);
 app.use('/', messagingRoutes);
 app.use('/', adminRoutes);
+app.use('/', comunicadosRoutes);
 
 if (devRoutes) {
   app.use('/', devRoutes);

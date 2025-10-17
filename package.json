@@ -2,6 +2,7 @@
   "name": "family-school-connect-api",
   "version": "1.0.0",
   "description": "",
+  "type": "commonjs",
   "main": "index.js",
   "directories": {
     "doc": "doc"
@@ -11,6 +12,7 @@
     "dev": "nodemon index.js",
     "test": "vitest run --testTimeout=20000 --hookTimeout=30000",
     "test:watch": "vitest",
+    "test:comunicados": "vitest run tests/comunicados.test.js --testTimeout=20000 --hookTimeout=30000",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
@@ -34,6 +36,7 @@
   "dependencies": {
     "@prisma/client": "^6.16.2",
     "bcrypt": "^6.0.0",
+    "chartjs-node-canvas": "^5.0.0",
     "cloudinary": "^2.7.0",
     "clsx": "^2.1.1",
     "cors": "^2.8.5",
@@ -46,8 +49,10 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "puppeteer": "^24.22.3",
+    "uuid": "^13.0.0",
     "winston": "^3.17.0",
-    "zod": "^4.1.11"
+    "zod": "^4.1.11",
+    "isomorphic-dompurify": "^2.14.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10",

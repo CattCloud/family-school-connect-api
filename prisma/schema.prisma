@@ -63,6 +63,11 @@ model Usuario {
   mensajesEmitidos          Mensaje[]        @relation("MensajeEmisor")
   adjuntosSubidos           ArchivoAdjunto[] @relation("ArchivoAdjuntoSubidor")
 
+  // Comunicados y Notificaciones
+  comunicadosCreados Comunicado[] @relation("ComunicadoAutor")
+  lecturasComunicados ComunicadoLectura[]
+  notificacionesRecibidas Notificacion[]
+
   @@unique([tipo_documento, nro_documento], name: "usuarios_documento_unique")
   @@map("usuarios")
 }
@@ -446,4 +451,150 @@ model ArchivoAdjunto {
 
   @@index([mensaje_id], name: "idx_adjuntos_mensaje")
   @@map("archivos_adjuntos")
+}
+
+// ------------------------------------------------------------
+// COMUNICADOS (HU-COM-02) - Creación, gestión y notificaciones
+// ------------------------------------------------------------
+
+enum ComunicadoTipo {
+  academico
+  administrativo
+  evento
+  urgente
+  informativo
+}
+
+enum ComunicadoEstado {
+  borrador
+  publicado
+  archivado
+  programado
+}
+
+enum ComunicadoPublico {
+  padres
+  docentes
+  ambos
+}
+
+model Comunicado {
+  id String @id @default(uuid()) @db.Uuid
+  
+  titulo String
+  contenido String
+  tipo ComunicadoTipo
+  publico_objetivo ComunicadoPublico[]
+  
+  // Segmentación (JSON arrays para flexibilidad)
+  niveles_objetivo String?
+  grados_objetivo String?
+  cursos_objetivo String?
+  
+  // Fechas
+  fecha_creacion DateTime @default(now())
+  fecha_publicacion DateTime?
+  fecha_programada DateTime?
+  fecha_edicion DateTime?
+  
+  // Metadatos
+  estado ComunicadoEstado @default(borrador)
+  editado Boolean @default(false)
+  
+  // Autor y año académico
+  autor_id String @db.Uuid
+  autor Usuario @relation("ComunicadoAutor", fields: [autor_id], references: [id])
+  año_academico Int
+  
+  // Relaciones
+  lecturas ComunicadoLectura[]
+  
+  @@index([autor_id, estado, fecha_creacion], name: "idx_comunicados_autor_estado_fecha")
+  @@index([estado, fecha_publicacion], name: "idx_comunicados_estado_fecha")
+  @@index([fecha_programada, estado], name: "idx_comunicados_programados")
+  @@map("comunicados")
+}
+
+model ComunicadoLectura {
+  id String @id @default(uuid()) @db.Uuid
+  
+  comunicado_id String @db.Uuid
+  comunicado Comunicado @relation(fields: [comunicado_id], references: [id])
+  
+  usuario_id String @db.Uuid
+  usuario Usuario @relation(fields: [usuario_id], references: [id])
+  
+  fecha_lectura DateTime @default(now())
+  
+  @@unique([comunicado_id, usuario_id], name: "idx_comunicados_lecturas_unique")
+  @@index([usuario_id, fecha_lectura], name: "idx_comunicados_lecturas_usuario_fecha")
+  @@map("comunicados_lecturas")
+}
+
+// ------------------------------------------------------------
+// NOTIFICACIONES (Centralizadas para todos los módulos)
+// ------------------------------------------------------------
+
+enum NotificacionTipo {
+  asistencia
+  calificacion
+  mensaje
+  comunicado
+  encuesta
+  sistema
+}
+
+enum NotificacionCanal {
+  plataforma
+  whatsapp
+  ambos
+}
+
+enum NotificacionEstadoPlataforma {
+  pendiente
+  entregada
+  leida
+}
+
+enum NotificacionEstadoWhatsApp {
+  pendiente
+  enviado
+  entregado
+  error
+}
+
+model Notificacion {
+  id String @id @default(uuid()) @db.Uuid
+  
+  // Destinatario
+  usuario_id String @db.Uuid
+  usuario Usuario @relation(fields: [usuario_id], references: [id])
+  
+  // Contenido
+  tipo NotificacionTipo
+  titulo String
+  contenido String
+  datos_adicionales String? // JSON
+  
+  // Canales y estados
+  canal NotificacionCanal
+  estado_plataforma NotificacionEstadoPlataforma @default(pendiente)
+  estado_whatsapp NotificacionEstadoWhatsApp?
+  
+  // Fechas
+  fecha_creacion DateTime @default(now())
+  fecha_entrega_plataforma DateTime?
+  fecha_envio_whatsapp DateTime?
+  fecha_lectura DateTime?
+  
+  // Metadatos
+  url_destino String?
+  referencia_id String?
+  estudiante_id String? @db.Uuid
+  año_academico Int
+  
+  @@index([usuario_id, estado_plataforma, fecha_creacion], name: "idx_notificaciones_usuario_estado")
+  @@index([tipo, fecha_creacion], name: "idx_notificaciones_tipo_fecha")
+  @@index([estado_whatsapp, fecha_envio_whatsapp], name: "idx_notificaciones_whatsapp")
+  @@map("notificaciones")
 }
