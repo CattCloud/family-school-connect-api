@@ -25,6 +25,7 @@ const comunicadosRoutes = require('./routes/comunicados');
 const usersRoutes = require('./routes/users');
 const coursesRoutes = require('./routes/courses');
 const adminRoutes = require('./routes/admin');
+const academicYearRoutes = require('./routes/academicYear');
 let devRoutes = null;
 if (process.env.ENABLE_DEV_ROUTES === 'true' && process.env.NODE_ENV !== 'production') {
   try {
@@ -62,6 +63,7 @@ app.use('/', coursesRoutes);
 app.use('/', messagingRoutes);
 app.use('/', adminRoutes);
 app.use('/', comunicadosRoutes);
+app.use('/', academicYearRoutes);
 
 if (devRoutes) {
   app.use('/', devRoutes);

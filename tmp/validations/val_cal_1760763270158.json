@@ -1,0 +1,31 @@
+{
+  "id": "val_cal_1760763270158",
+  "created_at": "2025-10-18T04:54:30.168Z",
+  "expires_at": "2025-10-19T04:54:30.168Z",
+  "payload": {
+    "context": {
+      "curso_id": "6ed98f67-0dbc-4422-9243-68fb5b8f719a",
+      "nivel_grado_id": "3c256547-35e8-45a2-baee-e3d861a8482e",
+      "trimestre": 1,
+      "componente_id": "fd36938f-70fe-433b-90ca-74adbc8e2f9c",
+      "año_academico": 2025,
+      "fecha_evaluacion": "2025-10-18"
+    },
+    "registros_validos": [
+      {
+        "fila": 6,
+        "codigo_estudiante": "EST001",
+        "nombre_completo": "Juan Méndez",
+        "calificacion": 11,
+        "observaciones": null
+      },
+      {
+        "fila": 7,
+        "codigo_estudiante": "P3001",
+        "nombre_completo": "Estudiante Prueba",
+        "calificacion": 11,
+        "observaciones": null
+      }
+    ]
+  }
+}

@@ -345,7 +345,6 @@ Sirve como punto intermedio entre **estudiantes** y **asignaciones\_docente\_cur
 - **estudiante_id** - Estudiante relacionado (FK a estudiantes, nullable)
 - **respuestas** - Respuestas en formato JSON estructurado (json, requerido)
 - **fecha_respuesta** - Cuándo se respondió (timestamp, auto-generado)
-- **tiempo_respuesta_minutos** - Tiempo que tardó en responder (integer, nullable)
 - **ip_respuesta** - IP desde donde se respondió (string, nullable)
 
 **Justificación técnica:**
