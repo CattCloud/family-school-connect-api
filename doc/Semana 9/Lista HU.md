@@ -51,7 +51,6 @@
 - Fecha y hora de envío de respuesta
 - Indicador de encuesta respondida (check verde)
 - No editable (solo lectura)
-- Opción de imprimir/descargar PDF (futuro)
 
 ---
 
@@ -118,8 +117,7 @@
   - Filtros: por fecha de respuesta, grado (si segmentado)
   - Lista de usuarios que respondieron (con timestamps)
   - Lista de usuarios pendientes de responder
-- Exportación a CSV con respuestas completas
-- Exportación a PDF con gráficos incluidos (futuro)
+
 
 ---
 
@@ -244,5 +242,3 @@
 ```
 
 ---
-
-**¿Qué opinas de esta propuesta?** ¿Te parece que cubre el MVP necesario del módulo de encuestas manteniendo la simplicidad y escalabilidad? 🚀

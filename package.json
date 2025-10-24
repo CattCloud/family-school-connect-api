@@ -12,7 +12,6 @@
     "dev": "nodemon index.js",
     "test": "vitest run --testTimeout=20000 --hookTimeout=30000",
     "test:watch": "vitest",
-    "test:comunicados": "vitest run tests/comunicados.test.js --testTimeout=20000 --hookTimeout=30000",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
@@ -51,8 +50,7 @@
     "puppeteer": "^24.22.3",
     "uuid": "^13.0.0",
     "winston": "^3.17.0",
-    "zod": "^4.1.11",
-    "isomorphic-dompurify": "^2.14.0"
+    "zod": "^4.1.11"
   },
   "devDependencies": {
     "nodemon": "^3.1.10",

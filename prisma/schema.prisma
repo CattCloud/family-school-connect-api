@@ -1,6 +1,4 @@
-// Prisma schema base - Autenticación (usuarios, password_reset_tokens, tokens_blacklist)
-
-generator client {
+ generator client {
   provider = "prisma-client-js"
 }
 
@@ -15,6 +13,50 @@ enum Rol {
   docente
   director
   administrador
+}
+
+/// Enumeración de estado de encuesta
+enum EstadoEncuesta {
+  borrador
+  activa
+  cerrada
+  vencida
+}
+
+/// Enumeración de tipo de pregunta
+enum TipoPregunta {
+  texto_corto
+  texto_largo
+  opcion_unica
+  opcion_multiple
+  escala_1_5
+}
+
+/// Enumeración de tipo de permiso para docentes
+enum PermisoTipo {
+  comunicados
+  encuestas
+}
+
+/// Enumeración de tipo de evaluación
+enum EvalTipo {
+  unica
+  recurrente
+}
+
+/// Enumeración de estado de matrícula
+enum MatriculaEstado {
+  activo
+  retirado
+  trasladado
+}
+
+/// Enumeración de tipo de relación familiar
+enum RelacionTipo {
+  padre
+  madre
+  apoderado
+  tutor
 }
 
 /// Tabla: usuarios
@@ -32,41 +74,20 @@ model Usuario {
   estado_activo         Boolean   @default(true)
   debe_cambiar_password Boolean   @default(false)
 
-  // Relaciones
-  resetTokens       PasswordResetToken[]
-  blacklistedTokens TokenBlacklist[]
-
-  // Permisos (docente es el receptor del permiso)
-  permisosDocentes  PermisoDocente[]
-  // Permisos otorgados por este usuario (director)
-  permisosOtorgados PermisoDocente[] @relation("PermisoOtorgadoPor")
-
-  // Historial de permisos (docente)
-  permisosDocentesLogs  PermisoDocenteLog[]
-  // Historial de permisos otorgados por este usuario (director)
-  permisosLogsOtorgados PermisoDocenteLog[] @relation("PermisoLogOtorgadoPor")
-
-  // Asignaciones de cursos cuando el usuario es docente
-  asignacionesDocente AsignacionDocenteCurso[]
-
-  // Relaciones familiares donde el usuario es apoderado
-  relacionesApoderado RelacionesFamiliares[]
-
-  // Registros académicos creados por este usuario
-  evaluacionesRegistradas Evaluacion[]
-  asistenciasRegistradas  Asistencia[]
-
-  // Mensajería: back-relations
-  conversacionesComoPadre   Conversacion[]   @relation("ConversacionPadre")
-  conversacionesComoDocente Conversacion[]   @relation("ConversacionDocente")
-  conversacionesCreadas     Conversacion[]   @relation("ConversacionCreador")
-  mensajesEmitidos          Mensaje[]        @relation("MensajeEmisor")
-  adjuntosSubidos           ArchivoAdjunto[] @relation("ArchivoAdjuntoSubidor")
-
-  // Comunicados y Notificaciones
-  comunicadosCreados Comunicado[] @relation("ComunicadoAutor")
-  lecturasComunicados ComunicadoLectura[]
-  notificacionesRecibidas Notificacion[]
+  // Relaciones existentes
+  resetTokens             PasswordResetToken[]
+  blacklistedTokens       TokenBlacklist[]
+  permisosDocentes        PermisoDocente[]
+  permisosOtorgados       PermisoDocente[]    @relation("PermisoOtorgadoPor")
+  permisosDocentesLogs    PermisoDocenteLog[]
+  permisosLogsOtorgados   PermisoDocenteLog[] @relation("PermisoLogOtorgadoPor")
+  asignacionesDocente     AsignacionDocenteCurso[]
+  relacionesApoderado     RelacionesFamiliares[]
+  
+  // Nuevas relaciones para encuestas
+  encuestasCreadas         Encuesta[]
+  respuestasEncuestas       RespuestaEncuesta[]
+  notificacionesUsuario     Notificacion[]
 
   @@unique([tipo_documento, nro_documento], name: "usuarios_documento_unique")
   @@map("usuarios")
@@ -74,13 +95,13 @@ model Usuario {
 
 /// Tabla: password_reset_tokens
 model PasswordResetToken {
-  id               String   @id @default(uuid()) @db.Uuid
-  token            String   @unique
-  id_usuario       String   @db.Uuid
-  usuario          Usuario  @relation(fields: [id_usuario], references: [id])
-  fecha_creacion   DateTime @default(now())
+  id               String    @id @default(uuid()) @db.Uuid
+  token            String    @unique
+  id_usuario       String    @db.Uuid
+  usuario          Usuario   @relation(fields: [id_usuario], references: [id])
+  fecha_creacion   DateTime  @default(now())
   fecha_expiracion DateTime
-  usado            Boolean  @default(false)
+  usado            Boolean   @default(false)
 
   @@index([id_usuario, fecha_creacion], name: "idx_reset_tokens_usuario_fecha")
   @@map("password_reset_tokens")
@@ -97,172 +118,131 @@ model TokenBlacklist {
   @@map("tokens_blacklist")
 }
 
-/// Enumeración de tipos de permiso para docentes
-enum PermisoTipo {
-  comunicados
-  encuestas
-}
-
-/// Enumeración de tipo de evaluación
-enum EvalTipo {
-  unica
-  recurrente
-}
-
-enum Nivel {
-  Inicial
-  Primaria
-  Secundaria
-}
-
-/// Tabla: permisos_docentes (permisos generales por docente y año)
+/// Tabla: permisos_docentes
 model PermisoDocente {
-  id                 String      @id @default(uuid()) @db.Uuid
-  docente_id         String      @db.Uuid
-  docente            Usuario     @relation(fields: [docente_id], references: [id])
-  tipo_permiso       PermisoTipo
-  estado_activo      Boolean     @default(true)
-  fecha_otorgamiento DateTime    @default(now())
-  otorgado_por       String?     @db.Uuid
-  otorgante          Usuario?    @relation("PermisoOtorgadoPor", fields: [otorgado_por], references: [id])
-  año_academico     Int
+  id               String      @id @default(uuid()) @db.Uuid
+  docente_id       String      @db.Uuid
+  docente          Usuario     @relation(fields: [docente_id], references: [id])
+  tipo_permiso     PermisoTipo
+  estado_activo    Boolean     @default(true)
+  fecha_otorgamiento DateTime  @default(now())
+  otorgado_por     String?     @db.Uuid
+  otorgante        Usuario?    @relation("PermisoOtorgadoPor", fields: [otorgado_por], references: [id])
+  año_academico    Int
 
   @@unique([docente_id, tipo_permiso, año_academico])
   @@map("permisos_docentes")
 }
 
-/// Tabla: historial de cambios de permisos (auditoría)
+/// Tabla: historial de cambios de permisos
 model PermisoDocenteLog {
   id             String      @id @default(uuid()) @db.Uuid
   docente_id     String      @db.Uuid
   docente        Usuario     @relation(fields: [docente_id], references: [id])
   tipo_permiso   PermisoTipo
-  accion         String // "activado" | "desactivado"
+  accion         String
   fecha          DateTime    @default(now())
   otorgado_por   String?     @db.Uuid
   otorgante      Usuario?    @relation("PermisoLogOtorgadoPor", fields: [otorgado_por], references: [id])
-  año_academico Int
+  año_academico  Int
 
   @@index([docente_id, año_academico])
   @@map("permisos_docentes_log")
 }
 
-/// Tabla: nivel_grado (datos maestros)
+/// Tabla: nivel_grado
 model NivelGrado {
-  id            String  @id @default(uuid()) @db.Uuid
-  nivel         Nivel
+  id            String   @id @default(uuid()) @db.Uuid
+  nivel         String
   grado         String
   descripcion   String?
-  estado_activo Boolean @default(true)
+  estado_activo Boolean  @default(true)
 
-  // Relaciones
-  cursos       Curso[]
-  asignaciones AsignacionDocenteCurso[]
-  estudiantes  Estudiante[]
+  cursos        Curso[]
+  asignaciones  AsignacionDocenteCurso[]
+  estudiantes   Estudiante[]
 
   @@unique([nivel, grado])
   @@map("nivel_grado")
 }
 
-/// Tabla: cursos (catálogo por nivel/grado)
+/// Tabla: cursos
 model Curso {
-  id             String     @id @default(uuid()) @db.Uuid
-  nombre         String
-  codigo_curso   String     @unique
-  nivel_grado_id String     @db.Uuid
-  nivel_grado    NivelGrado @relation(fields: [nivel_grado_id], references: [id])
-  año_academico Int
-  estado_activo  Boolean    @default(true)
+  id              String     @id @default(uuid()) @db.Uuid
+  nombre          String
+  codigo_curso    String     @unique
+  nivel_grado_id  String     @db.Uuid
+  nivel_grado     NivelGrado @relation(fields: [nivel_grado_id], references: [id])
+  año_academico   Int
+  estado_activo   Boolean    @default(true)
 
-  asignaciones   AsignacionDocenteCurso[]
-  evaluaciones   Evaluacion[]
-  conversaciones Conversacion[]
+  asignaciones    AsignacionDocenteCurso[]
 
   @@map("cursos")
 }
 
-/// Tabla: asignaciones_docente_curso (qué docente enseña qué curso)
+/// Tabla: asignaciones_docente_curso
 model AsignacionDocenteCurso {
-  id               String     @id @default(uuid()) @db.Uuid
-  docente_id       String     @db.Uuid
-  docente          Usuario    @relation(fields: [docente_id], references: [id])
-  curso_id         String     @db.Uuid
-  curso            Curso      @relation(fields: [curso_id], references: [id])
-  nivel_grado_id   String     @db.Uuid
-  nivel_grado      NivelGrado @relation(fields: [nivel_grado_id], references: [id])
+  id              String     @id @default(uuid()) @db.Uuid
+  docente_id      String     @db.Uuid
+  docente         Usuario    @relation(fields: [docente_id], references: [id])
+  curso_id        String     @db.Uuid
+  curso           Curso      @relation(fields: [curso_id], references: [id])
+  nivel_grado_id  String     @db.Uuid
+  nivel_grado     NivelGrado @relation(fields: [nivel_grado_id], references: [id])
   año_academico   Int
   fecha_asignacion DateTime
-  estado_activo    Boolean    @default(true)
+  estado_activo   Boolean    @default(true)
 
   @@index([docente_id, año_academico, estado_activo])
   @@map("asignaciones_docente_curso")
 }
 
-/// Tabla: estructura_evaluacion (componentes definidos por el director)
+/// Tabla: estructura_evaluacion
 model EstructuraEvaluacion {
-  id                  String   @id @default(uuid()) @db.Uuid
-  año_academico      Int
+  id                  String    @id @default(uuid()) @db.Uuid
+  año_academico       Int
   nombre_item         String
-  peso_porcentual     Decimal  @db.Decimal(5, 2)
+  peso_porcentual     Decimal   @db.Decimal(5, 2)
   tipo_evaluacion     EvalTipo
   orden_visualizacion Int
-  estado_activo       Boolean  @default(true)
-  fecha_configuracion DateTime @default(now())
-  bloqueada           Boolean  @default(true)
-
-  // Relaciones
-  evaluaciones Evaluacion[]
+  estado_activo       Boolean   @default(true)
+  fecha_configuracion DateTime  @default(now())
+  bloqueada           Boolean   @default(true)
 
   @@index([año_academico, estado_activo])
   @@map("estructura_evaluacion")
 }
 
-/// Enumeración de estado de matrícula
-enum MatriculaEstado {
-  activo
-  retirado
-  trasladado
-}
-
-/// Enumeración de tipo de relación familiar (apoderado principal)
-enum RelacionTipo {
-  padre
-  madre
-  apoderado
-  tutor
-}
-
 /// Tabla: estudiantes
 model Estudiante {
-  id                String          @id @default(uuid()) @db.Uuid
-  codigo_estudiante String          @unique
-  nombre            String
-  apellido          String
-  nivel_grado_id    String          @db.Uuid
-  nivel_grado       NivelGrado      @relation(fields: [nivel_grado_id], references: [id])
+  id               String         @id @default(uuid()) @db.Uuid
+  codigo_estudiante String        @unique
+  nombre           String
+  apellido         String
+  nivel_grado_id   String         @db.Uuid
+  nivel_grado      NivelGrado     @relation(fields: [nivel_grado_id], references: [id])
   año_academico    Int
-  estado_matricula  MatriculaEstado @default(activo)
+  estado_matricula MatriculaEstado @default(activo)
 
-  // Relaciones
   relacionesFamiliares RelacionesFamiliares[]
-  evaluaciones         Evaluacion[]
-  asistencias          Asistencia[]
-  conversaciones       Conversacion[]
+  respuestasEncuestas       RespuestaEncuesta[]
+  notificacionesEstudiante  Notificacion[]
 
   @@index([nivel_grado_id, año_academico])
   @@map("estudiantes")
 }
 
-/// Tabla: relaciones_familiares (solo apoderado principal)
+/// Tabla: relaciones_familiares
 model RelacionesFamiliares {
-  id               String       @id @default(uuid()) @db.Uuid
-  apoderado_id     String       @db.Uuid
-  apoderado        Usuario      @relation(fields: [apoderado_id], references: [id])
-  estudiante_id    String       @db.Uuid
-  estudiante       Estudiante   @relation(fields: [estudiante_id], references: [id])
-  tipo_relacion    RelacionTipo
+  id              String        @id @default(uuid()) @db.Uuid
+  apoderado_id    String        @db.Uuid
+  apoderado       Usuario       @relation(fields: [apoderado_id], references: [id])
+  estudiante_id   String        @db.Uuid
+  estudiante      Estudiante    @relation(fields: [estudiante_id], references: [id])
+  tipo_relacion   RelacionTipo
   fecha_asignacion DateTime     @default(now())
-  estado_activo    Boolean      @default(true)
+  estado_activo   Boolean       @default(true)
   año_academico   Int
 
   @@index([apoderado_id, estado_activo], name: "idx_relaciones_apoderado")
@@ -270,331 +250,135 @@ model RelacionesFamiliares {
   @@map("relaciones_familiares")
 }
 
-//
-// Nuevas enumeraciones para Módulo Académico (Semana 5)
-//
-enum CalificacionLetra {
-  AD
-  A
-  B
-  C
-}
-
-enum EvalEstado {
-  preliminar
-  final
-}
-
-enum AsistenciaEstado {
-  presente
-  tardanza
-  permiso
-  falta_justificada
-  falta_injustificada
-}
-
-//
-// Nuevas tablas: evaluaciones y asistencias
-//
-model Evaluacion {
-  id                       String               @id @default(uuid()) @db.Uuid
-  estudiante_id            String               @db.Uuid
-  estudiante               Estudiante           @relation(fields: [estudiante_id], references: [id])
-  curso_id                 String               @db.Uuid
-  curso                    Curso                @relation(fields: [curso_id], references: [id])
-  estructura_evaluacion_id String               @db.Uuid
-  estructura_evaluacion    EstructuraEvaluacion @relation(fields: [estructura_evaluacion_id], references: [id])
-  trimestre                Int
-  año_academico           Int
-  fecha_evaluacion         DateTime
-  calificacion_numerica    Decimal              @db.Decimal(5, 2)
-  calificacion_letra       CalificacionLetra
-  observaciones            String?
-  fecha_registro           DateTime             @default(now())
-  estado                   EvalEstado           @default(preliminar)
-  registrado_por           String               @db.Uuid
-  registrado               Usuario              @relation(fields: [registrado_por], references: [id])
-
-  @@index([estudiante_id, curso_id, trimestre, año_academico], name: "idx_evaluaciones_estudiante_curso")
-  @@index([estructura_evaluacion_id, año_academico], name: "idx_evaluaciones_componente")
-  @@index([fecha_evaluacion, estado], name: "idx_evaluaciones_fecha_estado")
-  @@map("evaluaciones")
-}
-
-model Asistencia {
-  id             String           @id @default(uuid()) @db.Uuid
-  estudiante_id  String           @db.Uuid
-  estudiante     Estudiante       @relation(fields: [estudiante_id], references: [id])
-  fecha          DateTime
-  estado         AsistenciaEstado
-  // HH:MM (24h) opcional solo si estado = tardanza. Se maneja validación en aplicación.
-  hora_llegada   String?          @db.VarChar(5)
-  justificacion  String?
-  año_academico Int
-  registrado_por String           @db.Uuid
-  registrado     Usuario          @relation(fields: [registrado_por], references: [id])
-  fecha_registro DateTime         @default(now())
-
-  @@index([estudiante_id, fecha, año_academico], name: "idx_asistencias_estudiante_fecha")
-  @@index([estado, fecha], name: "idx_asistencias_estado_fecha")
-  @@index([fecha, año_academico], name: "idx_asistencias_fecha_anio")
-  @@map("asistencias")
-}
-
-// ------------------------------------------------------------
-// MENSAJERÍA (HU-MSG-00/01/03) - Conversaciones, Mensajes, Adjuntos
-// ------------------------------------------------------------
-
-enum ConversacionEstado {
-  activa
-  cerrada
-}
-
-enum TipoConversacion {
-  padre_docente
-  docente_director
-  padre_director
-  soporte
-}
-
-enum MensajeLecturaEstado {
-  enviado
-  entregado
-  leido
-}
-
-model Conversacion {
-  id String @id @default(uuid()) @db.Uuid
-
-  // Contexto académico (opcionales)
-  estudiante_id String?     @db.Uuid
-  estudiante    Estudiante? @relation(fields: [estudiante_id], references: [id])
-
-  curso_id String? @db.Uuid
-  curso    Curso?  @relation(fields: [curso_id], references: [id])
-
-  // Participantes (padre/docente) - opcionales según tipo_conversacion
-  padre_id String?  @db.Uuid
-  padre    Usuario? @relation("ConversacionPadre", fields: [padre_id], references: [id])
-
-  docente_id String?  @db.Uuid
-  docente    Usuario? @relation("ConversacionDocente", fields: [docente_id], references: [id])
-
-  // Metadatos de conversación
-  asunto               String
-  estado               ConversacionEstado @default(activa)
-  fecha_inicio         DateTime           @default(now())
-  fecha_ultimo_mensaje DateTime           @default(now())
-  año_academico       Int
-  tipo_conversacion    TipoConversacion   @default(padre_docente)
-
-  // Auditoría de creación
-  creado_por String  @db.Uuid
-  creador    Usuario @relation("ConversacionCreador", fields: [creado_por], references: [id])
-
-  // Relación con mensajes
-  mensajes Mensaje[]
-
-  // Índices para bandeja (orden por último mensaje y filtros por participante/estado)
-  @@index([padre_id, estado, fecha_ultimo_mensaje], name: "idx_conv_padre_estado_fecha")
-  @@index([docente_id, estado, fecha_ultimo_mensaje], name: "idx_conv_docente_estado_fecha")
-  @@index([estudiante_id, estado, fecha_ultimo_mensaje], name: "idx_conv_estudiante_estado_fecha")
-  @@index([estado, fecha_ultimo_mensaje], name: "idx_conv_estado_fecha")
-  @@map("conversaciones")
-}
-
-model Mensaje {
-  id String @id @default(uuid()) @db.Uuid
-
-  conversacion_id String       @db.Uuid
-  conversacion    Conversacion @relation(fields: [conversacion_id], references: [id])
-
-  emisor_id String  @db.Uuid
-  emisor    Usuario @relation("MensajeEmisor", fields: [emisor_id], references: [id])
-
-  contenido   String
-  fecha_envio DateTime @default(now())
-
-  // Estados de lectura estilo WhatsApp
-  estado_lectura MensajeLecturaEstado @default(enviado)
-  fecha_lectura  DateTime?
-
-  tiene_adjuntos Boolean @default(false)
-
-  // Relación con adjuntos
-  archivos ArchivoAdjunto[]
-
-  // Índices para paginación, no leídos, polling
-  @@index([conversacion_id, fecha_envio], name: "idx_mensajes_conv_fecha")
-  @@index([conversacion_id, estado_lectura], name: "idx_mensajes_conv_estado")
-  @@index([conversacion_id, emisor_id, estado_lectura], name: "idx_mensajes_conv_emisor_estado")
-  @@map("mensajes")
-}
-
-model ArchivoAdjunto {
-  id String @id @default(uuid()) @db.Uuid
-
-  mensaje_id String  @db.Uuid
-  mensaje    Mensaje @relation(fields: [mensaje_id], references: [id])
-
-  nombre_original String
-  nombre_archivo  String
-  url_cloudinary  String
-  // Se valida MIME real en la aplicación (permitidos: application/pdf, image/jpeg, image/png)
-  tipo_mime       String
-  tamaño_bytes   Int
-  es_imagen       Boolean @default(false)
-
-  fecha_subida DateTime @default(now())
-  subido_por   String   @db.Uuid
-  subidor      Usuario  @relation("ArchivoAdjuntoSubidor", fields: [subido_por], references: [id])
-
-  @@index([mensaje_id], name: "idx_adjuntos_mensaje")
-  @@map("archivos_adjuntos")
-}
-
-// ------------------------------------------------------------
-// COMUNICADOS (HU-COM-02) - Creación, gestión y notificaciones
-// ------------------------------------------------------------
-
-enum ComunicadoTipo {
-  academico
-  administrativo
-  evento
-  urgente
-  informativo
-}
-
-enum ComunicadoEstado {
-  borrador
-  publicado
-  archivado
-  programado
-}
-
-enum ComunicadoPublico {
-  padres
-  docentes
-  ambos
-}
-
-model Comunicado {
-  id String @id @default(uuid()) @db.Uuid
-  
-  titulo String
-  contenido String
-  tipo ComunicadoTipo
-  publico_objetivo ComunicadoPublico[]
-  
-  // Segmentación (JSON arrays para flexibilidad)
-  niveles_objetivo String?
-  grados_objetivo String?
-  cursos_objetivo String?
-  
-  // Fechas
-  fecha_creacion DateTime @default(now())
-  fecha_publicacion DateTime?
-  fecha_programada DateTime?
-  fecha_edicion DateTime?
-  
-  // Metadatos
-  estado ComunicadoEstado @default(borrador)
-  editado Boolean @default(false)
-  
-  // Autor y año académico
-  autor_id String @db.Uuid
-  autor Usuario @relation("ComunicadoAutor", fields: [autor_id], references: [id])
-  año_academico Int
+/// Tabla: encuestas
+model Encuesta {
+  id                        String         @id @default(uuid()) @db.Uuid
+  titulo                    String         @db.VarChar(200)
+  descripcion               String
+  fecha_creacion            DateTime       @default(now())
+  fecha_inicio              DateTime?      // Fecha de publicación
+  fecha_vencimiento         DateTime?      // Fecha límite para responder
+  fecha_cierre              DateTime?      // Fecha de cierre anticipado
+  estado                    EstadoEncuesta @default(borrador)
+  permite_respuesta_multiple Boolean        @default(false)
+  es_anonima                Boolean        @default(false)
+  mostrar_resultados        Boolean        @default(true)
+  autor_id                  String         @db.Uuid
+  autor                     Usuario        @relation(fields: [autor_id], references: [id])
+  año_academico             Int
   
   // Relaciones
-  lecturas ComunicadoLectura[]
+  preguntas                 PreguntaEncuesta[]
+  respuestas                RespuestaEncuesta[]
+  notificacionesEncuesta    Notificacion[]
+
+  @@map("encuestas")
+}
+
+/// Tabla: preguntas de encuesta
+model PreguntaEncuesta {
+  id            String       @id @default(uuid()) @db.Uuid
+  encuesta_id   String       @db.Uuid
+  encuesta      Encuesta     @relation(fields: [encuesta_id], references: [id], onDelete: Cascade)
+  texto         String
+  tipo          TipoPregunta
+  obligatoria   Boolean      @default(false)
+  orden         Int
+  opciones      OpcionPregunta[]
+  respuestas    RespuestaPregunta[]
+  votos         VotoEncuesta[]
+
+  @@map("preguntas_encuesta")
+}
+
+/// Tabla: opciones de pregunta (para opción única y múltiple)
+model OpcionPregunta {
+  id           String           @id @default(uuid()) @db.Uuid
+  pregunta_id  String           @db.Uuid
+  pregunta     PreguntaEncuesta @relation(fields: [pregunta_id], references: [id], onDelete: Cascade)
+  texto        String
+  orden        Int
+  votos        VotoEncuesta[]
+
+  @@map("opciones_pregunta")
+}
+
+/// Tabla: respuestas de encuesta
+model RespuestaEncuesta {
+  id                       String    @id @default(uuid()) @db.Uuid
+  encuesta_id              String    @db.Uuid
+  encuesta                 Encuesta  @relation(fields: [encuesta_id], references: [id])
+  usuario_id               String    @db.Uuid
+  usuario                  Usuario   @relation(fields: [usuario_id], references: [id])
+  estudiante_id            String?   @db.Uuid // Para padres, referencia al hijo
+  estudiante               Estudiante? @relation(fields: [estudiante_id], references: [id])
+  fecha_respuesta          DateTime  @default(now())
+  tiempo_respuesta_minutos Int?
+  ip_respuesta             String?
   
-  @@index([autor_id, estado, fecha_creacion], name: "idx_comunicados_autor_estado_fecha")
-  @@index([estado, fecha_publicacion], name: "idx_comunicados_estado_fecha")
-  @@index([fecha_programada, estado], name: "idx_comunicados_programados")
-  @@map("comunicados")
+  // Relaciones
+  respuestasPregunta       RespuestaPregunta[]
+  votos                    VotoEncuesta[]
+
+  @@unique([encuesta_id, usuario_id])
+  @@map("respuestas_encuestas")
 }
 
-model ComunicadoLectura {
-  id String @id @default(uuid()) @db.Uuid
-  
-  comunicado_id String @db.Uuid
-  comunicado Comunicado @relation(fields: [comunicado_id], references: [id])
-  
-  usuario_id String @db.Uuid
-  usuario Usuario @relation(fields: [usuario_id], references: [id])
-  
-  fecha_lectura DateTime @default(now())
-  
-  @@unique([comunicado_id, usuario_id], name: "idx_comunicados_lecturas_unique")
-  @@index([usuario_id, fecha_lectura], name: "idx_comunicados_lecturas_usuario_fecha")
-  @@map("comunicados_lecturas")
+/// Tabla: respuestas a preguntas específicas
+model RespuestaPregunta {
+  id               String            @id @default(uuid()) @db.Uuid
+  respuesta_id     String            @db.Uuid
+  respuesta        RespuestaEncuesta @relation(fields: [respuesta_id], references: [id], onDelete: Cascade)
+  pregunta_id      String            @db.Uuid
+  pregunta         PreguntaEncuesta  @relation(fields: [pregunta_id], references: [id])
+  valor_texto     String?           // Para respuestas de texto
+  valor_opcion_id String?           // Para respuestas de opción única
+  valor_opciones  String[]          // Para respuestas de opción múltiple (array de IDs)
+  valor_escala    Int?              // Para respuestas de escala 1-5
+  votos           VotoEncuesta[]
+
+  @@map("respuestas_pregunta")
 }
 
-// ------------------------------------------------------------
-// NOTIFICACIONES (Centralizadas para todos los módulos)
-// ------------------------------------------------------------
+/// Tabla: votos (para opción múltiple)
+model VotoEncuesta {
+  id               String            @id @default(uuid()) @db.Uuid
+  respuesta_id     String            @db.Uuid
+  respuesta        RespuestaEncuesta @relation(fields: [respuesta_id], references: [id], onDelete: Cascade)
+  pregunta_id      String            @db.Uuid
+  pregunta         PreguntaEncuesta  @relation(fields: [pregunta_id], references: [id])
+  opcion_id        String            @db.Uuid
+  opcion           OpcionPregunta   @relation(fields: [opcion_id], references: [id])
+  respuesta_pregunta_id String?      @db.Uuid
+  respuesta_pregunta RespuestaPregunta? @relation(fields: [respuesta_pregunta_id], references: [id])
 
-enum NotificacionTipo {
-  asistencia
-  calificacion
-  mensaje
-  comunicado
-  encuesta
-  sistema
+  @@map("votos_encuesta")
 }
 
-enum NotificacionCanal {
-  plataforma
-  whatsapp
-  ambos
-}
-
-enum NotificacionEstadoPlataforma {
-  pendiente
-  entregada
-  leida
-}
-
-enum NotificacionEstadoWhatsApp {
-  pendiente
-  enviado
-  entregado
-  error
-}
-
+/// Tabla: notificaciones
 model Notificacion {
-  id String @id @default(uuid()) @db.Uuid
-  
-  // Destinatario
-  usuario_id String @db.Uuid
-  usuario Usuario @relation(fields: [usuario_id], references: [id])
-  
-  // Contenido
-  tipo NotificacionTipo
-  titulo String
-  contenido String
-  datos_adicionales String? // JSON
-  
-  // Canales y estados
-  canal NotificacionCanal
-  estado_plataforma NotificacionEstadoPlataforma @default(pendiente)
-  estado_whatsapp NotificacionEstadoWhatsApp?
-  
-  // Fechas
-  fecha_creacion DateTime @default(now())
+  id                       String    @id @default(uuid()) @db.Uuid
+  usuario_id                String    @db.Uuid
+  usuario                   Usuario   @relation(fields: [usuario_id], references: [id])
+  tipo                     String    // "asistencia", "calificacion", "mensaje", "comunicado", "encuesta", "sistema"
+  titulo                   String    @db.VarChar(200)
+  contenido                String
+  datos_adicionales        Json?     // Información extra en JSON
+  canal                    String    // "plataforma", "whatsapp", "ambos"
+  estado_plataforma        String    @default("pendiente") // "pendiente", "entregada", "leida"
+  estado_whatsapp          String?   // "pendiente", "enviado", "entregado", "error"
+  fecha_creacion           DateTime  @default(now())
   fecha_entrega_plataforma DateTime?
-  fecha_envio_whatsapp DateTime?
-  fecha_lectura DateTime?
-  
-  // Metadatos
-  url_destino String?
-  referencia_id String?
-  estudiante_id String? @db.Uuid
-  año_academico Int
-  
-  @@index([usuario_id, estado_plataforma, fecha_creacion], name: "idx_notificaciones_usuario_estado")
-  @@index([tipo, fecha_creacion], name: "idx_notificaciones_tipo_fecha")
-  @@index([estado_whatsapp, fecha_envio_whatsapp], name: "idx_notificaciones_whatsapp")
+  fecha_envio_whatsapp     DateTime?
+  fecha_lectura            DateTime?
+  url_destino              String?
+  estudiante_id            String?   @db.Uuid
+  estudiante               Estudiante? @relation(fields: [estudiante_id], references: [id])
+  referencia_id            String?   // ID del elemento que generó la notificación
+  tipo_referencia           String?   // "encuesta" para identificar tipo
+  año_academico            Int
+  encuesta_id              String?   @db.Uuid
+  encuesta                 Encuesta?  @relation(fields: [encuesta_id], references: [id])
+
   @@map("notificaciones")
 }

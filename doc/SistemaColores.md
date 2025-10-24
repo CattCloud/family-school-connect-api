@@ -3,163 +3,157 @@
 ## **Archivo `index.css` - Variables de Color**
 
 ```css
-@import "tailwindcss";
-
-:root {
-  --font-sans: 'Poppins', sans-serif;
-}
-
 @theme {
   /* ============================================
    * COLORES PRIMARIOS - Púrpura/Violeta Principal
-   * Usado para: Sidebar, navegación activa, botones primarios
+   * Usado para: Headers, navegación principal, botones primarios
    * ============================================ */
-  --color-primary-50: #f3f1ff;    /* Fondo hover en navegación */
-  --color-primary-100: #e9e5ff;   /* Fondo activo en navegación */
-  --color-primary-200: #d4ccff;   /* Bordes y divisores */
+  --color-primary-50: #f3f1ff;    /* Fondo muy claro para cards y overlays */
+  --color-primary-100: #e9e5ff;   /* Fondo claro para estados hover ligeros */
+  --color-primary-200: #d4ccff;   /* Bordes y divisores principales */
   --color-primary-300: #b5a7ff;   /* Elementos secundarios activos */
   --color-primary-400: #9b8aff;   /* Botones secundarios */
   --color-primary-500: #8b71ff;   /* Color principal de la marca */
-  --color-primary-600: #7c5cff;   /* Estados hover de botones */
+  --color-primary-600: #7c5cff;   /* Estados hover de botones primarios */
   --color-primary-700: #6d47ff;   /* Estados active/pressed */
   --color-primary-800: #5e38cc;   /* Texto sobre fondos claros */
-  --color-primary-900: #4e2d99;   /* Fondo del sidebar principal */
+  --color-primary-900: #4e2d99;   /* Texto de alta prioridad */
 
   /* ============================================
    * COLORES SECUNDARIOS - Naranja/Coral
    * Usado para: Alertas, notificaciones, CTAs importantes
    * ============================================ */
-  --color-secondary-50: #fff7ed;   
-  --color-secondary-100: #ffedd5;  
-  --color-secondary-200: #fed7aa;  
-  --color-secondary-300: #fdba74;  
-  --color-secondary-400: #fb923c;  
-  --color-secondary-500: #f97316;  
-  --color-secondary-600: #ea580c;  
-  --color-secondary-700: #c2410c;  
-  --color-secondary-800: #9a3412;  
-  --color-secondary-900: #7c2d12;  
+  --color-secondary-50: #fff7ed;   /* Fondo para alertas informativas */
+  --color-secondary-100: #ffedd5;  /* Fondo hover para elementos naranja */
+  --color-secondary-200: #fed7aa;  /* Bordes de elementos secundarios */
+  --color-secondary-300: #fdba74;  /* Elementos decorativos */
+  --color-secondary-400: #fb923c;  /* Botones de alerta media */
+  --color-secondary-500: #f97316;  /* Color secundario principal */
+  --color-secondary-600: #ea580c;  /* Hover para botones secundarios */
+  --color-secondary-700: #c2410c;  /* Estados active secundarios */
+  --color-secondary-800: #9a3412;  /* Texto sobre fondos claros */
+  --color-secondary-900: #7c2d12;  /* Texto de alta importancia */
 
   /* ============================================
    * COLORES TERCIARIOS - Teal/Verde Azulado
-   * Usado para: Confirmaciones, estados exitosos
+   * Usado para: Confirmaciones, estados exitosos, elementos informativos
    * ============================================ */
-  --color-tertiary-50: #f0fdfa;    
-  --color-tertiary-100: #ccfbf1;   
-  --color-tertiary-200: #99f6e4;   
-  --color-tertiary-300: #5eead4;   
-  --color-tertiary-400: #2dd4bf;   
-  --color-tertiary-500: #14b8a6;   
-  --color-tertiary-600: #0d9488;   
-  --color-tertiary-700: #0f766e;   
-  --color-tertiary-800: #115e59;   
-  --color-tertiary-900: #134e4a;   
+  --color-tertiary-50: #f0fdfa;    /* Fondo para mensajes exitosos */
+  --color-tertiary-100: #ccfbf1;   /* Hover ligero para elementos teal */
+  --color-tertiary-200: #99f6e4;   /* Bordes de elementos informativos */
+  --color-tertiary-300: #5eead4;   /* Elementos decorativos informativos */
+  --color-tertiary-400: #2dd4bf;   /* Botones informativos */
+  --color-tertiary-500: #14b8a6;   /* Color terciario principal */
+  --color-tertiary-600: #0d9488;   /* Hover para elementos informativos */
+  --color-tertiary-700: #0f766e;   /* Estados active informativos */
+  --color-tertiary-800: #115e59;   /* Texto sobre fondos claros */
+  --color-tertiary-900: #134e4a;   /* Texto informativo fuerte */
 
   /* ============================================
    * BACKGROUNDS - Fondos del Sistema
-   * DISTRIBUCIÓN CORREGIDA:
-   * - Sidebar: Púrpura oscuro (primary-900)
-   * - Header: Blanco puro
-   * - App/Body: Gris muy claro
-   * - Cards: Blanco puro
+   * Usado para: Layouts, containers, cards, modales
    * ============================================ */
-  --color-bg-app: #f8f9fc;         /* Fondo principal (gris muy claro) */
-  --color-bg-main: #ffffff;        /* Contenedores principales (blanco) */
-  --color-bg-card: #ffffff;        /* Cards (blanco) */
-  --color-bg-sidebar: #4e2d99;     /* Sidebar (primary-900 - púrpura oscuro) */
-  --color-bg-hover-table: #e9e5ff;     /* Sidebar (primary-900 - púrpura oscuro) */
-  --color-bg-header: #ffffff;      /* Header (blanco) */
-  --color-bg-overlay: #000000b3;   /* Overlay para modales */
-  --color-bg-disabled: #f1f5f9;    /* Elementos deshabilitados */
+  --color-bg-app: #fafbfc;         /* Fondo principal de la aplicación */
+  --color-bg-main: #ffffff;        /* Fondo de contenedores principales */
+  --color-bg-card: #ffffff;        /* Fondo de tarjetas y cards */
+  --color-bg-sidebar: #f8f9fb;     /* Fondo de sidebar y navegación lateral */
+  --color-bg-header: #ffffff;      /* Fondo del header principal */
+  --color-bg-overlay: #000000b3;   /* Overlay para modales (negro 70% opacidad) */
+  --color-bg-disabled: #f1f5f9;    /* Fondo para elementos deshabilitados */
 
   /* ============================================
    * BACKGROUNDS DARK MODE
+   * Usado para: Tema oscuro opcional
    * ============================================ */
-  --color-bg-dark-app: #0f1419;    
-  --color-bg-dark-main: #1a202c;   
-  --color-bg-dark-card: #2d3748;   
-  --color-bg-dark-sidebar: #1a1f2e;
+  --color-bg-dark-app: #0f1419;    /* Fondo principal modo oscuro */
+  --color-bg-dark-main: #1a202c;   /* Contenedores principales oscuro */
+  --color-bg-dark-card: #2d3748;   /* Cards en modo oscuro */
+  --color-bg-dark-sidebar: #1a1f2e; /* Sidebar modo oscuro */
 
   /* ============================================
    * TEXTOS - Jerarquía Tipográfica
+   * Usado para: Títulos, párrafos, labels, placeholders
    * ============================================ */
-  --color-text-primary: #1a202c;   /* Títulos principales */
-  --color-text-secondary: #4a5568; /* Texto regular */
-  --color-text-muted: #718096;     /* Texto secundario */
-  --color-text-placeholder: #a0aec0; 
-  --color-text-disabled: #cbd5e0;  
+  --color-text-primary: #1a202c;   /* Títulos principales y texto importante */
+  --color-text-secondary: #4a5568; /* Texto de párrafos y contenido regular */
+  --color-text-muted: #718096;     /* Texto secundario, labels, metadata */
+  --color-text-placeholder: #a0aec0; /* Placeholders de inputs */
+  --color-text-disabled: #cbd5e0;  /* Texto deshabilitado */
   --color-text-white: #ffffff;     /* Texto sobre fondos oscuros */
-  --color-text-inverse: #ffffff;   /* Texto sobre sidebar púrpura */
+  --color-text-inverse: #ffffff;   /* Texto sobre fondos colorados */
 
   /* ============================================
    * ESTADOS DEL SISTEMA - Feedback Visual
+   * Usado para: Alertas, notificaciones, validaciones
    * ============================================ */
-  --color-success: #10b981;        
-  --color-success-light: #d1fae5;  
-  --color-success-dark: #047857;   
+  --color-success: #10b981;        /* Operaciones exitosas, confirmaciones */
+  --color-success-light: #d1fae5;  /* Fondo para alertas de éxito */
+  --color-success-dark: #047857;   /* Texto/íconos de éxito */
 
-  --color-warning: #f59e0b;        
-  --color-warning-light: #fef3c7;  
-  --color-warning-dark: #d97706;   
+  --color-warning: #f59e0b;        /* Advertencias, alertas moderadas */
+  --color-warning-light: #fef3c7;  /* Fondo para alertas de advertencia */
+  --color-warning-dark: #d97706;   /* Texto/íconos de advertencia */
 
-  --color-error: #ef4444;          
-  --color-error-light: #fef2f2;    
-  --color-error-dark: #dc2626;     
+  --color-error: #ef4444;          /* Errores, validaciones fallidas */
+  --color-error-light: #fef2f2;    /* Fondo para alertas de error */
+  --color-error-dark: #dc2626;     /* Texto/íconos de error */
 
-  --color-info: #3b82f6;           
-  --color-info-light: #dbeafe;     
-  --color-info-dark: #1d4ed8;      
+  --color-info: #3b82f6;           /* Información general, tips */
+  --color-info-light: #dbeafe;     /* Fondo para alertas informativas */
+  --color-info-dark: #1d4ed8;      /* Texto/íconos informativos */
 
   /* ============================================
    * BORDERS - Bordes y Divisores
+   * Usado para: Separadores, inputs, cards
    * ============================================ */
-  --color-border-primary: #e5e7eb; /* Bordes principales (gris claro) */
-  --color-border-secondary: #f3f4f6; 
-  --color-border-light: #f9fafb;   
-  --color-border-focus: #8b71ff;   
-  --color-border-error: #ef4444;   
-  --color-border-success: #10b981; 
+  --color-border-primary: #e2e8f0; /* Bordes principales de elementos */
+  --color-border-secondary: #edf2f7; /* Bordes más sutiles */
+  --color-border-light: #f7fafc;   /* Bordes muy sutiles, divisores */
+  --color-border-focus: #8b71ff;   /* Bordes de elementos enfocados */
+  --color-border-error: #ef4444;   /* Bordes de inputs con error */
+  --color-border-success: #10b981; /* Bordes de inputs válidos */
 
   /* ============================================
-   * NAVEGACIÓN - Elementos del Sidebar
-   * IMPORTANTE: Colores sobre fondo púrpura oscuro
+   * NAVEGACIÓN - Elementos Interactivos
+   * Usado para: Menús, enlaces, breadcrumbs
    * ============================================ */
-  --color-nav-item: #e9e5ff;       /* Texto items normales (púrpura claro) */
-  --color-header-item: #1a202c;       /* Texto items normales (púrpura claro) */
-  --color-nav-item-hover: #ffffff; /* Texto en hover (blanco) */
-  --color-nav-item-active: #ffffff; /* Texto item activo (blanco) */
-  --color-nav-item-active-bg: #6d47ff; /* Fondo item activo (primary-700) */
-  --color-nav-item-hover-bg: #5e38cc; /* Fondo hover (primary-800) */
+  --color-nav-item: #4a5568;       /* Items de navegación normales */
+  --color-nav-item-hover: #2d3748; /* Hover en items de navegación */
+  --color-nav-item-active: #8b71ff; /* Item activo en navegación */
+  --color-nav-item-active-bg: #f3f1ff; /* Fondo de item activo */
 
   /* ============================================
    * ACADÉMICO - Colores Específicos del Dominio
+   * Usado para: Calificaciones, asistencia, estados académicos
    * ============================================ */
-  --color-academic-excellent: #10b981; 
-  --color-academic-good: #3b82f6;      
-  --color-academic-regular: #f59e0b;   
-  --color-academic-poor: #ef4444;      
+  --color-academic-excellent: #10b981; /* Notas AD (18-20) */
+  --color-academic-good: #3b82f6;      /* Notas A (14-17) */
+  --color-academic-regular: #f59e0b;   /* Notas B (11-13) */
+  --color-academic-poor: #ef4444;      /* Notas C (0-10) */
 
-  --color-attendance-present: #10b981;    
-  --color-attendance-late: #f59e0b;       
-  --color-attendance-excuse: #3b82f6;     
-  --color-attendance-justified: #8b5cf6;  
-  --color-attendance-unjustified: #ef4444;
+  --color-attendance-present: #10b981;    /* Asistencia presente */
+  --color-attendance-late: #f59e0b;       /* Tardanza */
+  --color-attendance-excuse: #3b82f6;     /* Permiso */
+  --color-attendance-justified: #8b5cf6;  /* Falta justificada */
+  --color-attendance-unjustified: #ef4444; /* Falta injustificada */
 
   /* ============================================
    * SOMBRAS - Depth y Elevación
+   * Usado para: Cards, modales, dropdowns
    * ============================================ */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);      
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);     
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);   
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);   
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);      /* Sombra sutil */
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);     /* Sombra media para cards */
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);   /* Sombra pronunciada */
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);   /* Sombra para modales */
 
   /* ============================================
    * ROLES - Colores por Tipo de Usuario
+   * Usado para: Identificación visual de roles
    * ============================================ */
-  --color-role-padre: #8b71ff;     
-  --color-role-docente: #14b8a6;   
-  --color-role-director: #f97316;  
-  --color-role-admin: #6b7280;     
+  --color-role-padre: #8b71ff;     /* Color identificativo padres */
+  --color-role-docente: #14b8a6;   /* Color identificativo docentes */
+  --color-role-director: #f97316;  /* Color identificativo director */
+  --color-role-admin: #6b7280;     /* Color identificativo administrador */
 }
 
 ```

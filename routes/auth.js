@@ -22,14 +22,14 @@ const {
 const router = Router();
 
 // Rutas públicas con rate limiting
-router.post('/auth/login', loginRateLimiter, login);
-router.post('/auth/forgot-password', forgotPasswordRateLimiter, forgotPassword);
-router.post('/auth/reset-password', resetPasswordRateLimiter, resetPassword);
+router.post('/login', loginRateLimiter, login);
+router.post('/forgot-password', forgotPasswordRateLimiter, forgotPassword);
+router.post('/reset-password', resetPasswordRateLimiter, resetPassword);
 
 // Rutas protegidas
-router.post('/auth/logout', auth, logout);
-router.get('/auth/validate-token', auth, validateToken);
-router.post('/auth/change-required-password', auth, changeRequiredPassword);
-router.get('/auth/parent-context/:user_id', auth, getParentContext);
+router.post('/logout', auth, logout);
+router.get('/validate-token', auth, validateToken);
+router.post('/change-required-password', auth, changeRequiredPassword);
+router.get('/parent-context/:user_id', auth, getParentContext);
 
 module.exports = router;

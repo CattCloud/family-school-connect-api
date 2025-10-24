@@ -8,7 +8,6 @@ const { parentsReadLimiter } = require('../middleware/limiters');
 const {
   getStudentComponentGradesController,
   getStudentComponentAverageController,
-  exportGradesPDFController,
 } = require('../controllers/gradesViewController');
 
 const router = Router();
@@ -31,16 +30,6 @@ router.get(
   validateParentAccess,
   parentsReadLimiter,
   getStudentComponentAverageController
-);
-
-// GET /calificaciones/estudiante/:estudiante_id/export
-router.get(
-  '/calificaciones/estudiante/:estudiante_id/export',
-  auth,
-  authorizeRole(['apoderado']),
-  validateParentAccess,
-  parentsReadLimiter,
-  exportGradesPDFController
 );
 
 module.exports = router;

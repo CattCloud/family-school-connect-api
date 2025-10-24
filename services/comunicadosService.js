@@ -137,15 +137,19 @@ async function crearComunicado(datos, usuario) {
       contenido: datos.contenido_html,
       tipo: datos.tipo,
       publico_objetivo: datos.publico_objetivo,
-      niveles_objetivo: datos.niveles ? JSON.stringify(datos.niveles) : null,
-      grados_objetivo: datos.grados ? JSON.stringify(datos.grados) : null,
-      cursos_objetivo: datos.cursos ? JSON.stringify(datos.cursos) : null,
+      niveles_objetivo: datos.niveles || [],
+      grados_objetivo: datos.grados || [],
+      cursos_objetivo: datos.cursos || [],
       fecha_creacion: new Date(),
       fecha_publicacion: fechaPublicacion,
       fecha_programada: fechaProgramada,
       estado: fechaProgramada ? 'programado' : estado,
       editado: false,
-      autor_id: usuario.id,
+      autor: {
+        connect: {
+          id: usuario.id
+        }
+      },
       año_academico: 2025
     }
   });
@@ -503,13 +507,17 @@ async function guardarBorrador(datos, usuario) {
       contenido: datos.contenido_html,
       tipo: datos.tipo,
       publico_objetivo: datos.publico_objetivo,
-      niveles_objetivo: datos.niveles ? JSON.stringify(datos.niveles) : null,
-      grados_objetivo: datos.grados ? JSON.stringify(datos.grados) : null,
-      cursos_objetivo: datos.cursos ? JSON.stringify(datos.cursos) : null,
+      niveles_objetivo: datos.niveles || [],
+      grados_objetivo: datos.grados || [],
+      cursos_objetivo: datos.cursos || [],
       fecha_creacion: new Date(),
       estado: 'borrador',
       editado: false,
-      autor_id: usuario.id,
+      autor: {
+        connect: {
+          id: usuario.id
+        }
+      },
       año_academico: 2025
     }
   });
@@ -778,6 +786,433 @@ async function validarSegmentacion(segmentacion, usuario) {
   }
 }
 
+// ========================================
+// FUNCIONES AUXILIARES PARA CONTROLADOR
+// ========================================
+
+/**
+ * Generar preview del contenido (máximo 120 caracteres)
+ */
+function generarPreviewContenido(contenido) {
+  if (!contenido) return '';
+  
+  // Eliminar etiquetas HTML
+  const contenidoSinHTML = contenido.replace(/<[^>]*>/g, '');
+  
+  // Truncar a 120 caracteres
+  if (contenidoSinHTML.length <= 120) {
+    return contenidoSinHTML;
+  }
+  
+  return contenidoSinHTML.substring(0, 120) + '...';
+}
+
+/**
+ * Formatear fecha de forma legible
+ */
+function formatearFechaLegible(fecha) {
+  if (!fecha) return '';
+  
+  const fechaObj = new Date(fecha);
+  const opciones = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  };
+  
+  return fechaObj.toLocaleDateString('es-ES', opciones);
+}
+
+/**
+ * Formatear fecha relativa (hace X tiempo)
+ */
+function formatearFechaRelativa(fecha) {
+  if (!fecha) return '';
+  
+  const fechaObj = new Date(fecha);
+  const ahora = new Date();
+  const diferenciaMilisegundos = ahora - fechaObj;
+  const diferenciaSegundos = Math.floor(diferenciaMilisegundos / 1000);
+  const diferenciaMinutos = Math.floor(diferenciaSegundos / 60);
+  const diferenciaHoras = Math.floor(diferenciaMinutos / 60);
+  const diferenciaDias = Math.floor(diferenciaHoras / 24);
+  
+  if (diferenciaDias > 0) {
+    return `Hace ${diferenciaDias} día${diferenciaDias > 1 ? 's' : ''}`;
+  }
+  
+  if (diferenciaHoras > 0) {
+    return `Hace ${diferenciaHoras} hora${diferenciaHoras > 1 ? 's' : ''}`;
+  }
+  
+  if (diferenciaMinutos > 0) {
+    return `Hace ${diferenciaMinutos} minuto${diferenciaMinutos > 1 ? 's' : ''}`;
+  }
+  
+  return 'Ahora mismo';
+}
+
+/**
+ * Generar texto legible de destinatarios
+ */
+function generarTextoDestinatarios(comunicado) {
+  if (!comunicado) return '';
+  
+  const { publico_objetivo, niveles_objetivo, grados_objetivo, cursos_objetivo } = comunicado;
+  
+  // Si está dirigido a todos
+  if (publico_objetivo && publico_objetivo.includes('todos')) {
+    return 'Todos los usuarios';
+  }
+  
+  let texto = '';
+  const partes = [];
+  
+  // Público objetivo
+  if (publico_objetivo && publico_objetivo.length > 0) {
+    if (publico_objetivo.includes('padres')) {
+      partes.push('Padres');
+    }
+    if (publico_objetivo.includes('docentes')) {
+      partes.push('Docentes');
+    }
+  }
+  
+  // Niveles
+  if (niveles_objetivo && niveles_objetivo.length > 0) {
+    partes.push(`Niveles: ${niveles_objetivo.join(', ')}`);
+  }
+  
+  // Grados
+  if (grados_objetivo && grados_objetivo.length > 0) {
+    partes.push(`Grados: ${grados_objetivo.join(', ')}`);
+  }
+  
+  // Cursos
+  if (cursos_objetivo && cursos_objetivo.length > 0) {
+    partes.push(`Cursos: ${cursos_objetivo.join(', ')}`);
+  }
+  
+  texto = partes.join(' | ');
+  
+  return texto || 'Sin destinatarios específicos';
+}
+
+/**
+ * Generar texto legible de destinatarios para segmentación
+ */
+function generarTextoDestinatariosSegmentacion(segmentacion, destinatarios) {
+  if (!segmentacion || !destinatarios) return '';
+  
+  const { publico_objetivo } = segmentacion;
+  const { total } = destinatarios;
+  
+  // Si está dirigido a todos
+  if (publico_objetivo && publico_objetivo.includes('todos')) {
+    return `${total} usuarios de toda la institución`;
+  }
+  
+  let texto = '';
+  const partes = [];
+  
+  // Público objetivo
+  if (publico_objetivo && publico_objetivo.length > 0) {
+    if (publico_objetivo.includes('padres')) {
+      partes.push(`${destinatarios.padres} padres`);
+    }
+    if (publico_objetivo.includes('docentes')) {
+      partes.push(`${destinatarios.docentes} docentes`);
+    }
+  }
+  
+  texto = partes.join(' y ');
+  
+  if (segmentacion.niveles && segmentacion.niveles.length > 0) {
+    texto += ` de los niveles ${segmentacion.niveles.join(', ')}`;
+  }
+  
+  if (segmentacion.grados && segmentacion.grados.length > 0) {
+    texto += ` de los grados ${segmentacion.grados.join(', ')}`;
+  }
+  
+  return texto || `${total} destinatarios`;
+}
+
+/**
+ * Resaltar término en texto
+ */
+function resaltarTermino(texto, termino) {
+  if (!texto || !termino) return texto;
+  
+  // Crear expresión regular para resaltar el término (case insensitive)
+  const regex = new RegExp(`(${termino})`, 'gi');
+  
+  // Reemplazar con marcador de resaltado
+  return texto.replace(regex, '<mark>$1</mark>');
+}
+
+/**
+ * Obtener comunicados visibles para un usuario
+ */
+async function obtenerComunicadosVisibles(usuario) {
+  let where = {
+    estado: 'publicado',
+    fecha_publicacion: { lte: new Date() }
+  };
+
+  // Aplicar segmentación automática según rol
+  if (usuario.rol === 'padre') {
+    // Obtener hijos del padre
+    const estudiantes = await prisma.relacionesFamiliares.findMany({
+      where: {
+        apoderado_id: usuario.id,
+        estado_activo: true,
+        año_academico: 2025
+      },
+      include: {
+        estudiante: {
+          include: {
+            nivel_grado: true
+          }
+        }
+      }
+    });
+
+    const nivelesHijos = [...new Set(estudiantes.map(e => e.estudiante.nivel_grado.nivel))];
+    const gradosHijos = [...new Set(estudiantes.map(e => e.estudiante.nivel_grado.grado))];
+
+    where.AND = [
+      {
+        OR: [
+          { publico_objetivo: { has: 'todos' } },
+          {
+            AND: [
+              { publico_objetivo: { has: 'padres' } },
+              {
+                OR: [
+                  { niveles_objetivo: { hasSome: nivelesHijos } },
+                  { grados_objetivo: { hasSome: gradosHijos } }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ];
+  } else if (usuario.rol === 'docente') {
+    where.AND = [
+      {
+        OR: [
+          { autor_id: usuario.id },
+          { publico_objetivo: { has: 'todos' } },
+          { publico_objetivo: { has: 'docentes' } }
+        ]
+      }
+    ];
+  }
+  // Director: sin filtros adicionales
+
+  const comunicados = await prisma.comunicado.findMany({
+    where,
+    select: {
+      id: true,
+      titulo: true,
+      tipo: true,
+      contenido: true,
+      fecha_publicacion: true,
+      autor_id: true,
+      publico_objetivo: true,
+      niveles_objetivo: true,
+      grados_objetivo: true,
+      cursos_objetivo: true
+    }
+  });
+
+  return comunicados;
+}
+
+/**
+ * Validar acceso a comunicado
+ */
+async function validarAccesoComunicado(usuario, comunicado) {
+  if (usuario.rol === 'director') {
+    return true;
+  }
+
+  if (usuario.rol === 'padre') {
+    // Obtener hijos del padre
+    const estudiantes = await prisma.relacionesFamiliares.findMany({
+      where: {
+        apoderado_id: usuario.id,
+        estado_activo: true,
+        año_academico: 2025
+      },
+      include: {
+        estudiante: {
+          include: {
+            nivel_grado: true
+          }
+        }
+      }
+    });
+
+    const nivelesHijos = [...new Set(estudiantes.map(e => e.estudiante.nivel_grado.nivel))];
+    const gradosHijos = [...new Set(estudiantes.map(e => e.estudiante.nivel_grado.grado))];
+
+    // Verificar si el comunicado está dirigido al grado/nivel de sus hijos
+    return (
+      comunicado.publico_objetivo.includes('todos') ||
+      (
+        comunicado.publico_objetivo.includes('padres') &&
+        (
+          comunicado.niveles_objetivo.some(n => nivelesHijos.includes(n)) ||
+          comunicado.grados_objetivo.some(g => gradosHijos.includes(g))
+        )
+      )
+    );
+  }
+
+  if (usuario.rol === 'docente') {
+    // Verificar que el comunicado sea institucional o propio
+    return (
+      comunicado.autor_id === usuario.id ||
+      comunicado.publico_objetivo.includes('todos') ||
+      comunicado.publico_objetivo.includes('docentes')
+    );
+  }
+
+  return false;
+}
+
+/**
+ * Contar comunicados no leídos
+ */
+async function contarNoLeidos(usuario) {
+  // Obtener comunicados visibles para el usuario
+  const comunicadosVisibles = await obtenerComunicadosVisibles(usuario);
+
+  // Obtener comunicados ya leídos
+  const comunicadosLeidos = await prisma.comunicadoLectura.findMany({
+    where: {
+      usuario_id: usuario.id,
+      comunicado_id: { in: comunicadosVisibles.map(c => c.id) }
+    },
+    select: { comunicado_id: true }
+  });
+
+  const comunicadosLeidosIds = comunicadosLeidos.map(cl => cl.comunicado_id);
+  const noLeidos = comunicadosVisibles.filter(c => !comunicadosLeidosIds.includes(c.id));
+
+  return noLeidos.length;
+}
+
+/**
+ * Calcular total de destinatarios
+ */
+async function calcularTotalDestinatarios(comunicado) {
+  const segmentacion = {
+    publico_objetivo: comunicado.publico_objetivo,
+    niveles: comunicado.niveles_objetivo,
+    grados: comunicado.grados_objetivo,
+    cursos: comunicado.cursos_objetivo,
+    todos: comunicado.publico_objetivo.includes('todos')
+  };
+
+  const destinatarios = await calcularDestinatarios(segmentacion, { rol: 'director' });
+  return destinatarios.total_estimado;
+}
+
+/**
+ * Generar notificaciones para un comunicado
+ */
+async function generarNotificaciones(comunicado, autor) {
+  try {
+    // Obtener destinatarios
+    const segmentacion = {
+      publico_objetivo: comunicado.publico_objetivo,
+      niveles: comunicado.niveles_objetivo,
+      grados: comunicado.grados_objetivo,
+      cursos: comunicado.cursos_objetivo,
+      todos: comunicado.publico_objetivo.includes('todos')
+    };
+
+    const destinatarios = await calcularDestinatarios(segmentacion, autor);
+    
+    // Obtener IDs de usuarios destinatarios
+    const usuariosDestinatarios = await obtenerUsuariosDestinatarios(segmentacion);
+    
+    // Crear notificaciones en lote
+    const notificacionesData = usuariosDestinatarios.map(usuarioId => ({
+      usuario_id: usuarioId,
+      tipo: 'comunicado',
+      titulo: `Nuevo comunicado: ${comunicado.tipo}`,
+      contenido: generarPreviewContenido(comunicado.contenido),
+      canal: 'ambos',
+      estado_plataforma: 'pendiente',
+      fecha_creacion: new Date(),
+      url_destino: `/dashboard/comunicados/${comunicado.id}`,
+      referencia_id: comunicado.id,
+      año_academico: 2025,
+      datos_adicionales: {
+        tipo_comunicado: comunicado.tipo,
+        autor: `${autor.nombre} ${autor.apellido}`
+      }
+    }));
+
+    // Insertar notificaciones en lote
+    if (notificacionesData.length > 0) {
+      await prisma.notificacion.createMany({
+        data: notificacionesData
+      });
+      
+      console.log(`Se generaron ${notificacionesData.length} notificaciones para el comunicado ${comunicado.id}`);
+    }
+    
+    return notificacionesData.length;
+  } catch (error) {
+    console.error('Error al generar notificaciones:', error);
+    throw error;
+  }
+}
+
+/**
+ * Obtener IDs de usuarios destinatarios
+ */
+async function obtenerUsuariosDestinatarios(segmentacion) {
+  const usuariosIds = [];
+  
+  // Padres
+  if (segmentacion.publico_objetivo.includes('padres') || segmentacion.todos) {
+    const padres = await prisma.usuario.findMany({
+      where: {
+        rol: 'apoderado',
+        estado_activo: true
+      },
+      select: { id: true }
+    });
+    
+    usuariosIds.push(...padres.map(p => p.id));
+  }
+  
+  // Docentes
+  if (segmentacion.publico_objetivo.includes('docentes') || segmentacion.todos) {
+    const docentes = await prisma.usuario.findMany({
+      where: {
+        rol: 'docente',
+        estado_activo: true
+      },
+      select: { id: true }
+    });
+    
+    usuariosIds.push(...docentes.map(d => d.id));
+  }
+  
+  // Eliminar duplicados
+  return [...new Set(usuariosIds)];
+}
+
 module.exports = {
   crearComunicado,
   obtenerTodosLosCursos,
@@ -792,5 +1227,18 @@ module.exports = {
   listarComunicadosProgramados,
   cancelarProgramacion,
   validarHTML,
-  validarSegmentacion
+  validarSegmentacion,
+  // Funciones auxiliares
+  generarPreviewContenido,
+  formatearFechaLegible,
+  formatearFechaRelativa,
+  generarTextoDestinatarios,
+  generarTextoDestinatariosSegmentacion,
+  resaltarTermino,
+  obtenerComunicadosVisibles,
+  validarAccesoComunicado,
+  contarNoLeidos,
+  calcularTotalDestinatarios,
+  generarNotificaciones,
+  obtenerUsuariosDestinatarios
 };

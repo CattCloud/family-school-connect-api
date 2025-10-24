@@ -15,11 +15,11 @@ const {
 
 const router = Router();
  
-// Alias Semana 5: ver estructura actual por año (Docente/Director/Apoderado)
+// Alias Semana 5: ver estructura actual por año (Docente/Director)
 router.get(
   '/estructura-evaluacion',
   auth,
-  authorizeRole(['docente', 'director', 'apoderado']),
+  authorizeRole(['docente', 'director']),
   getEvaluationStructure
 );
 

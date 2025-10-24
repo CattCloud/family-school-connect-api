@@ -116,14 +116,26 @@ const messagingSendLimiter = rateLimit({
   message: msg('RATE_LIMIT_EXCEEDED', 'Límite de envío de mensajes alcanzado. Intente en 1 minuto'),
 });
 
-// Comunicados: creación/publicación - 10 solicitudes por 15 minutos
+// Comunicados: creación/edición/publicación (docentes/directores)
+// 10 comunicados por hora por usuario/IP para prevenir spam
 const comunicadosLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
+  windowMs: 60 * 60 * 1000, // 1 hora
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: userOrIpKey,
-  message: msg('RATE_LIMIT_EXCEEDED', 'Límite de creación de comunicados alcanzado. Intente más tarde'),
+  message: msg('RATE_LIMIT_EXCEEDED', 'Límite de creación de comunicados alcanzado. Intente en 1 hora'),
+});
+
+// Comunicados: lectura/consulta (todos los roles)
+// 60 consultas por minuto por usuario/IP para lectura normal
+const comunicadosReadLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 min
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: userOrIpKey,
+  message: msg('RATE_LIMIT_EXCEEDED', 'Límite de consultas de comunicados alcanzado. Intente en 1 minuto'),
 });
 
 module.exports = {
@@ -138,4 +150,5 @@ module.exports = {
   messagingCreateLimiter,
   messagingSendLimiter,
   comunicadosLimiter,
+  comunicadosReadLimiter,
 };
