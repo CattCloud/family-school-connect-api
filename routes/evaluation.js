@@ -15,25 +15,17 @@ const {
 
 const router = Router();
  
-// Alias Semana 5: ver estructura actual por año (Docente/Director)
+// Estructura de evaluación: ver estructura actual por año (Docente/Director)
 router.get(
-  '/estructura-evaluacion',
+  '/',
   auth,
   authorizeRole(['docente', 'director']),
   getEvaluationStructure
 );
 
-// Director: ver estructura actual por año
-router.get(
-  '/evaluation-structure',
-  auth,
-  authorizeRole(['director']),
-  getEvaluationStructure
-);
-
 // Director: crear/actualizar estructura (bloquea para el año)
 router.put(
-  '/evaluation-structure',
+  '/',
   auth,
   authorizeRole(['director']),
   putEvaluationStructure
@@ -41,7 +33,7 @@ router.put(
 
 // Director: historial de configuraciones
 router.get(
-  '/evaluation-structure/history',
+  '/history',
   auth,
   authorizeRole(['director']),
   getEvaluationHistory
@@ -49,7 +41,7 @@ router.get(
 
 // Director: plantillas predefinidas
 router.get(
-  '/evaluation-structure/templates',
+  '/templates',
   auth,
   authorizeRole(['director']),
   getEvaluationTemplates
@@ -57,7 +49,7 @@ router.get(
 
 // Director: previsualizar impacto de pesos
 router.get(
-  '/evaluation-structure/preview',
+  '/preview',
   auth,
   authorizeRole(['director']),
   getEvaluationPreview

@@ -18,21 +18,21 @@ const router = Router();
 // - Director: obtiene listado paginado de todos los docentes
 // - Docente: obtiene únicamente sus propios permisos (controlado en el controlador)
 router.get(
-  '/teachers/permissions',
+  '/permissions',
   auth,
   authorizeRole(['director', 'docente']),
   getTeachersPermissions
 );
 
 router.patch(
-  '/teachers/:docente_id/permissions',
+  '/:docente_id/permissions',
   auth,
   authorizeRole(['director']),
   patchTeacherPermission
 );
 
 router.get(
-  '/teachers/:docente_id/permissions/history',
+  '/:docente_id/permissions/history',
   auth,
   authorizeRole(['director']),
   getTeacherPermissionHistory

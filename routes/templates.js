@@ -28,7 +28,7 @@ const router = Router();
 
 // Tipos de plantillas disponibles
 router.get(
-  '/plantillas/tipos',
+  '/tipos',
   auth,
   authorizeRole(['docente', 'director']),
   getTemplatesTypesController
@@ -36,7 +36,7 @@ router.get(
 
 // Generar plantilla de calificaciones
 router.post(
-  '/plantillas/calificaciones',
+  '/calificaciones',
   auth,
   authorizeRole(['docente', 'director']),
   templatesLimiter,
@@ -45,7 +45,7 @@ router.post(
 
 // Generar plantilla de asistencia
 router.post(
-  '/plantillas/asistencia',
+  '/asistencia',
   auth,
   authorizeRole(['docente', 'director']),
   templatesLimiter,
@@ -54,7 +54,7 @@ router.post(
 
 // Guía (texto)
 router.get(
-  '/plantillas/guias/:tipo',
+  '/guias/:tipo',
   auth,
   authorizeRole(['docente', 'director']),
   getTemplatesGuideController
@@ -62,7 +62,7 @@ router.get(
 
 // Guía (PDF simulado)
 router.get(
-  '/plantillas/guias/:tipo/pdf',
+  '/guias/:tipo/pdf',
   auth,
   authorizeRole(['docente', 'director']),
   getTemplatesGuidePdfController

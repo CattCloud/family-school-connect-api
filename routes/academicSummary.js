@@ -8,6 +8,8 @@ const { parentsReadLimiter } = require('../middleware/limiters');
 const {
   getAcademicSummaryController,
   exportAcademicSummaryController,
+  getStudentTrimestreAveragesController,
+  getStudentAnnualAveragesController,
 } = require('../controllers/academicSummaryController');
 
 const router = Router();
@@ -30,7 +32,7 @@ const router = Router();
 
 // GET /resumen-academico/estudiante/:estudiante_id
 router.get(
-  '/resumen-academico/estudiante/:estudiante_id',
+  '/estudiante/:estudiante_id',
   auth,
   authorizeRole(['apoderado']),
   validateParentAccess,
@@ -40,12 +42,32 @@ router.get(
 
 // GET /resumen-academico/estudiante/:estudiante_id/export
 router.get(
-  '/resumen-academico/estudiante/:estudiante_id/export',
+  '/estudiante/:estudiante_id/export',
   auth,
   authorizeRole(['apoderado']),
   validateParentAccess,
   parentsReadLimiter,
   exportAcademicSummaryController
+);
+
+// GET /resumen-academico/estudiante/:estudiante_id/promedios-trimestre
+router.get(
+  '/estudiante/:estudiante_id/promedios-trimestre',
+  auth,
+  authorizeRole(['apoderado']),
+  validateParentAccess,
+  parentsReadLimiter,
+  getStudentTrimestreAveragesController
+);
+
+// GET /resumen-academico/estudiante/:estudiante_id/promedios-anuales
+router.get(
+  '/estudiante/:estudiante_id/promedios-anuales',
+  auth,
+  authorizeRole(['apoderado']),
+  validateParentAccess,
+  parentsReadLimiter,
+  getStudentAnnualAveragesController
 );
 
 module.exports = router;

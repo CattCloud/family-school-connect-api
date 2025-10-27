@@ -29,7 +29,7 @@ const router = Router();
 
 // GET /asistencias/estudiante/:estudiante_id
 router.get(
-  '/asistencias/estudiante/:estudiante_id',
+  '/:estudiante_id',
   auth,
   authorizeRole(['apoderado']),
   validateParentAccess,
@@ -40,7 +40,7 @@ router.get(
 
 // GET /asistencias/estudiante/:estudiante_id/estadisticas
 router.get(
-  '/asistencias/estudiante/:estudiante_id/estadisticas',
+  '/:estudiante_id/estadisticas',
   auth,
   authorizeRole(['apoderado']),
   validateParentAccess,
@@ -50,7 +50,7 @@ router.get(
 
 // GET /asistencias/estudiante/:estudiante_id/export
 router.get(
-  '/asistencias/estudiante/:estudiante_id/export',
+  '/:estudiante_id/export',
   auth,
   authorizeRole(['apoderado']),
   validateParentAccess,

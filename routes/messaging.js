@@ -29,7 +29,7 @@ const router = Router();
 // Bandeja de mensajería (HU-MSG-00)
 // GET /conversaciones
 router.get(
-  '/conversaciones',
+  '/',
   auth,
   authorizeRole(['apoderado', 'docente']),
   messagingReadLimiter,
@@ -38,7 +38,7 @@ router.get(
 
 // GET /conversaciones/no-leidas/count
 router.get(
-  '/conversaciones/no-leidas/count',
+  '/no-leidas/count',
   auth,
   authorizeRole(['apoderado', 'docente']),
   messagingReadLimiter,
@@ -47,7 +47,7 @@ router.get(
 
 // GET /conversaciones/actualizaciones?ultimo_check=ISO
 router.get(
-  '/conversaciones/actualizaciones',
+  '/actualizaciones',
   auth,
   authorizeRole(['apoderado', 'docente']),
   messagingReadLimiter,
@@ -56,7 +56,7 @@ router.get(
 
 // PATCH /conversaciones/:id/marcar-leida
 router.patch(
-  '/conversaciones/:id/marcar-leida',
+  '/:id/marcar-leida',
   auth,
   authorizeRole(['apoderado', 'docente']),
   markConversationReadController
@@ -64,7 +64,7 @@ router.patch(
 
 // PATCH /conversaciones/:id/cerrar
 router.patch(
-  '/conversaciones/:id/cerrar',
+  '/:id/cerrar',
   auth,
   authorizeRole(['apoderado', 'docente']),
   closeConversationController
@@ -74,7 +74,7 @@ router.patch(
 
 // GET /conversaciones/existe
 router.get(
-  '/conversaciones/existe',
+  '/existe',
   auth,
   authorizeRole(['apoderado']),
   checkConversationExistsController
@@ -82,7 +82,7 @@ router.get(
 
 // POST /conversaciones (multipart/form-data)
 router.post(
-  '/conversaciones',
+  '/',
   auth,
   authorizeRole(['apoderado']),
   messagingCreateLimiter,
@@ -96,7 +96,7 @@ router.post(
 
 // GET /conversaciones/:id
 router.get(
-  '/conversaciones/:id',
+  '/:id',
   auth,
   authorizeRole(['apoderado', 'docente']),
   messagingReadLimiter,
@@ -105,7 +105,7 @@ router.get(
 
 // GET /mensajes?conversacion_id=&limit=&offset=&orden=
 router.get(
-  '/mensajes',
+  '/',
   auth,
   authorizeRole(['apoderado', 'docente']),
   messagingReadLimiter,
@@ -114,7 +114,7 @@ router.get(
 
 // POST /mensajes (multipart/form-data)
 router.post(
-  '/mensajes',
+  '/',
   auth,
   authorizeRole(['apoderado', 'docente']),
   messagingSendLimiter,
@@ -124,7 +124,7 @@ router.post(
 
 // PATCH /mensajes/marcar-leidos
 router.patch(
-  '/mensajes/marcar-leidos',
+  '/marcar-leidos',
   auth,
   authorizeRole(['apoderado', 'docente']),
   markMessagesBatchReadController
@@ -132,7 +132,7 @@ router.patch(
 
 // GET /mensajes/nuevos?conversacion_id=&ultimo_mensaje_id=
 router.get(
-  '/mensajes/nuevos',
+  '/nuevos',
   auth,
   authorizeRole(['apoderado', 'docente']),
   messagingReadLimiter,
@@ -141,7 +141,7 @@ router.get(
 
 // GET /archivos/:id/download
 router.get(
-  '/archivos/:id/download',
+  '/:id/download',
   auth,
   authorizeRole(['apoderado', 'docente']),
   downloadAttachmentController

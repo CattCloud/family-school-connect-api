@@ -124,7 +124,7 @@ function mapAttendanceRecord(a) {
   const diaSemana = new Intl.DateTimeFormat('es-PE', { weekday: 'long', timeZone: 'UTC' }).format(
     new Date(a.fecha.toISOString().slice(0, 10) + 'T00:00:00Z')
   );
-  const regNombre = `${a.registrado?.nombre || ''} ${a.registrado?.apellido || ''}`.trim();
+  const regNombre = `${a.registrante?.nombre || ''} ${a.registrante?.apellido || ''}`.trim();
   return {
     id: a.id,
     fecha: a.fecha.toISOString().slice(0, 10),
@@ -198,7 +198,7 @@ async function getAttendanceByPeriod({ estudiante_id, año, mes, trimestre }) {
       fecha: { gte: start, lte: end },
     },
     include: {
-      registrado: { select: { nombre: true, apellido: true } },
+      registrante: { select: { nombre: true, apellido: true } },
     },
     orderBy: [{ fecha: 'asc' }],
   });

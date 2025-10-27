@@ -88,6 +88,15 @@ model Usuario {
   encuestasCreadas         Encuesta[]
   respuestasEncuestas       RespuestaEncuesta[]
   notificacionesUsuario     Notificacion[]
+  
+  // Nuevas relaciones para módulo académico
+  evaluacionesRegistradas Evaluacion[] @relation("Registrante")
+  asistenciasRegistradas Asistencia[] @relation("RegistranteAsistencia")
+  
+  // Nuevas relaciones para módulo de mensajería
+  conversacionesPadre       Conversacion[] @relation("PadreConversacion")
+  conversacionesDocente      Conversacion[] @relation("DocenteConversacion")
+  mensajesEnviados         Mensaje[] @relation("EmisorMensaje")
 
   @@unique([tipo_documento, nro_documento], name: "usuarios_documento_unique")
   @@map("usuarios")
@@ -161,6 +170,7 @@ model NivelGrado {
   cursos        Curso[]
   asignaciones  AsignacionDocenteCurso[]
   estudiantes   Estudiante[]
+  calendarioEventos CalendarioAcademico[]
 
   @@unique([nivel, grado])
   @@map("nivel_grado")
@@ -177,6 +187,13 @@ model Curso {
   estado_activo   Boolean    @default(true)
 
   asignaciones    AsignacionDocenteCurso[]
+  
+  // Nuevas relaciones para módulo académico
+  evaluaciones Evaluacion[]
+  asistencias Asistencia[]
+  
+  // Nuevas relaciones para módulo de mensajería
+  conversaciones Conversacion[]
 
   @@map("cursos")
 }
@@ -210,6 +227,8 @@ model EstructuraEvaluacion {
   fecha_configuracion DateTime  @default(now())
   bloqueada           Boolean   @default(true)
 
+  evaluaciones Evaluacion[]
+
   @@index([año_academico, estado_activo])
   @@map("estructura_evaluacion")
 }
@@ -228,6 +247,13 @@ model Estudiante {
   relacionesFamiliares RelacionesFamiliares[]
   respuestasEncuestas       RespuestaEncuesta[]
   notificacionesEstudiante  Notificacion[]
+  
+  // Nuevas relaciones para módulo académico
+  evaluaciones Evaluacion[]
+  asistencias Asistencia[]
+  
+  // Nuevas relaciones para módulo de mensajería
+  conversaciones Conversacion[]
 
   @@index([nivel_grado_id, año_academico])
   @@map("estudiantes")
@@ -381,4 +407,126 @@ model Notificacion {
   encuesta                 Encuesta?  @relation(fields: [encuesta_id], references: [id])
 
   @@map("notificaciones")
+}
+
+/// Tabla: evaluaciones
+model Evaluacion {
+  id                        String    @id @default(uuid()) @db.Uuid
+  estudiante_id             String    @db.Uuid
+  estudiante                Estudiante @relation(fields: [estudiante_id], references: [id])
+  curso_id                  String    @db.Uuid
+  curso                     Curso     @relation(fields: [curso_id], references: [id])
+  estructura_evaluacion_id  String    @db.Uuid
+  estructura_evaluacion     EstructuraEvaluacion @relation(fields: [estructura_evaluacion_id], references: [id])
+  trimestre                 Int
+  año_academico              Int
+  fecha_evaluacion           DateTime
+  calificacion_numerica     Decimal   @db.Decimal(5, 2)
+  calificacion_letra        String
+  observaciones             String?
+  estado                    String     @default("preliminar") // "preliminar" | "final"
+  registrado_por             String    @db.Uuid
+  registrante               Usuario    @relation("Registrante", fields: [registrado_por], references: [id])
+  fecha_registro            DateTime  @default(now())
+
+  @@index([estudiante_id, año_academico, trimestre, curso_id, estructura_evaluacion_id])
+  @@map("evaluaciones")
+}
+
+/// Tabla: asistencias
+model Asistencia {
+  id              String    @id @default(uuid()) @db.Uuid
+  estudiante_id   String    @db.Uuid
+  estudiante      Estudiante @relation(fields: [estudiante_id], references: [id])
+  curso_id        String    @db.Uuid
+  curso           Curso     @relation(fields: [curso_id], references: [id])
+  fecha           DateTime
+  estado          String    // "presente", "tardanza", "permiso", "falta_justificada", "falta_injustificada"
+  hora_llegada   String?   // Hora de llegada para tardanzas
+  justificacion   String?   // Motivo de ausencia o permiso
+  año_academico   Int       // Año lectivo
+  tipo_asistencia String    // "asistencia", "tardanza", "falta", "falta_justificada"
+  observaciones   String?
+  registrado_por  String    @db.Uuid
+  registrante     Usuario   @relation("RegistranteAsistencia", fields: [registrado_por], references: [id])
+  fecha_registro  DateTime  @default(now())
+
+  @@unique([estudiante_id, curso_id, fecha])
+  @@map("asistencias")
+}
+
+/// Tabla: calendario_academico
+model CalendarioAcademico {
+  id          String    @id @default(uuid()) @db.Uuid
+  fecha       DateTime
+  tipo_evento String    // "no_lectivo", "feriado", "evaluacion", "evento"
+  descripcion String
+  nivel_grado_id String? @db.Uuid
+  nivel_grado  NivelGrado? @relation(fields: [nivel_grado_id], references: [id])
+  año_academico Int
+  estado_activo Boolean   @default(true)
+
+  @@unique([fecha, nivel_grado_id])
+  @@map("calendario_academico")
+}
+
+/// Tabla: conversaciones
+model Conversacion {
+  id                    String    @id @default(uuid()) @db.Uuid
+  estudiante_id         String    @db.Uuid
+  estudiante            Estudiante @relation(fields: [estudiante_id], references: [id])
+  curso_id              String    @db.Uuid
+  curso                 Curso     @relation(fields: [curso_id], references: [id])
+  padre_id              String    @db.Uuid
+  padre                 Usuario   @relation("PadreConversacion", fields: [padre_id], references: [id])
+  docente_id            String    @db.Uuid
+  docente               Usuario   @relation("DocenteConversacion", fields: [docente_id], references: [id])
+  asunto                String    @db.VarChar(200)
+  estado                 String    @default("activa") // "activa", "cerrada"
+  fecha_inicio           DateTime  @default(now())
+  fecha_ultimo_mensaje  DateTime  @default(now())
+  año_academico         Int
+  tipo_conversacion     String    @default("padre_docente")
+  creado_por            String    @db.Uuid
+  
+  // Relaciones
+  mensajes              Mensaje[]
+  
+  @@map("conversaciones")
+}
+
+/// Tabla: mensajes
+model Mensaje {
+  id                String    @id @default(uuid()) @db.Uuid
+  conversacion_id   String    @db.Uuid
+  conversacion      Conversacion @relation(fields: [conversacion_id], references: [id])
+  emisor_id        String    @db.Uuid
+  emisor           Usuario   @relation("EmisorMensaje", fields: [emisor_id], references: [id])
+  contenido         String    @db.Text
+  fecha_envio      DateTime  @default(now())
+  estado_lectura   String    @default("enviado") // "enviado", "leido"
+  fecha_lectura    DateTime?
+  tiene_adjuntos    Boolean   @default(false)
+  
+  // Relaciones
+  archivos          ArchivoAdjunto[]
+  
+  @@map("mensajes")
+}
+
+/// Tabla: archivos_adjuntos
+model ArchivoAdjunto {
+  id                String    @id @default(uuid()) @db.Uuid
+  mensaje_id        String    @db.Uuid
+  mensaje           Mensaje    @relation(fields: [mensaje_id], references: [id])
+  nombre_original    String    @db.VarChar(255)
+  nombre_archivo    String    @db.VarChar(255)
+  url_cloudinary    String
+  tipo_mime         String    @db.VarChar(100)
+  tamaño_bytes      Int
+  es_imagen         Boolean   @default(false)
+  fecha_subida      DateTime  @default(now())
+  subido_por        String    @db.Uuid
+  
+  @@map("archivos_adjuntos")
 }

@@ -548,9 +548,212 @@ startxref
   }
 }
 
+/**
+ * Obtiene promedios trimestrales de todos los cursos del estudiante
+ * Endpoint: GET /resumen-academico/estudiante/{id}/promedios-trimestre
+ */
+async function getStudentTrimestreAverages({ estudiante_id, año }) {
+  if (!estudiante_id || !año) {
+    throw httpError('INVALID_PARAMETERS', 'estudiante_id y año son requeridos', 400);
+  }
+
+  const estudiante = await getEstudianteInfo(estudiante_id);
+  const componentes = await getComponentesActivos(año);
+
+  // cursos con evaluaciones en cualquier trimestre del año
+  const cursosIds = await getCursosConEvaluaciones({ estudiante_id, año, trimestre: null });
+
+  if (cursosIds.length === 0) {
+    throw httpError('NO_GRADES_FOUND', `No hay calificaciones registradas para el año ${año}`, 404);
+  }
+
+  // Construcción de promedios por trimestre para cada curso
+  const promedios_trimestre = await Promise.all(
+    cursosIds.map(async (cid) => {
+      const curso = await getCursoInfo(cid);
+      
+      // Calcular promedios para cada trimestre
+      const [t1, t2, t3] = await Promise.all([
+        computeCourseTrimAverage({
+          estudiante_id,
+          curso_id: cid,
+          año,
+          trimestre: 1,
+          componentes,
+        }),
+        computeCourseTrimAverage({
+          estudiante_id,
+          curso_id: cid,
+          año,
+          trimestre: 2,
+          componentes,
+        }),
+        computeCourseTrimAverage({
+          estudiante_id,
+          curso_id: cid,
+          año,
+          trimestre: 3,
+          componentes,
+        }),
+      ]);
+
+      return {
+        curso_id: cid,
+        curso_nombre: curso?.nombre || 'Curso',
+        trimestre_1: t1 != null ? t1 : null,
+        trimestre_2: t2 != null ? t2 : null,
+        trimestre_3: t3 != null ? t3 : null,
+      };
+    })
+  );
+
+  // Calcular promedio general por trimestre
+  const promedio_general_trimestres = {
+    trimestre_1: null,
+    trimestre_2: null,
+    trimestre_3: null,
+  };
+
+  // Calcular promedio para cada trimestre
+  [1, 2, 3].forEach((trimestreNum) => {
+    const trimestresValidos = promedios_trimestre
+      .map((p) => p[`trimestre_${trimestreNum}`])
+      .filter((p) => typeof p === 'number');
+    
+    if (trimestresValidos.length > 0) {
+      promedio_general_trimestres[`trimestre_${trimestreNum}`] = round2(
+        trimestresValidos.reduce((acc, val) => acc + val, 0) / trimestresValidos.length
+      );
+    }
+  });
+
+  return {
+    estudiante,
+    año_academico: año,
+    promedios_trimestre,
+    promedio_general_trimestres,
+    total_cursos: promedios_trimestre.length,
+  };
+}
+
+/**
+ * Obtiene promedios anuales consolidados de todos los cursos del estudiante
+ * Endpoint: GET /resumen-academico/estudiante/{id}/promedios-anuales
+ */
+async function getStudentAnnualAverages({ estudiante_id, año }) {
+  if (!estudiante_id || !año) {
+    throw httpError('INVALID_PARAMETERS', 'estudiante_id y año son requeridos', 400);
+  }
+
+  const estudiante = await getEstudianteInfo(estudiante_id);
+  const componentes = await getComponentesActivos(año);
+
+  // cursos con evaluaciones en cualquier trimestre del año
+  const cursosIds = await getCursosConEvaluaciones({ estudiante_id, año, trimestre: null });
+
+  if (cursosIds.length === 0) {
+    throw httpError('NO_GRADES_FOUND', `No hay calificaciones registradas para el año ${año}`, 404);
+  }
+
+  // Construcción de promedios anuales para cada curso
+  const promedios_anuales = await Promise.all(
+    cursosIds.map(async (cid) => {
+      const curso = await getCursoInfo(cid);
+      
+      // Calcular promedios para cada trimestre
+      const [t1, t2, t3] = await Promise.all([
+        computeCourseTrimAverage({
+          estudiante_id,
+          curso_id: cid,
+          año,
+          trimestre: 1,
+          componentes,
+        }),
+        computeCourseTrimAverage({
+          estudiante_id,
+          curso_id: cid,
+          año,
+          trimestre: 2,
+          componentes,
+        }),
+        computeCourseTrimAverage({
+          estudiante_id,
+          curso_id: cid,
+          año,
+          trimestre: 3,
+          componentes,
+        }),
+      ]);
+
+      let promedio_final = null;
+      // Por especificación: (T1 + T2 + T3) / 3
+      if ([t1, t2, t3].every((v) => typeof v === 'number')) {
+        promedio_final = round2((t1 + t2 + t3) / 3);
+      } else {
+        // Si no están los 3 trimestres, dejamos promedio_final null
+        promedio_final = null;
+      }
+
+      const promedio_letra = promedio_final != null ? toLetter(promedio_final) : null;
+      const estado =
+        promedio_final != null ? (promedio_final >= 11 ? 'aprobado' : 'desaprobado') : 'pendiente';
+
+      return {
+        curso_id: cid,
+        curso_nombre: curso?.nombre || 'Curso',
+        trimestre_1: t1 != null ? t1 : null,
+        trimestre_2: t2 != null ? t2 : null,
+        trimestre_3: t3 != null ? t3 : null,
+        promedio_final,
+        promedio_letra,
+        estado,
+        estado_badge: estado === 'aprobado' ? '✅' : estado === 'desaprobado' ? '❌' : '⏳',
+      };
+    })
+  );
+
+  // Estadísticas generales
+  const withFinal = promedios_anuales.filter((r) => typeof r.promedio_final === 'number');
+  const promedio_general =
+    withFinal.length > 0
+      ? round2(withFinal.reduce((acc, r) => acc + r.promedio_final, 0) / withFinal.length)
+      : null;
+
+  const cursos_aprobados = withFinal.filter((r) => r.promedio_final >= 11).length;
+  const cursos_desaprobados = withFinal.filter((r) => r.promedio_final < 11).length;
+
+  let mejor_curso = null;
+  if (withFinal.length > 0) {
+    const best = withFinal.reduce((a, b) => (a.promedio_final >= b.promedio_final ? a : b));
+    mejor_curso = { nombre: best.curso_nombre, promedio: best.promedio_final };
+  }
+
+  let curso_atencion = null;
+  if (withFinal.length > 0) {
+    const worst = withFinal.reduce((a, b) => (a.promedio_final <= b.promedio_final ? a : b));
+    curso_atencion = { nombre: worst.curso_nombre, promedio: worst.promedio_final };
+  }
+
+  return {
+    estudiante,
+    año_academico: año,
+    promedios_anuales,
+    estadisticas: {
+      promedio_general,
+      cursos_aprobados,
+      cursos_desaprobados,
+      total_cursos: promedios_anuales.length,
+      mejor_curso,
+      curso_atencion,
+    },
+  };
+}
+
 module.exports = {
   getAcademicSummary,
   getAcademicSummaryTrimestral,
   getAcademicSummaryAnual,
   exportAcademicSummaryPDF,
+  getStudentTrimestreAverages,
+  getStudentAnnualAverages,
 };

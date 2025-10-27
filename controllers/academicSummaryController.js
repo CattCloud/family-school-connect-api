@@ -4,6 +4,8 @@ const { z } = require('zod');
 const {
   getAcademicSummary,
   exportAcademicSummaryPDF,
+  getStudentTrimestreAverages,
+  getStudentAnnualAverages,
 } = require('../services/academicSummaryService');
 
 // Schemas
@@ -22,6 +24,10 @@ const ExportQuerySchema = z.object({
   formato: z.string().transform((v) => String(v).toLowerCase()).refine((v) => v === 'pdf', {
     message: "Formato inválido. Solo se permite 'pdf'",
   }),
+});
+
+const YearQuerySchema = z.object({
+  año: z.preprocess((v) => (v != null ? Number(v) : v), z.number().int()),
 });
 
 // GET /resumen-academico/estudiante/:estudiante_id
@@ -87,7 +93,63 @@ async function exportAcademicSummaryController(req, res, next) {
   }
 }
 
+// GET /resumen-academico/estudiante/:estudiante_id/promedios-trimestre
+async function getStudentTrimestreAveragesController(req, res, next) {
+  try {
+    const estudiante_id = String(req.params?.estudiante_id || req.params?.id || '').trim();
+    if (!estudiante_id) {
+      const e = new Error('Parámetro estudiante_id requerido');
+      e.status = 400;
+      e.code = 'INVALID_PARAMETERS';
+      throw e;
+    }
+
+    const parsed = YearQuerySchema.parse(req.query || {});
+    const data = await getStudentTrimestreAverages({
+      estudiante_id,
+      año: parsed.año,
+    });
+
+    return res.status(200).json({ success: true, data });
+  } catch (err) {
+    if (err.name === 'ZodError') {
+      err.status = 400;
+      err.code = 'INVALID_PARAMETERS';
+    }
+    next(err);
+  }
+}
+
+// GET /resumen-academico/estudiante/:estudiante_id/promedios-anuales
+async function getStudentAnnualAveragesController(req, res, next) {
+  try {
+    const estudiante_id = String(req.params?.estudiante_id || req.params?.id || '').trim();
+    if (!estudiante_id) {
+      const e = new Error('Parámetro estudiante_id requerido');
+      e.status = 400;
+      e.code = 'INVALID_PARAMETERS';
+      throw e;
+    }
+
+    const parsed = YearQuerySchema.parse(req.query || {});
+    const data = await getStudentAnnualAverages({
+      estudiante_id,
+      año: parsed.año,
+    });
+
+    return res.status(200).json({ success: true, data });
+  } catch (err) {
+    if (err.name === 'ZodError') {
+      err.status = 400;
+      err.code = 'INVALID_PARAMETERS';
+    }
+    next(err);
+  }
+}
+
 module.exports = {
   getAcademicSummaryController,
   exportAcademicSummaryController,
+  getStudentTrimestreAveragesController,
+  getStudentAnnualAveragesController,
 };

@@ -31,7 +31,7 @@ const router = Router();
 
 // Verificar contexto
 router.get(
-  '/asistencias/verificar',
+  '/verificar',
   auth,
   authorizeRole(['docente', 'director']),
   getAttendanceVerifyController
@@ -39,7 +39,7 @@ router.get(
 
 // Generar plantilla
 router.post(
-  '/asistencias/plantilla',
+  '/plantilla',
   auth,
   authorizeRole(['docente', 'director']),
   postAttendanceTemplateController
@@ -47,7 +47,7 @@ router.post(
 
 // Validar archivo (multipart/form-data, campo: archivo)
 router.post(
-  '/asistencias/validar',
+  '/validar',
   auth,
   authorizeRole(['docente', 'director']),
   attendanceValidateLimiter,
@@ -57,7 +57,7 @@ router.post(
 
 // Cargar asistencias
 router.post(
-  '/asistencias/cargar',
+  '/cargar',
   auth,
   authorizeRole(['docente', 'director']),
   attendanceLoadLimiter,
@@ -66,7 +66,7 @@ router.post(
 
 // Descargar reporte de errores TXT
 router.get(
-  '/asistencias/reporte-errores/:id',
+  '/reporte-errores/:id',
   auth,
   authorizeRole(['docente', 'director']),
   getAttendanceErrorReportController
@@ -74,7 +74,7 @@ router.get(
 
 // Estadísticas del día por curso
 router.get(
-  '/asistencias/estadisticas',
+  '/estadisticas',
   auth,
   authorizeRole(['docente', 'director']),
   getAttendanceStatsController

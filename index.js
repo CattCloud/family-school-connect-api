@@ -13,6 +13,21 @@ const authRoutes = require('./routes/auth');
 const usersRoutes = require('./routes/users');
 const comunicadosRoutes = require('./routes/comunicados');
 const encuestasRoutes = require('./routes/encuestas');
+const academicSummaryRoutes = require('./routes/academicSummary');
+
+// Importar rutas faltantes según doc/Semana 4/Falta.md
+const teachersRoutes = require('./routes/teachers');
+const adminRoutes = require('./routes/admin');
+const evaluationRoutes = require('./routes/evaluation');
+
+// Importar rutas del módulo académico según doc/Semana 5/Falta5.md
+const gradesRoutes = require('./routes/grades');
+const attendanceRoutes = require('./routes/attendance');
+const gradesViewRoutes = require('./routes/gradesView');
+const attendanceViewRoutes = require('./routes/attendanceView');
+const academicsRoutes = require('./routes/academics');
+const templatesRoutes = require('./routes/templates');
+const messagingRoutes = require('./routes/messaging');
 
 // Inicializar app
 const app = express();
@@ -54,6 +69,36 @@ app.use('/auth', authRoutes);
 app.use('/usuarios', usersRoutes);
 app.use('/comunicados', comunicadosRoutes);
 app.use('/encuestas', encuestasRoutes);
+
+// Rutas de Gestión de Usuarios y Permisos (Semana 4)
+app.use('/teachers', teachersRoutes);
+app.use('/admin', adminRoutes);
+
+// Rutas de Estructura de Evaluación (Semana 4)
+app.use('/evaluation-structure', evaluationRoutes);
+
+// Rutas del Módulo Académico (Semana 5)
+// Módulo de Carga de Datos Académicos
+app.use('/calificaciones', gradesRoutes);
+app.use('/asistencias', attendanceRoutes);
+
+// Módulo de Visualización para Padres
+app.use('/calificaciones/estudiante', gradesViewRoutes);
+app.use('/asistencias/estudiante', attendanceViewRoutes);
+
+// Módulo Académico General
+app.use('/cursos', academicsRoutes);
+
+// Centro de Plantillas
+app.use('/plantillas', templatesRoutes);
+
+// Módulo de Mensajería
+app.use('/conversaciones', messagingRoutes);
+app.use('/mensajes', messagingRoutes);
+app.use('/archivos', messagingRoutes);
+
+// Ruta de resumen académico (corregida de '/' a '/resumen-academico')
+app.use('/resumen-academico', academicSummaryRoutes);
 
 // Ruta de health check
 app.get('/health', (req, res) => {

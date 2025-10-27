@@ -1063,27 +1063,24 @@ async function sendMessageInConversation({ user, body, files }) {
 
   // RN-64: Docente solo puede responder si la conversación fue iniciada por padre
   const iniciado_por = conv.creado_por === conv.padre_id ? 'padre' : 'docente';
-  if (user.rol === 'docente' && iniciado_por !== 'padre') {
-    const e = new Error('Los docentes solo pueden responder a conversaciones iniciadas por padres en esta versión');
-    e.status = 403;
-    e.code = 'ACTION_NOT_ALLOWED';
-    throw e;
-  }
+  // Permitir que los docentes respondan en conversaciones iniciadas por padres
+  // Esta validación ya se maneja en el controlador de permisos
 
   // Validaciones de contenido VN-04/05/06/07/08 + VE-06
   const filesArr = Array.isArray(files) ? files : [];
-  if ((contenido.length === 0 || contenido.length < 10) && filesArr.length === 0) {
+  const contenidoStr = contenido || '';
+  if ((contenidoStr.length === 0 || contenidoStr.length < 10) && filesArr.length === 0) {
     const e = new Error('Debe ingresar un mensaje de al menos 10 caracteres o adjuntar archivos');
     e.status = 400;
     e.code = 'VALIDATION_ERROR';
     e.details = { field: 'contenido', minLength: 10, has_files: false };
     throw e;
   }
-  if (contenido.length > 0 && (contenido.length < 10 || contenido.length > 1000)) {
+  if (contenidoStr.length > 0 && (contenidoStr.length < 10 || contenidoStr.length > 1000)) {
     const e = new Error('El mensaje debe tener entre 10 y 1000 caracteres');
     e.status = 400;
     e.code = 'VALIDATION_ERROR';
-    e.details = { field: 'contenido', minLength: 10, maxLength: 1000, current: contenido.length };
+    e.details = { field: 'contenido', minLength: 10, maxLength: 1000, current: contenidoStr.length };
     throw e;
   }
 

@@ -14,7 +14,7 @@ const router = Router();
 
 // GET /calificaciones/estudiante/:estudiante_id
 router.get(
-  '/calificaciones/estudiante/:estudiante_id',
+  '/:estudiante_id',
   auth,
   authorizeRole(['apoderado']),
   validateParentAccess,
@@ -24,7 +24,7 @@ router.get(
 
 // GET /calificaciones/estudiante/:estudiante_id/promedio
 router.get(
-  '/calificaciones/estudiante/:estudiante_id/promedio',
+  '/:estudiante_id/promedio',
   auth,
   authorizeRole(['apoderado']),
   validateParentAccess,

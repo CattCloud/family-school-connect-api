@@ -312,6 +312,98 @@ describe('HU-ACAD-09 — Resumen Trimestral y Anual Consolidado', () => {
     // body should be a buffer (non-empty)
     expect(res.body?.length >= 0).toBe(true);
   });
+
+  it('GET /resumen-academico/estudiante/:id/promedios-trimestre — 200 OK', async () => {
+    const res = await request(app)
+      .get(`/resumen-academico/estudiante/${estudiante.id}/promedios-trimestre?año=${year}`)
+      .set('Authorization', bearer);
+
+    expect(res.status).toBe(200);
+    expect(res.body?.success).toBe(true);
+    const data = res.body?.data;
+    expect(data?.estudiante?.id).toBe(estudiante.id);
+    expect(data?.año_academico).toBe(year);
+    expect(Array.isArray(data?.promedios_trimestre)).toBe(true);
+    expect(data?.promedios_trimestre.length).toBeGreaterThan(0);
+    
+    // Verificar estructura de promedios por trimestre
+    const math = data?.promedios_trimestre?.find((c) => c.curso_nombre === 'Matemáticas');
+    expect(math).toBeDefined();
+    expect(typeof math?.trimestre_1).toBe('number');
+    expect(math?.trimestre_2).toBeNull(); // No hay datos para T2
+    expect(math?.trimestre_3).toBeNull(); // No hay datos para T3
+    
+    // Verificar promedio general por trimestre
+    expect(data?.promedio_general_trimestres).toBeDefined();
+    expect(typeof data?.promedio_general_trimestres?.trimestre_1).toBe('number');
+    expect(data?.total_cursos).toBeGreaterThan(0);
+  });
+
+  it('GET /resumen-academico/estudiante/:id/promedios-anuales — 200 OK', async () => {
+    const res = await request(app)
+      .get(`/resumen-academico/estudiante/${estudiante.id}/promedios-anuales?año=${year}`)
+      .set('Authorization', bearer);
+
+    expect(res.status).toBe(200);
+    expect(res.body?.success).toBe(true);
+    const data = res.body?.data;
+    expect(data?.estudiante?.id).toBe(estudiante.id);
+    expect(data?.año_academico).toBe(year);
+    expect(Array.isArray(data?.promedios_anuales)).toBe(true);
+    expect(data?.promedios_anuales.length).toBeGreaterThan(0);
+    
+    // Verificar estructura de promedios anuales
+    const math = data?.promedios_anuales?.find((c) => c.curso_nombre === 'Matemáticas');
+    expect(math).toBeDefined();
+    expect(typeof math?.trimestre_1).toBe('number');
+    expect(math?.trimestre_2).toBeNull(); // No hay datos para T2
+    expect(math?.trimestre_3).toBeNull(); // No hay datos para T3
+    expect(math?.promedio_final).toBeNull(); // No hay datos suficientes para promedio final
+    
+    // Verificar estadísticas
+    expect(data?.estadisticas).toBeDefined();
+    expect(data?.estadisticas?.total_cursos).toBeGreaterThan(0);
+  });
+
+  it('GET /resumen-academico/estudiante/:id/promedios-trimestre — 403 ACCESS_DENIED sin relación', async () => {
+    const res = await request(app)
+      .get(`/resumen-academico/estudiante/${estudianteSinRelacion.id}/promedios-trimestre?año=${year}`)
+      .set('Authorization', bearer);
+
+    expect(res.status).toBe(403);
+    expect(res.body?.success).toBe(false);
+    expect(res.body?.error?.code).toBe('ACCESS_DENIED');
+  });
+
+  it('GET /resumen-academico/estudiante/:id/promedios-anuales — 403 ACCESS_DENIED sin relación', async () => {
+    const res = await request(app)
+      .get(`/resumen-academico/estudiante/${estudianteSinRelacion.id}/promedios-anuales?año=${year}`)
+      .set('Authorization', bearer);
+
+    expect(res.status).toBe(403);
+    expect(res.body?.success).toBe(false);
+    expect(res.body?.error?.code).toBe('ACCESS_DENIED');
+  });
+
+  it('GET /resumen-academico/estudiante/:id/promedios-trimestre — 400 INVALID_PARAMETERS sin año', async () => {
+    const res = await request(app)
+      .get(`/resumen-academico/estudiante/${estudiante.id}/promedios-trimestre`)
+      .set('Authorization', bearer);
+
+    expect(res.status).toBe(400);
+    expect(res.body?.success).toBe(false);
+    expect(res.body?.error?.code).toBe('INVALID_PARAMETERS');
+  });
+
+  it('GET /resumen-academico/estudiante/:id/promedios-anuales — 400 INVALID_PARAMETERS sin año', async () => {
+    const res = await request(app)
+      .get(`/resumen-academico/estudiante/${estudiante.id}/promedios-anuales`)
+      .set('Authorization', bearer);
+
+    expect(res.status).toBe(400);
+    expect(res.body?.success).toBe(false);
+    expect(res.body?.error?.code).toBe('INVALID_PARAMETERS');
+  });
 });
 
 // Utilidad local para letra

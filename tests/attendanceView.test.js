@@ -62,6 +62,22 @@ describe('HU-ACAD-07 — Consultar Asistencia Diaria con Calendario y Estadísti
       });
     }
 
+    // Crear un curso para las asistencias
+    const curso = await prisma.curso.findFirst({
+      where: { codigo_curso: 'C-PRI-3-001' },
+    });
+    if (!curso) {
+      await prisma.curso.create({
+        data: {
+          nombre: 'Matemáticas',
+          codigo_curso: 'C-PRI-3-001',
+          nivel_grado_id: nivelGrado.id,
+          año_academico: year,
+          estado_activo: true,
+        },
+      });
+    }
+
     // Estudiantes
     const codigoEstudiante = `AST-${Date.now()}`;
     estudiante = await prisma.estudiante.create({
@@ -111,11 +127,13 @@ describe('HU-ACAD-07 — Consultar Asistencia Diaria con Calendario y Estadísti
       const a = await prisma.asistencia.create({
         data: {
           estudiante_id: estudiante.id,
+          curso_id: curso.id, // Usar el ID del curso creado
           fecha: new Date(r.fecha),
-          estado: r.estado,
-          hora_llegada: r.hora_llegada || null,
-          justificacion: null,
-          año_academico: year,
+          tipo_asistencia: r.estado, // Usar tipo_asistencia en lugar de estado
+          estado: r.estado, // Agregar campo estado según el modelo
+          hora_llegada: r.hora_llegada || null, // Agregar campo hora_llegada
+          justificacion: null, // Agregar campo justificacion
+          año_academico: year, // Agregar campo año_academico
           registrado_por: docente.id,
         },
       });

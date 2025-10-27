@@ -27,7 +27,7 @@ const router = Router();
 
 // Generar plantilla
 router.post(
-  '/calificaciones/plantilla',
+  '/plantilla',
   auth,
   authorizeRole(['docente', 'director']),
   postGradesTemplateController
@@ -35,7 +35,7 @@ router.post(
 
 // Validar archivo (multipart/form-data, campo: archivo)
 router.post(
-  '/calificaciones/validar',
+  '/validar',
   auth,
   authorizeRole(['docente', 'director']),
   gradesValidateLimiter,
@@ -45,7 +45,7 @@ router.post(
 
 // Cargar calificaciones
 router.post(
-  '/calificaciones/cargar',
+  '/cargar',
   auth,
   authorizeRole(['docente', 'director']),
   gradesLoadLimiter,
@@ -54,7 +54,7 @@ router.post(
 
 // Descargar reporte de errores TXT
 router.get(
-  '/calificaciones/reporte-errores/:id',
+  '/reporte-errores/:id',
   auth,
   authorizeRole(['docente', 'director']),
   getGradesErrorReportController

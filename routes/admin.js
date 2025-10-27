@@ -25,7 +25,7 @@ const router = Router();
 
 // Templates
 router.get(
-  '/admin/templates/:tipo',
+  '/templates/:tipo',
   auth,
   authorizeRole(['administrador']),
   getTemplateController
@@ -33,14 +33,14 @@ router.get(
 
 // Validación y ejecución (limitado)
 router.post(
-  '/admin/import/validate',
+  '/import/validate',
   auth,
   authorizeRole(['administrador']),
   validateImportController
 );
 
 router.post(
-  '/admin/import/execute',
+  '/import/execute',
   auth,
   authorizeRole(['administrador']),
   executeImportController
@@ -48,21 +48,21 @@ router.post(
 
 // Relaciones familiares
 router.post(
-  '/admin/import/validate-relationships',
+  '/import/validate-relationships',
   auth,
   authorizeRole(['administrador']),
   validateRelationshipsController
 );
 
 router.post(
-  '/admin/import/create-relationships',
+  '/import/create-relationships',
   auth,
   authorizeRole(['administrador']),
   createRelationshipsController
 );
 
 router.get(
-  '/admin/verify/relationships',
+  '/verify/relationships',
   auth,
   authorizeRole(['administrador']),
   verifyRelationshipsController
@@ -70,48 +70,48 @@ router.get(
 
 // Credenciales (simulado en pruebas)
 router.post(
- '/admin/import/credentials/generate',
+ '/import/credentials/generate',
  auth,
- authorizeRole(['administrador']),
- generateCredentialsController
+  authorizeRole(['administrador']),
+  generateCredentialsController
 );
 
 router.post(
- '/admin/import/credentials/send-whatsapp',
- auth,
- authorizeRole(['administrador']),
- adminWhatsAppLimiter,
- sendCredentialsWhatsAppController
+  '/import/credentials/send-whatsapp',
+  auth,
+  authorizeRole(['administrador']),
+  adminWhatsAppLimiter,
+  sendCredentialsWhatsAppController
 );
 
 // Gestión de Credenciales v2 (según DocumentacionAPI.md - Sección 4)
 router.post(
- '/admin/import/generate-credentials',
+ '/import/generate-credentials',
  auth,
- authorizeRole(['administrador']),
- generateCredentialsV2Controller
+  authorizeRole(['administrador']),
+  generateCredentialsV2Controller
 );
 
 router.get(
- '/admin/import/credentials/:credentials_id/download',
- auth,
- authorizeRole(['administrador']),
- downloadCredentialsController
+  '/import/credentials/:credentials_id/download',
+  auth,
+  authorizeRole(['administrador']),
+  downloadCredentialsController
 );
 
 router.post(
- '/admin/import/credentials/:credentials_id/send-whatsapp',
- auth,
- authorizeRole(['administrador']),
- adminWhatsAppLimiter,
- sendCredentialsWhatsAppV2Controller
+  '/import/credentials/:credentials_id/send-whatsapp',
+  auth,
+  authorizeRole(['administrador']),
+  adminWhatsAppLimiter,
+  sendCredentialsWhatsAppV2Controller
 );
 
 router.post(
- '/admin/import/credentials/:credentials_id/generate-pdfs',
- auth,
- authorizeRole(['administrador']),
- generatePdfsController
+  '/import/credentials/:credentials_id/generate-pdfs',
+  auth,
+  authorizeRole(['administrador']),
+  generatePdfsController
 );
 
 module.exports = router;

@@ -145,7 +145,7 @@ async function getStudentComponentGrades({ estudiante_id, año, trimestre, curso
       estructura_evaluacion_id: componente_id,
     },
     include: {
-      registrado: { select: { nombre: true, apellido: true } },
+      registrante: { select: { nombre: true, apellido: true } },
     },
     orderBy: [{ fecha_evaluacion: 'desc' }],
   });
@@ -164,7 +164,7 @@ async function getStudentComponentGrades({ estudiante_id, año, trimestre, curso
   const items = evaluaciones.map((ev) => {
     const num = toNumber(ev.calificacion_numerica);
     const letra = toLetter(num);
-    const regNombre = `${ev.registrado?.nombre || ''} ${ev.registrado?.apellido || ''}`.trim();
+    const regNombre = `${ev.registrante?.nombre || ''} ${ev.registrante?.apellido || ''}`.trim();
     if (Number.isFinite(num)) suma += num;
     if (ev.estado === 'preliminar') hayPreliminar = true;
 

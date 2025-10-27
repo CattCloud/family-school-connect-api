@@ -22,7 +22,7 @@ const router = Router();
 
 // Docente: cursos asignados
 router.get(
-  '/cursos/asignados',
+  '/asignados',
   auth,
   authorizeRole(['docente']),
   getCursosAsignadosController
@@ -30,7 +30,7 @@ router.get(
 
 // Director: cursos por nivel/grado
 router.get(
-  '/cursos',
+  '/',
   auth,
   authorizeRole(['director']),
   getCursosByNivelGradoController
