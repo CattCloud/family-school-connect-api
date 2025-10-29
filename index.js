@@ -29,6 +29,11 @@ const academicsRoutes = require('./routes/academics');
 const templatesRoutes = require('./routes/templates');
 const messagingRoutes = require('./routes/messaging');
 
+// Importar rutas del módulo de soporte técnico
+const supportRoutes = require('./routes/support');
+const adminSupportRoutes = require('./routes/adminSupport');
+const helpCenterRoutes = require('./routes/helpCenter');
+
 // Inicializar app
 const app = express();
 
@@ -96,6 +101,11 @@ app.use('/plantillas', templatesRoutes);
 app.use('/conversaciones', messagingRoutes);
 app.use('/mensajes', messagingRoutes);
 app.use('/archivos', messagingRoutes);
+
+// Rutas del Módulo de Soporte Técnico
+app.use('/soporte', supportRoutes);
+app.use('/soporte', helpCenterRoutes);
+app.use('/soporte', adminSupportRoutes);
 
 // Ruta de resumen académico (corregida de '/' a '/resumen-academico')
 app.use('/resumen-academico', academicSummaryRoutes);

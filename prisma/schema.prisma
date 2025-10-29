@@ -97,6 +97,11 @@ model Usuario {
   conversacionesPadre       Conversacion[] @relation("PadreConversacion")
   conversacionesDocente      Conversacion[] @relation("DocenteConversacion")
   mensajesEnviados         Mensaje[] @relation("EmisorMensaje")
+  
+  // Nuevas relaciones para módulo de soporte técnico
+  ticketsCreados          TicketSoporte[]    @relation("TicketCreador")
+  ticketsAsignados         TicketSoporte[]    @relation("TicketAsignado")
+  respuestasTickets        RespuestaTicket[]
 
   @@unique([tipo_documento, nro_documento], name: "usuarios_documento_unique")
   @@map("usuarios")
@@ -386,7 +391,7 @@ model Notificacion {
   id                       String    @id @default(uuid()) @db.Uuid
   usuario_id                String    @db.Uuid
   usuario                   Usuario   @relation(fields: [usuario_id], references: [id])
-  tipo                     String    // "asistencia", "calificacion", "mensaje", "comunicado", "encuesta", "sistema"
+  tipo                     String    // "asistencia", "calificacion", "mensaje", "comunicado", "encuesta", "sistema", "ticket"
   titulo                   String    @db.VarChar(200)
   contenido                String
   datos_adicionales        Json?     // Información extra en JSON
@@ -401,10 +406,12 @@ model Notificacion {
   estudiante_id            String?   @db.Uuid
   estudiante               Estudiante? @relation(fields: [estudiante_id], references: [id])
   referencia_id            String?   // ID del elemento que generó la notificación
-  tipo_referencia           String?   // "encuesta" para identificar tipo
+  tipo_referencia           String?   // "encuesta", "ticket" para identificar tipo
   año_academico            Int
   encuesta_id              String?   @db.Uuid
   encuesta                 Encuesta?  @relation(fields: [encuesta_id], references: [id])
+  ticket_id                String?   @db.Uuid
+  ticket                   TicketSoporte? @relation(fields: [ticket_id], references: [id])
 
   @@map("notificaciones")
 }
@@ -517,8 +524,10 @@ model Mensaje {
 /// Tabla: archivos_adjuntos
 model ArchivoAdjunto {
   id                String    @id @default(uuid()) @db.Uuid
-  mensaje_id        String    @db.Uuid
-  mensaje           Mensaje    @relation(fields: [mensaje_id], references: [id])
+  mensaje_id        String?   @db.Uuid
+  mensaje           Mensaje?   @relation(fields: [mensaje_id], references: [id])
+  ticket_id         String?   @db.Uuid
+  ticket            TicketSoporte? @relation(fields: [ticket_id], references: [id])
   nombre_original    String    @db.VarChar(255)
   nombre_archivo    String    @db.VarChar(255)
   url_cloudinary    String
@@ -529,4 +538,131 @@ model ArchivoAdjunto {
   subido_por        String    @db.Uuid
   
   @@map("archivos_adjuntos")
+}
+
+/// Enumeración de categorías de tickets de soporte
+enum CategoriaTicket {
+  acceso_plataforma
+  funcionalidad_academica
+  comunicaciones
+  reportes
+  sugerencias
+  errores_sistema
+  otros
+}
+
+/// Enumeración de estados de tickets de soporte
+enum EstadoTicket {
+  pendiente
+  en_progreso
+  esperando_respuesta
+  resuelto
+  cerrado
+  cancelado
+}
+
+/// Enumeración de prioridades de tickets de soporte
+enum PrioridadTicket {
+  baja
+  normal
+  alta
+  critica
+}
+
+/// Tabla: tickets_soporte
+model TicketSoporte {
+  id                    String            @id @default(uuid()) @db.Uuid
+  numero_ticket         String            @unique
+  titulo                String            @db.VarChar(200)
+  descripcion           String            @db.Text
+  categoria             CategoriaTicket
+  prioridad             PrioridadTicket   @default(normal)
+  estado                EstadoTicket      @default(pendiente)
+  usuario_id            String            @db.Uuid
+  usuario               Usuario           @relation("TicketCreador", fields: [usuario_id], references: [id])
+  asignado_a            String?           @db.Uuid
+  asignado              Usuario?          @relation("TicketAsignado", fields: [asignado_a], references: [id])
+  fecha_creacion        DateTime          @default(now())
+  fecha_asignacion      DateTime?
+  fecha_resolucion      DateTime?
+  tiempo_respuesta_horas Int?
+  satisfaccion_usuario  Int?
+  año_academico         Int
+  respuestas            RespuestaTicket[]
+  archivos_adjuntos     ArchivoAdjunto[]
+  notificaciones        Notificacion[]
+
+  @@map("tickets_soporte")
+}
+
+/// Tabla: respuestas_tickets
+model RespuestaTicket {
+  id                    String            @id @default(uuid()) @db.Uuid
+  ticket_id             String            @db.Uuid
+  ticket                TicketSoporte     @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  usuario_id            String            @db.Uuid
+  usuario               Usuario           @relation(fields: [usuario_id], references: [id])
+  contenido             String            @db.Text
+  es_respuesta_publica  Boolean           @default(true)
+  fecha_respuesta       DateTime          @default(now())
+  estado_cambio         String?
+
+  @@map("respuestas_tickets")
+}
+
+/// Tabla: categorias_faq
+model CategoriaFAQ {
+  id                String            @id @default(uuid()) @db.Uuid
+  nombre            String            @unique
+  icono             String
+  color             String
+  descripcion       String?
+  preguntas         FAQ[]
+
+  @@map("categorias_faq")
+}
+
+/// Tabla: faq
+model FAQ {
+  id                    String            @id @default(uuid()) @db.Uuid
+  pregunta              String
+  respuesta             String            @db.Text
+  categoria_id          String            @db.Uuid
+  categoria             CategoriaFAQ      @relation(fields: [categoria_id], references: [id])
+  orden                 Int
+  vistas                Int               @default(0)
+  activa                Boolean           @default(true)
+  fecha_actualizacion   DateTime          @updatedAt
+
+  @@map("faq")
+}
+
+/// Tabla: categorias_guias
+model CategoriaGuia {
+  id                String            @id @default(uuid()) @db.Uuid
+  nombre            String            @unique
+  icono             String
+  color             String
+  descripcion       String?
+  guias             Guia[]
+
+  @@map("categorias_guias")
+}
+
+/// Tabla: guias
+model Guia {
+  id                    String            @id @default(uuid()) @db.Uuid
+  titulo                String
+  descripcion           String            @db.Text
+  categoria_id          String            @db.Uuid
+  categoria             CategoriaGuia     @relation(fields: [categoria_id], references: [id])
+  icono                 String
+  pdf_url               String
+  paginas               Int?
+  tamaño_mb             Decimal?          @db.Decimal(8, 2)
+  descargas             Int               @default(0)
+  activa                Boolean           @default(true)
+  fecha_actualizacion   DateTime          @updatedAt
+
+  @@map("guias")
 }

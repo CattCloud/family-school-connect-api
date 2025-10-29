@@ -3805,6 +3805,988 @@ Content-Disposition: attachment; filename="nombre_original.pdf"
 | `BAD_REQUEST` | Solicitud incorrecta | 400 |
 | `EXPORT_FAILED` | Error al exportar | 500 |
 | `INVALID_STATE` | Estado inválido | 400 |
+| `TICKET_NOT_FOUND` | Ticket no encontrado | 404 |
+| `INVALID_ADMIN` | Administrador no válido | 400 |
+| `TICKET_NOT_RESOLVED` | Ticket no está resuelto | 400 |
+| `FAQ_NOT_FOUND` | FAQ no encontrada | 404 |
+| `GUIA_NOT_FOUND` | Guía no encontrada | 404 |
+| `INVALID_RATING` | Calificación inválida | 400 |
+
+---
+
+## **SECCIÓN 12: SOPORTE TÉCNICO**
+
+### **101. Crear Ticket de Soporte**
+
+**Endpoint:** `POST /soporte/tickets`
+**Descripción:** Crea un nuevo ticket de soporte técnico
+**Autenticación:** Bearer token (Todos los roles)
+
+#### **Request Body:**
+```json
+{
+  "titulo": "No puedo acceder a mis calificaciones",
+  "descripcion": "Cuando intento ver las calificaciones de mi hijo, el sistema muestra un error 500. Esto ha estado sucediendo desde ayer.",
+  "categoria": "acceso_plataforma",
+  "prioridad": "alta"
+}
+```
+
+#### **Response Success (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "ticket": {
+      "id": "ticket_001",
+      "numero_ticket": "#SOP-2025-0001",
+      "titulo": "No puedo acceder a mis calificaciones",
+      "descripcion": "Cuando intento ver las calificaciones de mi hijo, el sistema muestra un error 500. Esto ha estado sucediendo desde ayer.",
+      "categoria": "acceso_plataforma",
+      "prioridad": "alta",
+      "estado": "pendiente",
+      "fecha_creacion": "2025-10-28T15:30:00Z",
+      "usuario": {
+        "id": "usr_pad_001",
+        "nombre": "Juan",
+        "apellido": "Pérez",
+        "rol": "apoderado"
+      },
+      "año_academico": 2025
+    }
+  },
+  "message": "Ticket creado exitosamente"
+}
+```
+
+#### **Response Errors:**
+- **400 Bad Request - Datos inválidos:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "El título debe tener entre 10 y 200 caracteres, La descripción debe tener entre 20 y 1000 caracteres"
+  }
+}
+```
+
+---
+
+### **102. Obtener Historial de Tickets del Usuario**
+
+**Endpoint:** `GET /soporte/tickets/usuario`
+**Descripción:** Lista todos los tickets creados por el usuario autenticado
+**Autenticación:** Bearer token (Todos los roles)
+
+#### **Query Parameters:**
+```
+?estado=pendiente          # Estado: pendiente, en_progreso, esperando_respuesta, resuelto, cerrado, cancelado (opcional)
+&categoria=acceso_plataforma  # Categoría (opcional)
+&pagina=1                 # Número de página (default: 1)
+&limite=20                # Registros por página (default: 20)
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "tickets": [
+      {
+        "id": "ticket_001",
+        "numero_ticket": "#SOP-2025-0001",
+        "titulo": "No puedo acceder a mis calificaciones",
+        "categoria": "acceso_plataforma",
+        "prioridad": "alta",
+        "estado": "en_progreso",
+        "fecha_creacion": "2025-10-28T15:30:00Z",
+        "usuario": {
+          "id": "usr_pad_001",
+          "nombre": "Juan",
+          "apellido": "Pérez"
+        }
+      }
+    ],
+    "paginacion": {
+      "pagina_actual": 1,
+      "total_paginas": 1,
+      "total_resultados": 1,
+      "limite": 20
+    }
+  }
+}
+```
+
+---
+
+### **103. Obtener Detalle de Ticket**
+
+**Endpoint:** `GET /soporte/tickets/:id`
+**Descripción:** Obtiene detalles completos de un ticket específico del usuario
+**Autenticación:** Bearer token (Todos los roles)
+
+#### **Path Parameters:**
+```
+{id} = ID del ticket
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "ticket": {
+      "id": "ticket_001",
+      "numero_ticket": "#SOP-2025-0001",
+      "titulo": "No puedo acceder a mis calificaciones",
+      "descripcion": "Cuando intento ver las calificaciones de mi hijo, el sistema muestra un error 500. Esto ha estado sucediendo desde ayer.",
+      "categoria": "acceso_plataforma",
+      "prioridad": "alta",
+      "estado": "en_progreso",
+      "fecha_creacion": "2025-10-28T15:30:00Z",
+      "usuario": {
+        "id": "usr_pad_001",
+        "nombre": "Juan",
+        "apellido": "Pérez",
+        "rol": "apoderado",
+        "telefono": "+51987654321"
+      },
+      "asignado": {
+        "id": "usr_admin_001",
+        "nombre": "Carlos",
+        "apellido": "Méndez"
+      },
+      "respuestas": [
+        {
+          "id": "resp_001",
+          "contenido": "Estamos revisando el problema. Le informaremos pronto.",
+          "fecha_respuesta": "2025-10-28T16:00:00Z",
+          "es_respuesta_publica": true,
+          "usuario": {
+            "id": "usr_admin_001",
+            "nombre": "Carlos",
+            "apellido": "Méndez",
+            "rol": "administrador"
+          }
+        }
+      ],
+      "archivos_adjuntos": []
+    }
+  }
+}
+```
+
+---
+
+### **104. Responder a Ticket (Usuario)**
+
+**Endpoint:** `POST /soporte/tickets/:id/respuestas`
+**Descripción:** Agrega una respuesta a un ticket existente
+**Autenticación:** Bearer token (Todos los roles)
+
+#### **Path Parameters:**
+```
+{id} = ID del ticket
+```
+
+#### **Request Body:**
+```json
+{
+  "contenido": "Ya intenté limpiar el caché del navegador pero el problema persiste. El error aparece específicamente cuando intento ver las calificaciones del trimestre actual."
+}
+```
+
+#### **Response Success (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "respuesta": {
+      "id": "resp_002",
+      "ticket_id": "ticket_001",
+      "contenido": "Ya intenté limpiar el caché del navegador pero el problema persiste. El error aparece específicamente cuando intento ver las calificaciones del trimestre actual.",
+      "fecha_respuesta": "2025-10-28T17:00:00Z",
+      "es_respuesta_publica": true,
+      "usuario": {
+        "id": "usr_pad_001",
+        "nombre": "Juan",
+        "apellido": "Pérez",
+        "rol": "apoderado"
+      }
+    }
+  },
+  "message": "Respuesta agregada exitosamente"
+}
+```
+
+---
+
+### **105. Calificar Satisfacción del Ticket**
+
+**Endpoint:** `POST /soporte/tickets/:id/calificar`
+**Descripción:** Califica la atención recibida en un ticket resuelto
+**Autenticación:** Bearer token (Todos los roles)
+
+#### **Path Parameters:**
+```
+{id} = ID del ticket
+```
+
+#### **Request Body:**
+```json
+{
+  "satisfaccion": 5
+}
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "message": "Calificación registrada exitosamente"
+}
+```
+
+---
+
+### **106. Obtener Categorías Disponibles**
+
+**Endpoint:** `GET /soporte/categorias`
+**Descripción:** Lista todas las categorías disponibles para crear tickets
+**Autenticación:** Bearer token (Todos los roles)
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "categorias": [
+      {
+        "valor": "acceso_plataforma",
+        "nombre": "Acceso a la Plataforma",
+        "icono": "login",
+        "color": "#4CAF50"
+      },
+      {
+        "valor": "funcionalidad_academica",
+        "nombre": "Funcionalidad Académica",
+        "icono": "school",
+        "color": "#2196F3"
+      },
+      {
+        "valor": "comunicaciones",
+        "nombre": "Comunicaciones",
+        "icono": "chat",
+        "color": "#FF9800"
+      },
+      {
+        "valor": "reportes",
+        "nombre": "Reportes y Estadísticas",
+        "icono": "assessment",
+        "color": "#9C27B0"
+      },
+      {
+        "valor": "sugerencias",
+        "nombre": "Sugerencias",
+        "icono": "lightbulb",
+        "color": "#607D8B"
+      },
+      {
+        "valor": "errores_sistema",
+        "nombre": "Errores del Sistema",
+        "icono": "bug_report",
+        "color": "#F44336"
+      },
+      {
+        "valor": "otros",
+        "nombre": "Otros",
+        "icono": "more_horiz",
+        "color": "#795548"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### **107. Obtener Bandeja de Tickets (Administrador)**
+
+**Endpoint:** `GET /soporte/admin/tickets`
+**Descripción:** Lista todos los tickets para gestión administrativa
+**Autenticación:** Bearer token (Rol: Administrador)
+
+#### **Query Parameters:**
+```
+?estado=en_progreso         # Estado: pendiente, en_progreso, esperando_respuesta, resuelto, cerrado, cancelado (opcional)
+&categoria=acceso_plataforma # Categoría (opcional)
+&prioridad=alta            # Prioridad: baja, normal, alta, critica (opcional)
+&asignado_a=usr_admin_001  # ID del administrador asignado (opcional)
+&pagina=1                  # Número de página (default: 1)
+&limite=20                 # Registros por página (default: 20)
+&busqueda=calificaciones    # Búsqueda por título, descripción o número de ticket (opcional)
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "tickets": [
+      {
+        "id": "ticket_001",
+        "numero_ticket": "#SOP-2025-0001",
+        "titulo": "No puedo acceder a mis calificaciones",
+        "categoria": "acceso_plataforma",
+        "prioridad": "alta",
+        "estado": "en_progreso",
+        "fecha_creacion": "2025-10-28T15:30:00Z",
+        "usuario": {
+          "id": "usr_pad_001",
+          "nombre": "Juan",
+          "apellido": "Pérez",
+          "rol": "apoderado",
+          "telefono": "+51987654321"
+        },
+        "asignado": {
+          "id": "usr_admin_001",
+          "nombre": "Carlos",
+          "apellido": "Méndez"
+        },
+        "_count": {
+          "respuestas": 2
+        }
+      }
+    ],
+    "paginacion": {
+      "pagina_actual": 1,
+      "total_paginas": 1,
+      "total_resultados": 1,
+      "limite": 20
+    }
+  }
+}
+```
+
+---
+
+### **108. Obtener Ticket para Gestión (Administrador)**
+
+**Endpoint:** `GET /soporte/admin/tickets/:id`
+**Descripción:** Obtiene detalles completos de un ticket para gestión administrativa
+**Autenticación:** Bearer token (Rol: Administrador)
+
+#### **Path Parameters:**
+```
+{id} = ID del ticket
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "ticket": {
+      "id": "ticket_001",
+      "numero_ticket": "#SOP-2025-0001",
+      "titulo": "No puedo acceder a mis calificaciones",
+      "descripcion": "Cuando intento ver las calificaciones de mi hijo, el sistema muestra un error 500. Esto ha estado sucediendo desde ayer.",
+      "categoria": "acceso_plataforma",
+      "prioridad": "alta",
+      "estado": "en_progreso",
+      "fecha_creacion": "2025-10-28T15:30:00Z",
+      "usuario": {
+        "id": "usr_pad_001",
+        "nombre": "Juan",
+        "apellido": "Pérez",
+        "rol": "apoderado",
+        "telefono": "+51987654321"
+      },
+      "asignado": {
+        "id": "usr_admin_001",
+        "nombre": "Carlos",
+        "apellido": "Méndez"
+      },
+      "respuestas": [
+        {
+          "id": "resp_001",
+          "contenido": "Estamos revisando el problema. Le informaremos pronto.",
+          "fecha_respuesta": "2025-10-28T16:00:00Z",
+          "es_respuesta_publica": true,
+          "estado_cambio": null,
+          "usuario": {
+            "id": "usr_admin_001",
+            "nombre": "Carlos",
+            "apellido": "Méndez",
+            "rol": "administrador"
+          }
+        }
+      ],
+      "archivos_adjuntos": [],
+      "tiempo_respuesta_horas": 2
+    }
+  }
+}
+```
+
+---
+
+### **109. Responder a Ticket (Administrador)**
+
+**Endpoint:** `POST /soporte/admin/tickets/:id/respuestas`
+**Descripción:** Agrega una respuesta administrativa a un ticket
+**Autenticación:** Bearer token (Rol: Administrador)
+
+#### **Path Parameters:**
+```
+{id} = ID del ticket
+```
+
+#### **Request Body:**
+```json
+{
+  "contenido": "Hemos identificado el problema y estamos trabajando en una solución. El error está relacionado con la carga de datos del trimestre actual. Estimamos tenerlo solucionado en las próximas 2 horas.",
+  "estado_cambio": "esperando_respuesta",
+  "es_respuesta_publica": true
+}
+```
+
+#### **Response Success (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "respuesta": {
+      "id": "resp_003",
+      "ticket_id": "ticket_001",
+      "contenido": "Hemos identificado el problema y estamos trabajando en una solución. El error está relacionado con la carga de datos del trimestre actual. Estimamos tenerlo solucionado en las próximas 2 horas.",
+      "fecha_respuesta": "2025-10-28T18:00:00Z",
+      "es_respuesta_publica": true,
+      "estado_cambio": "esperando_respuesta",
+      "usuario": {
+        "id": "usr_admin_001",
+        "nombre": "Carlos",
+        "apellido": "Méndez",
+        "rol": "administrador"
+      }
+    }
+  },
+  "message": "Respuesta agregada exitosamente"
+}
+```
+
+---
+
+### **110. Cambiar Estado de Ticket**
+
+**Endpoint:** `PATCH /soporte/admin/tickets/:id/estado`
+**Descripción:** Cambia el estado de un ticket
+**Autenticación:** Bearer token (Rol: Administrador)
+
+#### **Path Parameters:**
+```
+{id} = ID del ticket
+```
+
+#### **Request Body:**
+```json
+{
+  "estado": "resuelto",
+  "motivo": "Se ha solucionado el error de carga de calificaciones. El usuario ya puede acceder normalmente."
+}
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "message": "Estado actualizado exitosamente"
+}
+```
+
+---
+
+### **111. Resolver Ticket**
+
+**Endpoint:** `POST /soporte/admin/tickets/:id/resolver`
+**Descripción:** Marca un ticket como resuelto con una solución
+**Autenticación:** Bearer token (Rol: Administrador)
+
+#### **Path Parameters:**
+```
+{id} = ID del ticket
+```
+
+#### **Request Body:**
+```json
+{
+  "solucion": "Se ha corregido el error en el módulo de calificaciones. El problema estaba en la consulta SQL que recuperaba los datos del trimestre actual. Ya se ha aplicado el parche y el usuario puede acceder a sus calificaciones sin problemas.",
+  "solicitar_calificacion": true
+}
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "message": "Ticket resuelto exitosamente"
+}
+```
+
+---
+
+### **112. Asignar Ticket a Administrador**
+
+**Endpoint:** `POST /soporte/admin/tickets/:id/asignar`
+**Descripción:** Asigna un ticket a un administrador específico
+**Autenticación:** Bearer token (Rol: Administrador)
+
+#### **Path Parameters:**
+```
+{id} = ID del ticket
+```
+
+#### **Request Body:**
+```json
+{
+  "administrador_id": "usr_admin_002"
+}
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "message": "Ticket asignado exitosamente"
+}
+```
+
+---
+
+### **113. Obtener Estadísticas de Soporte**
+
+**Endpoint:** `GET /soporte/admin/estadisticas`
+**Descripción:** Obtiene estadísticas de tickets de soporte
+**Autenticación:** Bearer token (Rol: Administrador)
+
+#### **Query Parameters:**
+```
+?periodo=mes    # Período: semana, mes, trimestre, año (default: mes)
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "periodo": "mes",
+    "fecha_inicio": "2025-10-01T00:00:00Z",
+    "fecha_fin": "2025-10-28T23:59:59Z",
+    "totales": {
+      "tickets_creados": 25,
+      "tickets_resueltos": 20,
+      "tasa_resolucion": 80,
+      "tiempo_promedio_respuesta": 4.5,
+      "satisfaccion_promedio": 4.2
+    },
+    "por_estado": [
+      {
+        "estado": "pendiente",
+        "_count": { "estado": 3 }
+      },
+      {
+        "estado": "en_progreso",
+        "_count": { "estado": 2 }
+      },
+      {
+        "estado": "resuelto",
+        "_count": { "estado": 20 }
+      }
+    ],
+    "por_categoria": [
+      {
+        "categoria": "acceso_plataforma",
+        "_count": { "categoria": 10 }
+      },
+      {
+        "categoria": "funcionalidad_academica",
+        "_count": { "categoria": 8 }
+      }
+    ],
+    "por_prioridad": [
+      {
+        "prioridad": "alta",
+        "_count": { "prioridad": 5 }
+      },
+      {
+        "prioridad": "normal",
+        "_count": { "prioridad": 15 }
+      }
+    ]
+  }
+}
+```
+
+---
+
+### **114. Obtener FAQs**
+
+**Endpoint:** `GET /soporte/ayuda/faqs`
+**Descripción:** Lista preguntas frecuentes del centro de ayuda
+**Autenticación:** Bearer token (Todos los roles)
+
+#### **Query Parameters:**
+```
+?categoria_id=cat_001    # ID de categoría (opcional)
+&busqueda=acceso         # Búsqueda en preguntas y respuestas (opcional)
+&pagina=1               # Número de página (default: 1)
+&limite=20              # Registros por página (default: 20)
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "faqs": [
+      {
+        "id": "faq_001",
+        "pregunta": "¿Cómo puedo ver las calificaciones de mi hijo?",
+        "respuesta": "Para ver las calificaciones de su hijo, siga estos pasos: 1. Inicie sesión en la plataforma. 2. Seleccione el estudiante. 3. Haga clic en la sección 'Calificaciones'. 4. Seleccione el trimestre que desea consultar.",
+        "categoria": {
+          "id": "cat_001",
+          "nombre": "Funcionalidad Académica",
+          "icono": "school",
+          "color": "#2196F3"
+        },
+        "orden": 1,
+        "activa": true,
+        "vistas": 150
+      }
+    ],
+    "paginacion": {
+      "pagina_actual": 1,
+      "total_paginas": 1,
+      "total_resultados": 1,
+      "limite": 20
+    }
+  }
+}
+```
+
+---
+
+### **115. Obtener Detalle de FAQ**
+
+**Endpoint:** `GET /soporte/ayuda/faqs/:id`
+**Descripción:** Obtiene detalles de una pregunta frecuente específica
+**Autenticación:** Bearer token (Todos los roles)
+
+#### **Path Parameters:**
+```
+{id} = ID de la FAQ
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "faq": {
+      "id": "faq_001",
+      "pregunta": "¿Cómo puedo ver las calificaciones de mi hijo?",
+      "respuesta": "Para ver las calificaciones de su hijo, siga estos pasos: 1. Inicie sesión en la plataforma. 2. Seleccione el estudiante. 3. Haga clic en la sección 'Calificaciones'. 4. Seleccione el trimestre que desea consultar.",
+      "categoria": {
+        "id": "cat_001",
+        "nombre": "Funcionalidad Académica",
+        "icono": "school",
+        "color": "#2196F3"
+      },
+      "orden": 1,
+      "activa": true,
+      "vistas": 151
+    }
+  }
+}
+```
+
+---
+
+### **116. Obtener Categorías de FAQs**
+
+**Endpoint:** `GET /soporte/ayuda/faqs-categorias`
+**Descripción:** Lista todas las categorías de preguntas frecuentes
+**Autenticación:** Bearer token (Todos los roles)
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "categorias": [
+      {
+        "id": "cat_001",
+        "nombre": "Funcionalidad Académica",
+        "descripcion": "Preguntas sobre calificaciones, asistencia y reportes",
+        "icono": "school",
+        "color": "#2196F3",
+        "activa": true,
+        "_count": {
+          "preguntas": 15
+        }
+      },
+      {
+        "id": "cat_002",
+        "nombre": "Acceso a la Plataforma",
+        "descripcion": "Preguntas sobre inicio de sesión y recuperación de contraseña",
+        "icono": "login",
+        "color": "#4CAF50",
+        "activa": true,
+        "_count": {
+          "preguntas": 8
+        }
+      }
+    ]
+  }
+}
+```
+
+---
+
+### **117. Obtener Guías de Ayuda**
+
+**Endpoint:** `GET /soporte/ayuda/guias`
+**Descripción:** Lista guías de ayuda disponibles
+**Autenticación:** Bearer token (Todos los roles)
+
+#### **Query Parameters:**
+```
+?categoria_id=cat_003    # ID de categoría (opcional)
+&busqueda=calificaciones   # Búsqueda en títulos y descripciones (opcional)
+&pagina=1                # Número de página (default: 1)
+&limite=20               # Registros por página (default: 20)
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "guias": [
+      {
+        "id": "guia_001",
+        "titulo": "Guía completa para consultar calificaciones",
+        "descripcion": "Aprenda a utilizar todas las funcionalidades del módulo de calificaciones, incluyendo filtros, exportación y comparación entre trimestres.",
+        "categoria": {
+          "id": "cat_003",
+          "nombre": "Guías Prácticas",
+          "icono": "menu_book",
+          "color": "#9C27B0"
+        },
+        "archivo_url": "/uploads/guias/guia_calificaciones.pdf",
+        "activa": true,
+        "descargas": 85
+      }
+    ],
+    "paginacion": {
+      "pagina_actual": 1,
+      "total_paginas": 1,
+      "total_resultados": 1,
+      "limite": 20
+    }
+  }
+}
+```
+
+---
+
+### **118. Obtener Detalle de Guía**
+
+**Endpoint:** `GET /soporte/ayuda/guias/:id`
+**Descripción:** Obtiene detalles de una guía específica
+**Autenticación:** Bearer token (Todos los roles)
+
+#### **Path Parameters:**
+```
+{id} = ID de la guía
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "guia": {
+      "id": "guia_001",
+      "titulo": "Guía completa para consultar calificaciones",
+      "descripcion": "Aprenda a utilizar todas las funcionalidades del módulo de calificaciones, incluyendo filtros, exportación y comparación entre trimestres.",
+      "categoria": {
+        "id": "cat_003",
+        "nombre": "Guías Prácticas",
+        "icono": "menu_book",
+        "color": "#9C27B0"
+      },
+      "archivo_url": "/uploads/guias/guia_calificaciones.pdf",
+      "activa": true,
+      "descargas": 86
+    }
+  }
+}
+```
+
+---
+
+### **119. Obtener Categorías de Guías**
+
+**Endpoint:** `GET /soporte/ayuda/guias-categorias`
+**Descripción:** Lista todas las categorías de guías
+**Autenticación:** Bearer token (Todos los roles)
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "categorias": [
+      {
+        "id": "cat_003",
+        "nombre": "Guías Prácticas",
+        "descripcion": "Manuales y tutoriales paso a paso",
+        "icono": "menu_book",
+        "color": "#9C27B0",
+        "activa": true,
+        "_count": {
+          "guias": 12
+        }
+      },
+      {
+        "id": "cat_004",
+        "nombre": "Videos Tutoriales",
+        "descripcion": "Videos explicativos de las funcionalidades",
+        "icono": "play_circle",
+        "color": "#F44336",
+        "activa": true,
+        "_count": {
+          "guias": 6
+        }
+      }
+    ]
+  }
+}
+```
+
+---
+
+### **120. Búsqueda General en Centro de Ayuda**
+
+**Endpoint:** `GET /soporte/ayuda/buscar`
+**Descripción:** Busca en todo el centro de ayuda (FAQs y guías)
+**Autenticación:** Bearer token (Todos los roles)
+
+#### **Query Parameters:**
+```
+?termino=calificaciones    # Término de búsqueda (mínimo 3 caracteres) (requerido)
+&pagina=1                 # Número de página (default: 1)
+&limite=10                # Registros por página (default: 10)
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "termino": "calificaciones",
+    "resultados": [
+      {
+        "id": "faq_001",
+        "pregunta": "¿Cómo puedo ver las calificaciones de mi hijo?",
+        "respuesta": "Para ver las calificaciones de su hijo, siga estos pasos...",
+        "categoria": {
+          "id": "cat_001",
+          "nombre": "Funcionalidad Académica",
+          "icono": "school",
+          "color": "#2196F3"
+        },
+        "tipo": "faq",
+        "vistas": 150
+      },
+      {
+        "id": "guia_001",
+        "titulo": "Guía completa para consultar calificaciones",
+        "descripcion": "Aprenda a utilizar todas las funcionalidades del módulo de calificaciones...",
+        "categoria": {
+          "id": "cat_003",
+          "nombre": "Guías Prácticas",
+          "icono": "menu_book",
+          "color": "#9C27B0"
+        },
+        "tipo": "guia",
+        "descargas": 85
+      }
+    ],
+    "totales": {
+      "faqs": 8,
+      "guias": 3,
+      "total": 11
+    },
+    "paginacion": {
+      "pagina_actual": 1,
+      "limite": 10
+    }
+  }
+}
+```
+
+---
+
+### **121. Obtener Contenido Destacado**
+
+**Endpoint:** `GET /soporte/ayuda/destacado`
+**Descripción:** Obtiene contenido más visitado y descargado
+**Autenticación:** Bearer token (Todos los roles)
+
+#### **Query Parameters:**
+```
+?limite=5    # Número de resultados (default: 5)
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "faqs_destacadas": [
+      {
+        "id": "faq_001",
+        "pregunta": "¿Cómo puedo ver las calificaciones de mi hijo?",
+        "respuesta": "Para ver las calificaciones de su hijo, siga estos pasos...",
+        "categoria": {
+          "id": "cat_001",
+          "nombre": "Funcionalidad Académica",
+          "icono": "school",
+          "color": "#2196F3"
+        },
+        "vistas": 150
+      }
+    ],
+    "guias_destacadas": [
+      {
+        "id": "guia_001",
+        "titulo": "Guía completa para consultar calificaciones",
+        "descripcion": "Aprenda a utilizar todas las funcionalidades del módulo de calificaciones...",
+        "categoria": {
+          "id": "cat_003",
+          "nombre": "Guías Prácticas",
+          "icono": "menu_book",
+          "color": "#9C27B0"
+        },
+        "descargas": 85
+      }
+    ]
+  }
+}
+```
 
 ---
 
