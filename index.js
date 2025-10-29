@@ -28,6 +28,7 @@ const attendanceViewRoutes = require('./routes/attendanceView');
 const academicsRoutes = require('./routes/academics');
 const templatesRoutes = require('./routes/templates');
 const messagingRoutes = require('./routes/messaging');
+const academicYearRoutes = require('./routes/academicYear');
 
 // Importar rutas del módulo de soporte técnico
 const supportRoutes = require('./routes/support');
@@ -106,6 +107,9 @@ app.use('/archivos', messagingRoutes);
 app.use('/soporte', supportRoutes);
 app.use('/soporte', helpCenterRoutes);
 app.use('/soporte', adminSupportRoutes);
+
+// Ruta de año académico
+app.use('/anio-academico', academicYearRoutes);
 
 // Ruta de resumen académico (corregida de '/' a '/resumen-academico')
 app.use('/resumen-academico', academicSummaryRoutes);

@@ -160,7 +160,7 @@ function generarAsistenciaMarzo() {
       asistencia.push({
         fecha: fechaStr,
         estado,
-        hora_llegada,
+        hora_llegada: horaLlegada,
         año_academico: año
       });
     }
@@ -569,7 +569,10 @@ async function main() {
             estudiante_id: estudiante.id,
             curso_id: cursoId,
             fecha: new Date(asistencia.fecha),
+            estado: asistencia.estado,
             tipo_asistencia: tipoAsistencia,
+            hora_llegada: asistencia.hora_llegada,
+            año_academico: asistencia.año_academico,
             observaciones: asistencia.hora_llegada ? `Llegada: ${asistencia.hora_llegada}` : null,
             registrado_por: docente.id
           }

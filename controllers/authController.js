@@ -279,30 +279,31 @@ async function changeRequiredPassword(req, res, next) {
 async function getParentContext(req, res, next) {
   try {
     const { user_id } = req.params;
-
+    
     if (req.user.rol !== 'apoderado') {
       const e = new Error('Solo accesible por rol apoderado');
       e.status = 403;
       e.code = 'FORBIDDEN';
       throw e;
     }
-
+    
     if (req.user.id !== user_id) {
       const e = new Error('No autorizado para consultar este contexto');
       e.status = 403;
       e.code = 'FORBIDDEN';
       throw e;
     }
-
-    // Semana 3: stub temporal sin tablas relaciones_familiares/estudiantes
-    // Al implementar BD, consultar:
-    // relaciones_familiares.estado_activo = true
-    // estudiantes.estado_matricula = 'activo'
+    
+    // Obtener hijos del padre usando el servicio existente
+    const { getChildrenForParent } = require('../services/usersService');
+    const data = await getChildrenForParent(req.user);
+    
+    // Formatear respuesta según lo esperado por el frontend
     return res.status(200).json({
       success: true,
       data: {
-        hijos: [],
-        total_hijos: 0,
+        hijos: data.hijos,
+        total_hijos: data.total_hijos,
       },
     });
   } catch (err) {

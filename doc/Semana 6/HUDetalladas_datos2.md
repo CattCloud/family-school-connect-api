@@ -180,7 +180,7 @@
 ### **Mensajes Informativos**
 
 - "Aún no hay calificaciones registradas para Participación en el Trimestre 1"
-- "Las notas preliminares están sujetas a cambios hasta el cierre oficial del trimestre"
+- "Las notas preliminares están sujetas a cambios hasta el cierre del trimestre"
 - "Este promedio se actualiza automáticamente cada vez que el docente registra una nueva nota"
 - "Calificaciones finales del trimestre certificadas el [fecha]"
 
@@ -211,9 +211,9 @@
     - `SkeletonLoader`: Carga inicial
 - **Endpoints API:**
     - `GET /calificaciones/estudiante/{id}` - Calificaciones completas del estudiante
-        - Query params: `?año={año}&trimestre={trimestre}&curso_id={id}&componente_id={id}`
-    - `GET /calificaciones/promedio` - Promedio calculado en tiempo real
-        - Query params: `?estudiante_id={id}&curso_id={id}&componente_id={id}&trimestre={trimestre}`
+        - Query params: `?año={año}&trimestre={trimestre}`
+    - `GET /calificaciones/estudiante/{id}/promedio` - Promedio calculado en tiempo real
+        - Query params: `?año={año}&trimestre={trimestre}`
     - `GET /cursos/estudiante/{id}` - Cursos del estudiante por año
     - `GET /estructura-evaluacion?año={año}` - Componentes disponibles
 
@@ -377,7 +377,7 @@
 - **EF-11:** Estado de detalle: Modal de día específico abierto
 - **EF-12:** Estado de selección: Rango de fechas seleccionado
 - **EF-13:** Estado vacío: Sin registros para el período
-- **EF-14:** Estado de exportación: Generando reporte PDF/Excel
+- **EF-14:** Estado de exportación: Generando reporte PDF
 
 ---
 
@@ -455,7 +455,7 @@
 
 **Condiciones Funcionales:**
 
-- **CA-01:** Acceso al módulo **“Resumen Académico”** desde el dashboard del padre.
+- **CA-01:** Acceso al módulo **"Resumen Académico"** desde el dashboard del padre.
 - **CA-02:** Pantalla principal muestra **controles de filtrado:**
     - **Selector de Año Académico:** Dropdown con años disponibles (default: año actual)
     - **Selector de Trimestre:** Tabs horizontales {Trimestre 1, Trimestre 2, Trimestre 3, Anual} (default: trimestre actual)
@@ -480,19 +480,19 @@
     - **Card de promedio final del trimestre:**
         - Promedio calculado: `Σ (promedio × peso) / 100`
         - Badge de estado:
-            - 🟡 “Preliminar” si hay notas preliminares
-            - 🟢 “Final” si todas son oficiales
+            - 🟡 "Preliminar" si hay notas preliminares
+            - 🟢 "Final" si todas son oficiales
         - Calificación en letras (AD, A, B, C)
         - Barra de progreso visual
         - Mensaje:
-            - ⚠️ “Promedio preliminar, sujeto a cambios”
-            - ✅ “Promedio oficial certificado el [fecha]”
+            - ⚠️ "Promedio preliminar, sujeto a cambios"
+            - ✅ "Promedio oficial certificado el [fecha]"
 
 ---
 
 ### **Vista Anual — Tabla consolidada de notas finales**
 
-- **CA-04:** Al seleccionar la vista “Anual”, se muestra una **tabla consolidada** (TanStack Table):
+- **CA-04:** Al seleccionar la vista "Anual", se muestra una **tabla consolidada** (TanStack Table):
     - Columnas: Curso | T1 | T2 | T3 | Promedio Final | Estado
     - Filas: Un curso por fila
     - **Cálculos:**
@@ -504,8 +504,8 @@
         - Fondo verde/rojo según estado
         - Tooltip con desglose del cálculo
     - **Acciones:**
-        - Botón “Ver Detalle” → redirige a HU-06 (vista por componente)
-        - Botón “Exportar Boleta (PDF)” → descarga boleta institucional
+        - Botón "Ver Detalle" → redirige a HU-06 (vista por componente)
+        - Botón "Exportar Boleta (PDF)" → descarga boleta institucional
 
 ---
 
@@ -525,7 +525,7 @@
 
 ### **Exportación**
 
-- **CA-06:** Botón global “Exportar Boleta PDF” en la parte superior:
+- **CA-06:** Botón global "Exportar Boleta PDF" en la parte superior:
     - Genera un documento con logo institucional, datos del estudiante y tabla anual
     - Incluye firma digital y fecha de certificación
     - Disponible solo si hay al menos un trimestre cerrado (notas finales)
@@ -538,7 +538,7 @@
 - **VN-02:** Promedios calculados en tiempo real
 - **VN-03:** Promedio trimestral = Σ (promedio_componente × peso / 100)
 - **VN-04:** Promedio anual = (T1 + T2 + T3) / 3
-- **VN-05:** Estado = “Aprobado” si promedio ≥ 11
+- **VN-05:** Estado = "Aprobado" si promedio ≥ 11
 - **VN-06:** Redondear todos los valores a 2 decimales
 - **VN-07:** Mostrar solo cursos con notas registradas
 
@@ -565,9 +565,9 @@
 - **UX-07:** **Empty State:**
     - Ilustración + texto:
         
-        “Aún no hay calificaciones registradas para el año [XXXX]”
+        "Aún no hay calificaciones registradas para el año [XXXX]"
         
-    - Botón: “Volver al panel principal”
+    - Botón: "Volver al panel principal"
 
 ---
 
@@ -591,18 +591,18 @@
 
 ### **Mensajes de Error**
 
-- “No se pudieron cargar las calificaciones. Intente nuevamente.”
-- “Error al calcular promedio anual. Contacte con soporte.”
-- “No tiene permisos para ver las calificaciones de este estudiante.”
+- "No se pudieron cargar las calificaciones. Intente nuevamente."
+- "Error al calcular promedio anual. Contacte con soporte."
+- "No tiene permisos para ver las calificaciones de este estudiante."
 
 ---
 
 ### **Mensajes Informativos**
 
-- “Promedios preliminares pueden cambiar hasta el cierre del trimestre.”
-- “Promedios finales certificados el [fecha].”
-- “Promedio general del año: [X.X] ⭐ Excelente rendimiento.”
-- “Curso que requiere atención: [Nombre del curso].”
+- "Promedios preliminares pueden cambiar hasta el cierre del trimestre."
+- "Promedios finales certificados el [fecha]."
+- "Promedio general del año: [X.X] ⭐ Excelente rendimiento."
+- "Curso que requiere atención: [Nombre del curso]."
 
 ---
 
@@ -633,8 +633,98 @@
 - **Endpoints API:**
     - `GET /resumen-academico/estudiante/{id}` - Retorna el resumen completo de calificaciones del estudiante.
         - Query params: `?año={año}&trimestre={trimestre}`
+    - `GET /resumen-academico/estudiante/{id}/promedios-trimestre` - Devuelve los promedios por componente y curso del trimestre seleccionado.
+        - Query params: `?año={año}&trimestre={trimestre}`
+    - `GET /resumen-academico/estudiante/{id}/promedios-anuales` - Devuelve tabla consolidada de los 3 trimestres y promedio final anual.
+        - Query params: `?año={año}`
     - `GET /resumen-academico/estudiante/{id}/export` - Genera la boleta institucional PDF con promedios finales y logo oficial.
         - Query params: `?año={año}&formato={pdf}`
+
+---
+
+## **HU-ACAD-10 — Obtener Año Académico Actual**
+
+**Título:** Consulta del año académico vigente y configuración de trimestres
+
+**Historia:**
+
+> Como padre/apoderado, quiero conocer el año académico vigente y la configuración de trimestres para entender el contexto temporal de las calificaciones y asistencia de mi hijo.
+> 
+
+---
+
+### **Criterios de Aceptación**
+
+**Condiciones Funcionales:**
+
+- **CA-01:** Acceso a la información del año académico desde cualquier módulo académico
+- **CA-02:** Visualización clara del año académico vigente
+- **CA-03:** Lista de trimestres con sus fechas de inicio y fin
+- **CA-04:** Identificación del trimestre actual según la fecha del sistema
+- **CA-05:** Estados de los trimestres (finalizado, vigente, pendiente)
+
+---
+
+### **Validaciones de Negocio**
+
+- **VN-01:** El sistema determina automáticamente el año académico vigente basado en la fecha actual
+- **VN-02:** Cada año académico contiene 3 trimestres con fechas de inicio y fin definidas
+- **VN-03:** El trimestre actual se determina según la fecha del sistema
+- **VN-04:** Las fechas de los trimestres siguen el calendario escolar peruano
+
+---
+
+### **UI/UX**
+
+- **UX-01:** Diseño responsivo mobile-first
+- **UX-02:** Información clara y concisa
+- **UX-03:** Indicadores visuales de estados
+- **UX-04:** Tooltips informativos
+
+---
+
+### **Estados y Flujo**
+
+- **EF-01:** Estado inicial: cargando información del año académico
+- **EF-02:** Estado de visualización: información del año académico visible
+- **EF-03:** Estado de error: fallo en la carga de datos
+
+---
+
+### **Validaciones de Entrada**
+
+- **VE-01:** Validar que el usuario esté autenticado
+
+---
+
+### **Mensajes de Error**
+
+- "No se pudo cargar la información del año académico. Intente nuevamente."
+- "No se encontró un año académico vigente."
+
+---
+
+### **HU Relacionadas**
+
+- **HU Previas:**
+    - HU-AUTH-01 (Login con selector de hijos)
+- **HU Siguientes:**
+    - Todas las HU académicas que dependen del contexto temporal
+
+---
+
+### **Componentes y Estructura**
+
+- **Tipo:** Componente reutilizable en múltiples vistas
+- **Componentes principales:**
+    - `AcademicYearInfo`: Contenedor principal
+    - `YearDisplay`: Visualización del año académico
+    - `TrimestresList`: Lista de trimestres
+    - `CurrentTrimestre`: Indicador del trimestre actual
+    - `LoadingState`: Estado de carga
+    - `ErrorState`: Estado de error
+- **Endpoints API:**
+    - `GET /anio-academico/actual` - Devuelve el año académico activo y configuración de trimestres.
 
 ---
 
@@ -658,7 +748,7 @@
 
 ---
 
-**ENDPOINTS API CONSOLIDADOS — VISUALIZACIÓN (PADRES)**
+## **ENDPOINTS API CONSOLIDADOS — VISUALIZACIÓN (PADRES)**
 
 ### **CALIFICACIONES**
 
@@ -666,12 +756,6 @@
 | --- | --- | --- |
 | **GET** | `/calificaciones/estudiante/{id}` | Obtiene todas las calificaciones del estudiante por año y trimestre. |
 | **GET** | `/calificaciones/estudiante/{id}/promedio` | Calcula el promedio en tiempo real para un curso y componente específicos. |
-| **GET** | `/calificaciones/estudiante/{id}/promedios-trimestre` | Devuelve los promedios por componente y curso del trimestre seleccionado. |
-| **GET** | `/calificaciones/estudiante/{id}/promedios-anuales` | Retorna los promedios finales anuales por curso. |
-| **GET** | `/calificaciones/estudiante/{id}/estadisticas-generales` | Entrega métricas generales del rendimiento (promedio general, curso con mejor/peor nota, etc.). |
-| **GET** | `/cursos/estudiante/{id}` | Lista los cursos matriculados del estudiante en un año académico. |
-| **GET** | `/estructura-evaluacion` | Obtiene los componentes de evaluación y pesos definidos por la institución. **Query:** `?año={año}` |
-| **GET** | `/calificaciones/estudiante/{id}/export` | Exporta calificaciones o boleta de notas en formato PDF o Excel. **Query:** `?año={año}&formato={pdf|excel}` |
 
 ### **ASISTENCIA**
 
@@ -680,7 +764,6 @@
 | **GET** | `/asistencias/estudiante/{id}` | Obtiene todos los registros de asistencia del estudiante. **Query:** `?año={año}&mes={mes}` (mutuamente excluyentes con `trimestre`) o `?año={año}&trimestre={trimestre}` (mutuamente excluyentes con `mes`). |
 | **GET** | `/asistencias/estudiante/{id}/estadisticas` | Calcula porcentajes de asistencia, tardanza, permisos, faltas, etc. **Query:** `?fecha_inicio={fecha}&fecha_fin={fecha}` |
 | **GET** | `/asistencias/estudiante/{id}/export` | Exporta reporte visual de asistencia (PDF/Excel) con calendario y estadísticas. **Query:** `?formato={pdf|excel}&fecha_inicio={fecha}&fecha_fin={fecha}` |
-| **GET** | `/calendario/dias-no-lectivos?año={año}` | Lista los feriados y días no lectivos institucionales (para marcar en calendario). |
 
 ### **RESUMEN ACADÉMICO**
 
@@ -689,14 +772,22 @@
 | **GET** | `/resumen-academico/estudiante/{id}` | Retorna el resumen completo de calificaciones del estudiante. **Query:** `?año={año}&trimestre={trimestre}` |
 | **GET** | `/resumen-academico/estudiante/{id}/promedios-trimestre` | Devuelve promedios ponderados por curso del trimestre seleccionado. **Query:** `?año={año}&trimestre={trimestre}` |
 | **GET** | `/resumen-academico/estudiante/{id}/promedios-anuales` | Devuelve tabla consolidada de los 3 trimestres y promedio final anual. **Query:** `?año={año}` |
-| **GET** | `/resumen-academico/estudiante/{id}/estadisticas` | Calcula métricas globales: promedio general, cursos aprobados/desaprobados, mejor curso, etc. **Query:** `?año={año}&trimestre={trimestre}` |
 | **GET** | `/resumen-academico/estudiante/{id}/export` | Genera la boleta institucional PDF con promedios finales y logo oficial. **Query:** `?año={año}&formato={pdf}` |
 
-## **COMPLEMENTARIOS (Opcionales / Utilitarios)**
+### **CALENDARIO**
+
+| Método | Endpoint | Descripción |
+| --- | --- | --- |
+| **GET** | `/calendario/dias-no-lectivos?año={año}` | Lista los feriados y días no lectivos institucionales (para marcar en calendario). |
+
+### **AÑO ACADÉMICO**
+
+| Método | Endpoint | Descripción |
+| --- | --- | --- |
+| **GET** | `/anio-academico/actual` | Devuelve el año académico activo y trimestres configurados. |
+
+### **COMPLEMENTARIOS (Opcionales / Utilitarios)**
 
 | Método | Endpoint | Descripción |
 | --- | --- | --- |
 | **GET** | `/usuarios/hijos` | Devuelve lista de hijos asociados al padre autenticado (para selector global). |
-| **GET** | `/año-academico/actual` | Devuelve el año académico activo y trimestres configurados. |
-| **GET** | `/nivel-grado` | Devuelve la lista de niveles y grados activos. |
-| **GET** | `/alertas/estudiante/{id}` | Muestra alertas de asistencia o rendimiento (integrable con HU futuras). |

@@ -10,7 +10,7 @@
 ## **Base URL y Configuración**
 
 - **Base URL (local):** `http://localhost:3000`
-- **Base URL (producción):** `https://api.orquideas.edu.pe`
+
 
 ### **Autenticación JWT**
 - Todos los endpoints requieren autenticación (excepto los de login y recuperación de contraseña)
@@ -216,20 +216,66 @@
 
 ### **7. Obtener Contexto del Padre**
 
-**Endpoint:** `GET /auth/parent-context/:user_id`  
-**Descripción:** Obtiene hijos vinculados al padre  
+**Endpoint:** `GET /auth/parent-context/:user_id`
+**Descripción:** Obtiene hijos vinculados al padre con información académica completa
 **Autenticación:** Bearer token (Rol: Apoderado)
+
+#### **Path Parameters:**
+```
+{user_id} = ID del usuario padre (requerido)
+```
 
 #### **Response Success (200):**
 ```json
 {
   "success": true,
   "data": {
-    "hijos": [],
-    "total_hijos": 0
+    "hijos": [
+      {
+        "id": "41a379f9-ec54-4e01-8d64-e0df693e8721",
+        "codigo_estudiante": "P3001",
+        "nombre_completo": "Estudiante Ejemplo",
+        "nivel_grado": {
+          "nivel": "Primaria",
+          "grado": "3",
+          "descripcion": "3ro de Primaria"
+        },
+        "estado_matricula": "activo"
+      }
+    ],
+    "total_hijos": 1
   }
 }
 ```
+
+#### **Response Errors:**
+- **403 Forbidden - Usuario no es padre:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ACCESS_DENIED",
+    "message": "El usuario no tiene rol de apoderado"
+  }
+}
+```
+
+- **404 Not Found - Usuario no encontrado:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "USER_NOT_FOUND",
+    "message": "Usuario no encontrado"
+  }
+}
+```
+
+#### **Reglas de Negocio:**
+- Solo usuarios con rol `apoderado` pueden acceder a este endpoint
+- El endpoint devuelve información completa de los hijos vinculados al padre
+- Incluye datos académicos como nivel, grado y estado de matrícula
+- Se utiliza principalmente para el contexto inicial del dashboard del padre
 
 ---
 
@@ -619,7 +665,7 @@
 
 ---
 
-### **18. Obtener Plantillas Predefinidas**
+### **18. Obtener Plantillas De Estructura de Evaluacion Predefinidas**
 
 **Endpoint:** `GET /evaluation-structure/templates`  
 **Descripción:** Plantillas comunes de estructura de evaluación  
@@ -4787,6 +4833,80 @@ Content-Disposition: attachment; filename="nombre_original.pdf"
   }
 }
 ```
+
+---
+
+## **SECCIÓN 13: AÑO ACADÉMICO**
+
+### **122. Obtener Año Académico Actual**
+
+**Endpoint:** `GET /anio-academico/actual`
+**Descripción:** Obtiene el año académico vigente actual del sistema
+**Autenticación:** Bearer token (Todos los roles)
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "anio_academico": 2025,
+    "estado": "vigente",
+    "trimestres": [
+      {
+        "numero": 1,
+        "nombre": "Primer Trimestre",
+        "fecha_inicio": "2025-03-01",
+        "fecha_fin": "2025-05-31",
+        "estado": "finalizado"
+      },
+      {
+        "numero": 2,
+        "nombre": "Segundo Trimestre",
+        "fecha_inicio": "2025-06-01",
+        "fecha_fin": "2025-08-31",
+        "estado": "finalizado"
+      },
+      {
+        "numero": 3,
+        "nombre": "Tercer Trimestre",
+        "fecha_inicio": "2025-09-01",
+        "fecha_fin": "2025-12-20",
+        "estado": "vigente"
+      }
+    ],
+    "trimestre_actual": {
+      "numero": 3,
+      "nombre": "Tercer Trimestre",
+      "fecha_inicio": "2025-09-01",
+      "fecha_fin": "2025-12-20",
+      "estado": "vigente"
+    },
+    "fecha_actual": "2025-10-28"
+  }
+}
+```
+
+#### **Response Errors:**
+- **404 Not Found - No hay año académico vigente:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "NO_ACTIVE_ACADEMIC_YEAR",
+    "message": "No se encontró un año académico vigente"
+  }
+}
+```
+
+#### **Reglas de Negocio:**
+- El sistema determina automáticamente el año académico vigente basado en la fecha actual
+- Cada año académico contiene 3 trimestres con fechas de inicio y fin definidas
+- El trimestre actual se determina según la fecha del sistema
+- Las fechas de los trimestres siguen el calendario escolar peruano:
+  - T1: Marzo - Mayo
+  - T2: Junio - Agosto
+  - T3: Septiembre - Diciembre
+- El endpoint está disponible para todos los roles autenticados
 
 ---
 
