@@ -12,6 +12,9 @@ router.use(auth);
 // BANDEJA DE COMUNICADOS (HU-COM-00)
 // ========================================
 
+// Obtener todos los niveles y grados
+router.get('/nivel-grado', comunicadosReadLimiter, comunicadosController.obtenerNivelesGradosController);
+
 // Obtener lista de comunicados del usuario con paginación y filtros
 router.get('/', comunicadosReadLimiter, comunicadosController.obtenerComunicadosController);
 
@@ -47,8 +50,6 @@ router.get('/permisos-docentes/:docente_id', comunicadosReadLimiter, comunicados
 // Obtener cursos asignados a un docente
 router.get('/cursos/docente/:docente_id', comunicadosReadLimiter, comunicadosController.obtenerCursosDocenteController);
 
-// Obtener todos los niveles y grados (solo director)
-router.get('/nivel-grado', comunicadosReadLimiter, comunicadosController.obtenerNivelesGradosController);
 
 // Calcular destinatarios estimados (preview)
 router.post('/usuarios/destinatarios/preview', comunicadosReadLimiter, comunicadosController.calcularDestinatariosPreviewController);

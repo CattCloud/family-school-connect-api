@@ -10,7 +10,7 @@ const router = Router();
 // HU-MSG-01 — Obtener Cursos del Estudiante
 // GET /cursos/estudiante/:estudiante_id
 router.get(
-  '/cursos/estudiante/:estudiante_id',
+  '/estudiante/:estudiante_id',
   auth,
   authorizeRole(['apoderado']),
   getCoursesByStudentController

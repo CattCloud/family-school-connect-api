@@ -4,13 +4,13 @@
 
 ### **Entidades de Base de Datos Involucradas:**
 
-1. **usuarios** - Docente/Director que crea el comunicado
-2. **comunicados** - Comunicado con contenido y configuración
-3. **permisos_docentes** - Validación de permisos de publicación
-4. **nivel_grado** - Niveles y grados para segmentación
-5. **cursos** - Cursos para segmentación específica
-6. **asignaciones_docente_curso** - Determina qué grados/cursos puede usar el docente
-7. **notificaciones** - Alertas generadas a destinatarios
+1. **Usuario** - Docente/Director que crea el comunicado
+2. **Comunicado** - Comunicado con contenido y configuración
+3. **PermisoDocente** - Validación de permisos de publicación
+4. **NivelGrado** - Niveles y grados para segmentación
+5. **Curso** - Cursos para segmentación específica
+6. **AsignacionDocenteCurso** - Determina qué grados/cursos puede usar el docente
+7. **Notificacion** - Alertas generadas a destinatarios
 
 ### **Módulos Previos Requeridos:**
 
@@ -20,7 +20,7 @@
 
 ### **Roles Involucrados:**
 
-- **Docente:** Solo si tiene `permiso_activo = true` en `permisos_docentes`
+- **Docente:** Solo si tiene `permiso_activo = true` en `PermisoDocente`
 - **Director:** Acceso completo sin restricciones
 
 ---
@@ -45,7 +45,7 @@
     - Opción en menú lateral del dashboard
     - Al hacer clic, redirige a `/dashboard/comunicados/nuevo`
 - **CA-02:** Validación de permisos previa:
-    - **Docente:** Verificar que `permisos_docentes.puede_crear_comunicados = true`
+    - **Docente:** Verificar que `PermisoDocente.tipo_permiso = 'comunicados'` y `estado_activo = true`
     - **Director:** Acceso automático sin validación adicional
     - Si el docente no tiene permisos: Mostrar mensaje "No tienes permisos para crear comunicados. Contacta al director."
 - **CA-03:** La interfaz está diseñada como **Wizard de 3 pasos** con barra de progreso visual:
@@ -109,7 +109,7 @@
         - Contador de caracteres: "XX/5000"
         - Altura inicial: 400px
         - Auto-save cada 2 minutos en localStorage (borrador temporal)
-            - No crea registros en la base de datos hasta que el usuario seleccione explícitamente “💾 Guardar Borrador” o “📤 Publicar”.
+            - No crea registros en la base de datos hasta que el usuario seleccione explícitamente "💾 Guardar Borrador" o "📤 Publicar".
     - **Vista Previa en Tiempo Real:**
         - Toggle "👁️ Vista Previa" en esquina superior derecha del editor
         - Al activar: Muestra panel split-screen con renderizado HTML en tiempo real
@@ -143,7 +143,7 @@
             - Al desmarcar: Limpia toda la selección
             - Badge informativo: "Total estimado: XXX personas"
         - **Árbol Jerárquico Completo:**
-            
+           
             ```
             [☑️] Todos los destinatarios
             -----------------------------------
@@ -172,9 +172,9 @@
             👥 Rol: Docentes [☐]
             -----------------------------------
             Resumen: 3 cursos, 2 grados, 1 nivel, 1 rol
-            
+           
             ```
-            
+           
         - **Funcionalidades del árbol:**
             - Selección jerárquica: Marcar "Primaria" marca todos sus grados automáticamente
             - Estados intermedios: Si un padre tiene algunos hijos marcados, muestra estado semi-seleccionado (ícono "–")
@@ -185,7 +185,7 @@
         
         - **Sin Checkbox Global "Todos"** (oculto completamente)
         - **Árbol Limitado a sus Asignaciones:**
-            
+           
             ```
             📚 Nivel: Primaria
              ├── [☑️] 5to A (solo este grado)
@@ -194,11 +194,11 @@
             👥 Rol: Padres [☑️] (fijo, no editable)
             -----------------------------------
             Resumen: 1 curso, 1 grado, 1 nivel
-            
+           
             ```
-            
+           
         - **Restricciones visuales:**
-            - Solo muestra grados/cursos donde tiene `asignaciones_docente_curso` activas
+            - Solo muestra grados/cursos donde tiene `AsignacionDocenteCurso` activas
             - Rol "Padres" pre-seleccionado y deshabilitado (no puede cambiar)
             - Mensaje informativo: "ℹ️ Solo puedes enviar comunicados a padres de tus cursos asignados"
     - **Panel de Resumen de Audiencia:**
@@ -246,8 +246,8 @@
     **Validación Backend:**
     
     - Verificar permisos del usuario:
-        - **Docente:** Validar `permisos_docentes.puede_crear_comunicados = true`
-        - **Docente:** Validar que los grados/cursos seleccionados están en `asignaciones_docente_curso`
+        - **Docente:** Validar `PermisoDocente.tipo_permiso = 'comunicados'` y `estado_activo = true`
+        - **Docente:** Validar que los grados/cursos seleccionados están en `AsignacionDocenteCurso`
         - **Director:** Sin restricciones
     - Sanitizar contenido HTML:
         - Permitir solo etiquetas seguras: `<p>, <strong>, <em>, <u>, <h1-h3>, <ul>, <ol>, <li>, <a>, <br>, <span>`
@@ -357,14 +357,14 @@
 ### **Validaciones de Negocio**
 
 - **VN-01:** Solo usuarios autenticados con rol docente (con permisos) o director pueden crear comunicados
-- **VN-02:** Docente solo puede crear si `permisos_docentes.puede_crear_comunicados = true` y `estado_activo = true`
+- **VN-02:** Docente solo puede crear si `PermisoDocente.tipo_permiso = 'comunicados'` y `estado_activo = true`
 - **VN-03:** Título debe tener entre 10 y 200 caracteres
 - **VN-04:** Contenido debe tener entre 20 y 5000 caracteres
 - **VN-05:** Tipo de comunicado debe ser válido según rol:
     - Director: Académico, Administrativo, Evento, Urgente, Informativo
     - Docente: Académico, Evento
 - **VN-06:** Audiencia debe tener al menos 1 selección (grado, curso, nivel o rol)
-- **VN-07:** Docente solo puede seleccionar grados/cursos donde tiene `asignaciones_docente_curso` activas
+- **VN-07:** Docente solo puede seleccionar grados/cursos donde tiene `AsignacionDocenteCurso` activas
 - **VN-08:** Docente solo puede seleccionar rol "Padres"
 - **VN-09:** Fecha programada debe ser al menos 30 minutos en el futuro
 - **VN-10:** Contenido HTML debe estar sanitizado (sin scripts maliciosos)
@@ -380,7 +380,7 @@
     ```
     ┌─────────────────────────────────────────────────────┐
     │  [1] Información  ━━━  [2] Contenido  ━━━  [3] Audiencia │
-    │      ●━━━━━━━━━━━━━━━━━━━━━○━━━━━━━━━━━━━━━━━○           │
+    │      ●━━━━━━━━━━━━━━━━━━━○━━━━━━━━━━━━━━━━━○           │
     └─────────────────────────────────────────────────────┘
     
     ```
@@ -528,37 +528,63 @@
 
 - **Tipo:** Página completa con wizard de 3 pasos (`/dashboard/comunicados/nuevo`)
 - **Componentes principales:**
-    - `CrearComunicadoWizard`: Componente contenedor del wizard
-    - `StepProgressBar`: Barra de progreso visual entre pasos
-    - `InformacionBasicaStep`: Paso 1 - Título, tipo, fecha
-    - `TituloInput`: Campo de texto con contador
-    - `TipoComunicadoSelect`: Dropdown con opciones según rol
-    - `PublicacionDatePicker`: Selector de fecha/hora con radio buttons
-    - `ContenidoStep`: Paso 2 - Editor de texto
-    - `TinyMCEEditor`: Editor de texto enriquecido
-    - `VistaPreviewToggle`: Toggle para vista previa split
-    - `AutoSaveIndicator`: Indicador de guardado automático
-    - `AudienciaStep`: Paso 3 - Segmentación y publicación
-    - `ContextoResumen`: Card con resumen de pasos anteriores
-    - `AudienciaTreeSelect`: Árbol jerárquico con checkboxes
-    - `CheckboxGlobal`: Checkbox "Todos los destinatarios"
-    - `ResumenAudienciaPanel`: Card lateral con contadores
-    - `ComunicadoPreview`: Vista previa final del comunicado
-    - `PublicarButton`: Botón de publicación con estados
-    - `GuardarBorradorButton`: Botón de guardado temporal
-    - `ConfirmacionModal`: Modal de confirmación de publicación
-    - `ExitoModal`: Modal de éxito con animación
-    - `ErrorAlert`: Componente de alertas de error
+    - [Card.jsx](src/components/ui/Card.jsx): Contenedor estructural de cada paso del wizard. Usar CardHeader (título/ayuda), CardContent (formulario/editor/árbol) y CardFooter (acciones). Alineado con tokens: fondo `--color-bg-card`, borde `--color-border-primary`, sombra `--shadow-md`.
+    - [Input.jsx](src/components/ui/Input.jsx): Campo “Título del Comunicado” con contador de caracteres y helperText. Estados normal/focus/error/disabled mapeados a tokens (`--color-border-focus`, `--color-error`). Integrable con React Hook Form para validación en tiempo real.
+    - [Button.jsx](src/components/ui/Button.jsx): Acciones “Continuar”, “Atrás”, “Cancelar”, “Guardar borrador” y “Publicar”. Variantes primary/outline/secondary y tamaño md; soporta `isLoading` y `disabled`. Focus ring accesible con `--color-primary-300`.
+    - [Modal.jsx](src/components/ui/Modal.jsx): Confirmaciones de “Cancelar” y “Publicar” con focus trap y cierre por ESC/overlay cuando `dismissible=true`. Usar tamaños `sm` (confirmaciones) y `md` (vista previa de destinatarios).
+    - [LoadingSpinner.jsx](src/components/ui/LoadingSpinner.jsx): Indicadores de carga inline (validaciones) y overlay (publicación/guardado). Respetar `aria-busy` y `aria-live`.
+    - [Toast.jsx](src/components/ui/Toast.jsx): Feedback de éxito/error para borrador, validación de HTML/segmentación y publicación. Mapea errores de API con `toastFromApiError()`.
+    - [ProtectedRoute.jsx](src/components/auth/ProtectedRoute.jsx): Gate de acceso al flujo según autenticación/rol. Compatible con [useProtectedRoute.js](src/hooks/useProtectedRoute.js) para lógica de roles (docente/director).
+
+    - Propuestos (alineados al sistema de diseño):
+        - [StepProgressBar.jsx](src/components/ui/StepProgressBar.jsx): Barra accesible (ARIA `aria-current="step"`) de 3 pasos con estados completado/activo/pendiente. Colores basados en primarios (active `--color-primary-600`, completo `--color-tertiary-500`).
+        - [DateTimeScheduleField.jsx](src/components/ui/DateTimeScheduleField.jsx): Control unificado “Inmediato/Programado” con radios + date/time. Valida “≥ 30 min” y deshabilita fecha/hora cuando es inmediato. Estados de error con `--color-error`.
+        - [RichTextEditor.jsx](src/components/communication/RichTextEditor.jsx): Wrapper de editor (TinyMCE/Quill) con toolbar restringida, conteo de caracteres, autosave en localStorage y toggle “Vista Previa” split. Expone `onChange(html, textLength)` para validación 20–5000 chars.
+        - [AudienceTreeSelect.jsx](src/components/communication/AudienceTreeSelect.jsx): Árbol jerárquico triestado con expand/collapse, búsqueda inline y restricciones por rol. Para docente: limita a `AsignacionDocenteCurso` y fija rol “Padres”.
+        - [AudienceSummaryPanel.jsx](src/components/communication/AudienceSummaryPanel.jsx): Panel lateral con totales y desglose (niveles/grados/cursos/roles) y botón “Previsualizar Lista” (abre Modal con tabla).
+        - [AutoSaveIndicator.jsx](src/components/ui/AutoSaveIndicator.jsx): Etiqueta discreta “💾 Guardado automáticamente hace XXs” con actualización de timestamp; color `--color-text-muted`.
+        - [htmlSanitizer.js](src/utils/htmlSanitizer.js): Utilidad para pre-sanitizar contenido según whitelist (`p,strong,em,u,h1-h3,ul,ol,li,a,br,span`) previo a envío a backend.
+        - [FormErrorSummary.jsx](src/components/ui/FormErrorSummary.jsx): Resumen de errores de validación al pie del step, con enlaces a campos (accesible).
+
+    - Formularios y validación (reutilizable):
+        - Integración con React Hook Form (control) y Zod (esquemas) para: título (10–200), tipo por rol, fecha programada (ISO y ≥ 30 min), contenido (20–5000), audiencia (≥ 1 selección). Mostrar errores con Input.helperText y FormErrorSummary.
 - **Endpoints API:**
+
+
+#### **Verificación de Permisos y Consultas de Datos:**
     - `GET /permisos-docentes/:docente_id` - Verificar permisos del docente
-    - `GET /nivel-grado` - Lista de niveles y grados
-    - `GET /cursos/docente/:docente_id` - Cursos asignados al docente (con grados)
-    - `GET /cursos/todos` - Todos los cursos (solo director)
+    - `GET /nivel-grado` - Obtener niveles y grados (estructura jerárquica)
+    - `GET /cursos/docente/:docente_id` - Obtener cursos asignados al docente
+    - `GET /comunicados/:id/acceso` - Validar acceso del usuario a un comunicado específico
+
+#### **Gestión de Comunicados - Lectura:**
+    - `GET /comunicados` - Lista de comunicados con filtros y paginación
+    - `GET /comunicados/search` - Buscar comunicados por texto
+    - `GET /comunicados/actualizaciones` - Verificar nuevos comunicados (polling)
+    - `GET /comunicados/:id` - Obtener comunicado completo
+    - `POST /comunicados-lecturas` - Marcar comunicado como leído
+
+#### **Gestión de Comunicados - Creación:**
     - `POST /comunicados` - Crear nuevo comunicado
-    - `POST /comunicados/borrador` - Guardar como borrador
-    - `POST /notificaciones/batch` - Crear notificaciones masivas
-    - `POST /notificaciones/whatsapp/batch` - Enviar WhatsApp masivo
-    - `GET /usuarios/destinatarios` - Calcular destinatarios según segmentación (preview)
+    - `POST /comunicados/borrador` - Guardar comunicado como borrador
+    - `POST /comunicados/:id/publicar` - Publicar un borrador existente
+    - `GET /comunicados/mis-borradores` - Listar borradores propios
+
+#### **Gestión de Comunicados - Edición y Eliminación:**
+    - `PUT /comunicados/:id` - Editar comunicado existente
+    - `PATCH /comunicados/:id/desactivar` - Desactivar comunicado
+    - `DELETE /comunicados/:id` - Eliminar comunicado permanentemente
+
+#### **Programación y Validación:**
+    - `GET /comunicados/programados` - Listar comunicados programados
+    - `DELETE /comunicados/:id/programacion` - Cancelar programación
+    - `POST /comunicados/validar-html` - Validar contenido HTML
+    - `POST /comunicados/validar-segmentacion` - Validar segmentación de destinatarios
+
+#### **Gestión de Notificaciones:**
+    - `POST /usuarios/destinatarios/preview` - Calcular destinatarios según segmentación
+    - `GET /comunicados/no-leidos/count` - Obtener contador de no leídos
+    - `GET /comunicados/filtros` - Filtrar comunicados por criterios específicos
 
 ---
 
@@ -568,14 +594,14 @@
 
 ### **Entidades de Base de Datos Involucradas:**
 
-1. **usuarios** - Usuario autenticado que visualiza comunicados
-2. **comunicados** - Comunicados publicados en la institución
-3. **comunicados_lecturas** - Registro de comunicados leídos por usuario
-4. **estudiantes** - Hijos del padre (para filtrado automático)
-5. **relaciones_familiares** - Vinculación padre-hijo
-6. **nivel_grado** - Niveles y grados para filtrado
-7. **asignaciones_docente_curso** - Cursos del docente (para filtrado)
-8. **permisos_docentes** - Permisos de creación de comunicados
+1. **Usuario** - Usuario autenticado que visualiza comunicados
+2. **Comunicado** - Comunicados publicados en la institución
+3. **ComunicadoLectura** - Registro de comunicados leídos por usuario
+4. **Estudiante** - Hijos del padre (para filtrado automático)
+5. **RelacionesFamiliares** - Vinculación padre-hijo
+6. **NivelGrado** - Niveles y grados para filtrado
+7. **AsignacionDocenteCurso** - Cursos del docente (para filtrado)
+8. **PermisoDocente** - Permisos de creación de comunicados
 
 ### **Módulos Previos Requeridos:**
 
@@ -612,7 +638,7 @@
     
     - **Botón "✍️ Nuevo Comunicado"** (solo visible si tiene permisos):
         - **Director:** Siempre visible, color primario (púrpura)
-        - **Docente con permisos:** Visible si `permisos_docentes.puede_crear_comunicados = true`
+        - **Docente con permisos:** Visible si `PermisoDocente.tipo_permiso = 'comunicados'` y `estado_activo = true`
         - **Docente sin permisos / Padre:** No visible
         - Click redirige a HU-COM-02
         - Posición: Esquina superior derecha, fijo
@@ -675,7 +701,7 @@
     
     - **Vista de tarjetas (Grid Layout):**
         - **Desktop (>1024px):** Grid de 3 columnas con gap de 24px
-        - **Tablet (768px-1024px):** Grid de 2 columnas con gap de 16px
+        - **Tablet (768px-1024px):** Grid de 2 columnas con gap de16px
         - **Mobile (<768px):** Lista vertical con gap de 12px
     - **Cada tarjeta de comunicado muestra:**
         
@@ -779,7 +805,7 @@
     ```
     
     - **Lógica específica:**
-        - Obtener estudiantes del padre desde `relaciones_familiares`
+        - Obtener estudiantes del padre desde `RelacionesFamiliares`
         - Obtener nivel/grado de cada estudiante
         - Filtrar comunicados que:
             - Incluyen "todos" en `publico_objetivo`
@@ -850,7 +876,7 @@
         - **Eliminar:** Modal de confirmación con advertencia + eliminación permanente
 - **CA-07:** Marcado Automático como Leído:
     - Al abrir un comunicado (click en tarjeta o "Leer más"):
-        - Insertar registro en `comunicados_lecturas`:
+        - Insertar registro en `ComunicadoLectura`:
         
         ```sql
         INSERT INTO comunicados_lecturas (
@@ -910,7 +936,7 @@
 - **UX-01:** Layout tipo Pinterest/Grid con diseño limpio:
     
     ```
-    ┌────────────────────────────────────────────────────────┐
+    ┌────────────────────────────────────────────────┐
     │  📢 Comunicados                     [🔍 Buscar...]  [✍️ Nuevo]  │
     ├──────────┬─────────────────────────────────────────────┤
     │ FILTROS  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
@@ -933,8 +959,8 @@
     - **Padding:** 20px
     - **Border-radius:** 12px
     - **Sombra:**
-        - Normal: `box-shadow: 0 2px 8px rgba(0,0,0,0.1)`
-        - Hover: `box-shadow: 0 4px 16px rgba(0,0,0,0.15)`
+        - Normal: `box-shadow: 0 2px 8px rgba(0,0,0,.1)`
+        - Hover: `box-shadow: 0 4px 16px rgba(0,0,0,.15)`
     - **Transición:** `transition: all 0.3s ease`
     - **Estado no leído:**
         - Fondo: `bg-white`
@@ -1034,7 +1060,7 @@
 ### **HU Relacionadas**
 
 - **HU Previas:**
-    - HU-AUTH-01 (Autenticación de usuarios)
+    - HU-AUTH-01 (Autenticación como docente/director)
     - HU-USERS-04 (Relaciones padre-hijo configuradas)
     - HU-USERS-65 (Permisos de docentes asignados)
 - **HU Siguientes:**
@@ -1042,7 +1068,7 @@
     - HU-COM-02 (Crear nuevo comunicado)
     - HU-COM-03 (Gestionar comunicados propios)
     - HU-COM-04 (Ver estadísticas de lectura)
-    - HU-COM-05 (Notificaciones de comunicados)
+    - HU-COM-05 (Notificaciones de nuevos comunicados)
 
 ---
 
@@ -1050,37 +1076,48 @@
 
 - **Tipo:** Página principal completa (`/dashboard/comunicados`)
 - **Componentes principales:**
-    - `ComunicadosBandeja`: Componente contenedor principal
-    - `ComunicadosHeader`: Header con buscador y botón nuevo
-    - `NuevoComunicadoButton`: Botón de creación (condicional por rol)
-    - `BadgeContador`: Badge de contador de no leídos
-    - `FiltrosSidebar`: Sidebar con filtros (desktop) o modal (móvil)
-    - `BuscadorComunicados`: Campo de búsqueda con debounce
-    - `TipoSelect`: Selector de tipo de comunicado
-    - `EstadoSelect`: Selector de estado de lectura
-    - `DateRangePicker`: Selector de rango de fechas
-    - `AutorSelect`: Selector de autor (docente/director)
-    - `NivelGradoSelect`: Selectores de nivel/grado (director)
-    - `LimpiarFiltrosButton`: Botón de reseteo de filtros
-    - `ComunicadosGrid`: Grid de tarjetas con lazy loading
-    - `ComunicadoCard`: Tarjeta individual de comunicado
-    - `TipoBadge`: Badge de tipo con color
-    - `NuevoBadge`: Badge "Nuevo" animado
-    - `EditadoBadge`: Badge "Editado" con tooltip
-    - `LecturaIndicador`: Punto circular de estado de lectura
-    - `MenuOpciones`: Dropdown con opciones (editar/eliminar)
-    - `EmptyState`: Estado vacío con ilustración
-    - `LazyLoadSpinner`: Spinner de carga
-    - `ToastNotification`: Toast de nuevo comunicado
+    - [DashboardLayout.jsx](src/components/layout/DashboardLayout.jsx), [Header.jsx](src/components/layout/Header.jsx), [Sidebar.jsx](src/components/layout/Sidebar.jsx): Layout base y navegación, aplicando clases `.sidebar-purple`, `.header-white`, `.main-content` definidas en tokens. Mantener a11y en navegación.
+    - [Button.jsx](src/components/ui/Button.jsx): CTA “✍️ Nuevo Comunicado” (desktop) y FAB móvil, acciones “Cargar más” y menú contextual. Variantes primary/outline/ghost según jerarquía.
+    - [Input.jsx](src/components/ui/Input.jsx): Buscador con debounce y campos de texto de filtros simples; focus visible y errores accesibles consistentes.
+    - [Card.jsx](src/components/ui/Card.jsx): Tarjetas de comunicado con Header (badges), cuerpo (título/extracto) y Footer (acciones). Fondo y sombras de sistema.
+    - [LoadingSpinner.jsx](src/components/ui/LoadingSpinner.jsx): Indicadores en carga inicial, carga incremental y refresco por filtros.
+    - [Toast.jsx](src/components/ui/Toast.jsx): Avisos de nuevos comunicados, errores de red y permisos. Usar `toastInfo`/`toastError`.
+    - [ProtectedRoute.jsx](src/components/auth/ProtectedRoute.jsx): Protección por rol/estado.
+    - [EmptyState.jsx](src/components/academic/EmptyState.jsx): Estado vacío con ilustración y CTA contextual “Limpiar filtros” o “✍️ Crear Comunicado”.
+
+    - Propuestos (alineados al sistema de diseño):
+        - [ComunicadosHeader.jsx](src/components/communication/ComunicadosHeader.jsx): Header con título, buscador, chips de filtros activos y CTA “✍️ Nuevo Comunicado”. Responsive y accesible.
+        - [FiltrosSidebar.jsx](src/components/communication/FiltrosSidebar.jsx): Panel de filtros (sidebar en desktop / modal en móvil) con selects y date range; aplica tokens y foco manejable por teclado.
+        - [ComunicadosGrid.jsx](src/components/communication/ComunicadosGrid.jsx): Grid responsivo 1–3 columnas con infinite scroll y animaciones; soporta “optimistic add” tras publicar.
+        - [ComunicadoCard.jsx](src/components/communication/ComunicadoCard.jsx): Tarjeta con `TipoBadge`, `LecturaIndicador`, título, extracto, metadatos y menú kebab condicionado por permisos.
+        - [TipoBadge.jsx](src/components/ui/TipoBadge.jsx): Badges semánticos “Académico/Administrativo/Evento/Urgente/Informativo/Nuevo/Editado” mapeados a tokens de color y animación pulse para “Urgente/Nuevo”.
+        - [KebabMenu.jsx](src/components/ui/KebabMenu.jsx): Menú contextual (⋮) con opciones editar/estadísticas/desactivar/eliminar; navegación por teclado y roles ARIA.
+        - [FilterSelect.jsx](src/components/ui/FilterSelect.jsx): Select estilizado con iconos y tamaño compacto para tipo/estado/autor/nivel/grado.
+        - [DateRangePicker.jsx](src/components/ui/DateRangePicker.jsx): Selector de rango con presets “Hoy/Última semana/Último mes/Todo”, accesible y consistente con tokens.
+        - [LecturaIndicadorDot.jsx](src/components/ui/LecturaIndicadorDot.jsx): Punto de estado (no leído/leído) con leyenda accesible (`aria-label`).
+
+    - Listados/tablas:
+        - Opcionalmente, un [DestinatariosPreviewTable.jsx](src/components/communication/DestinatariosPreviewTable.jsx) reutilizable con paginación para vistas de preview cuando aplique.
 - **Endpoints API:**
-    - `GET /comunicados?page={page}&limit={limit}&rol={rol}&usuario_id={id}` - Lista de comunicados paginada y filtrada
-    - `GET /comunicados/search?query={query}&usuario_id={id}` - Búsqueda de comunicados
-    - `GET /comunicados/filtros?tipo={tipo}&estado={estado}&fecha_inicio={fecha}&fecha_fin={fecha}&autor_id={id}` - Comunicados filtrados
-    - `GET /comunicados/no-leidos/count?usuario_id={id}` - Contador de no leídos
+ #### **Consultas de Datos:**
+    - `GET /comunicados?page={page}&limit={limit}&rol={rol}&usuario_id={id}&tipo={tipo}&estado_lectura={estado}&fecha_inicio={fecha}&fecha_fin={fecha}&autor_id={id}&nivel={nivel}&grado={grado}&hijo_id={hijo}&busqueda={busqueda}&solo_mis_comunicados={bool}` - Lista de comunicados paginada y filtrada
+    - `GET /comunicados/search?query={query}&limit={limit}&offset={offset}` - Búsqueda de comunicados
+    - `GET /comunicados/no-leidos/count` - Contador de no leídos
+    - `GET /comunicados/actualizaciones?ultimo_check={timestamp}` - Verificar actualizaciones (polling)
+    - `GET /comunicados/:id` - Obtener comunicado completo
+    - `GET /comunicados/:id/acceso` - Validar acceso al comunicado
+
+#### **Interacción con Comunicados:**
     - `POST /comunicados-lecturas` - Marcar comunicado como leído
-    - `PATCH /comunicados/:id/desactivar` - Desactivar comunicado (director)
-    - `DELETE /comunicados/:id` - Eliminar comunicado (director)
-    - `GET /comunicados/actualizaciones?usuario_id={id}&ultimo_check={timestamp}` - Polling de nuevos comunicados
+    - `GET /comunicados/programados` - Listar comunicados programados
+    - `GET /comunicados/mis-borradores` - Listar borradores propios
+
+#### **Gestión de Comunicados (Solo Director):**
+    - `PATCH /comunicados/:id/desactivar` - Desactivar comunicado
+    - `PATCH /comunicados/:id/reactivar` - Reactivar comunicado (director)
+    - `DELETE /comunicados/:id` - Eliminar comunicado
+
+#### **Consultas Complementarias:**
     - `GET /estudiantes/padre/:padre_id` - Hijos del padre (para filtrado)
     - `GET /asignaciones-docente-curso?docente_id={id}` - Cursos del docente (para filtrado)
     - `GET /permisos-docentes/:docente_id` - Permisos de creación
@@ -1093,12 +1130,12 @@
 
 ### **Entidades de Base de Datos Involucradas:**
 
-1. **usuarios** - Usuario que visualiza el comunicado
-2. **comunicados** - Comunicado específico a visualizar
-3. **comunicados_lecturas** - Registro de lectura del usuario
-4. **estudiantes** - Estudiantes relacionados (para validación de acceso)
-5. **relaciones_familiares** - Validación de acceso del padre
-6. **asignaciones_docente_curso** - Validación de acceso del docente
+1. **Usuario** - Usuario que visualiza el comunicado
+2. **Comunicado** - Comunicado específico a visualizar
+3. **ComunicadoLectura** - Registro de comunicados leídos por usuario
+4. **Estudiante** - Estudiantes relacionados (para validación de acceso)
+5. **RelacionesFamiliares** - Validación de acceso del padre
+6. **AsignacionDocenteCurso** - Validación de acceso del docente
 
 ### **Módulos Previos Requeridos:**
 
@@ -1183,29 +1220,29 @@
         - **Card con fondo gris claro** (`bg-gray-50`) y borde redondeado
         - Layout horizontal con separadores verticales
         - Información presentada en formato "Etiqueta: Valor":
-            
+           
             **Autor:**
-            
+           
             - Ícono: 👤
             - Formato: "Publicado por: [Nombre Completo del Autor]"
             - Si es el usuario actual: Badge pequeño "(Tú)" en color primario
-            
+           
             **Fecha de Publicación:**
-            
+           
             - Ícono: 📅
             - Formato completo: "DD de MMMM de YYYY, HH:MM"
             - Ejemplo: "15 de octubre de 2025, 10:30"
-            
+           
             **Indicador de Edición** (si aplica):
-            
+           
             - Solo visible si `editado = true`
             - Ícono: ✏️
             - Badge: "Editado"
             - Tooltip al hover: "Última edición: [fecha_edicion en formato DD/MM/YYYY HH:MM]"
             - Color: Gris medio
-            
+           
             **Destinatarios** (solo visible para docente/director):
-            
+           
             - Ícono: 👥
             - Formato: "Dirigido a: [Lista de destinatarios]"
             - Ejemplos:
@@ -1222,7 +1259,7 @@
         
         **Contenido HTML Renderizado:**
         
-        - Renderizado completo del contenido HTML desde `comunicados.contenido`
+        - Renderizado completo del contenido HTML desde `Comunicado.contenido`
         - Estilos aplicados para mantener formato: estandar de colores en index.css
         - Sanitización de HTML para evitar XSS:
             - Permitir solo etiquetas seguras: `<p>, <strong>, <em>, <u>, <h1-h3>, <ul>, <ol>, <li>, <a>, <br>, <span>`
@@ -1245,7 +1282,7 @@
         
         **Botones de Acción:**
         
-        - Layout horizontal centrado con gap de 16px
+        - Layout horizontal centrado con gap de16px
         - **Botón "← Volver a la Bandeja":**
             - Color secundario (outline gris)
             - Ícono de flecha izquierda
@@ -1261,10 +1298,10 @@
     **Proceso al Cargar la Vista:**
     
     - **Al montar el componente (useEffect):**
-        - Verificar si existe registro en `comunicados_lecturas` para el usuario actual
+        - Verificar si existe registro en `ComunicadoLectura` para el usuario actual
         - Si NO existe:
             - Insertar registro en base de datos:
-            
+           
             ```sql
             INSERT INTO comunicados_lecturas (
               comunicado_id, usuario_id, fecha_lectura
@@ -1272,9 +1309,9 @@
               ?, ?, NOW()
             )
             ON CONFLICT (comunicado_id, usuario_id) DO NOTHING;
-            
+           
             ```
-            
+           
             - Actualizar estado local del componente
             - Actualizar contador de no leídos en header global (mediante context)
         - Si YA existe:
@@ -1420,14 +1457,14 @@
     ```
     
 - **UX-02:** Diseño del header sticky:
-    - Fondo blanco con sombra sutil: `box-shadow: 0 2px 8px rgba(0,0,0,0.1)`
+    - Fondo blanco con sombra sutil: `box-shadow: 0 2px 8px rgba(0,0,0,.1)`
     - Padding: 16px horizontal, 12px vertical
     - Z-index: 10 para estar sobre el contenido
     - Transición suave al hacer scroll: `transition: box-shadow 0.3s ease`
 - **UX-03:** Diseño del badge de tipo:
     - Tamaño grande para destacar: 18px padding, 14px texto
     - Border-radius: 24px (pastilla completa)
-    - Sombra sutil: `box-shadow: 0 1px 3px rgba(0,0,0,0.1)`
+    - Sombra sutil: `box-shadow: 0 1px 3px rgba(0,0,0,.1)`
     - Animación en urgentes: `animation: pulse 2s infinite`
     - Margin-bottom: 24px
 - **UX-04:** Diseño del título:
@@ -1536,35 +1573,40 @@
 
 - **Tipo:** Página de detalle completa (`/dashboard/comunicados/:id`)
 - **Componentes principales:**
-    - `ComunicadoDetalle`: Componente contenedor principal
-    - `ComunicadoHeader`: Header sticky con navegación y menú
-    - `BackButton`: Botón de regreso a bandeja
-    - `MenuOpciones`: Dropdown con opciones (editar/estadísticas/desactivar/eliminar)
-    - `ComunicadoEncabezado`: Sección superior con tipo, título y metadatos
-    - `TipoBadge`: Badge grande de tipo de comunicado
-    - `TituloComunicado`: Título centrado y destacado
-    - `MetadatosCard`: Card con información del comunicado
-    - `AutorInfo`: Información del autor con avatar
-    - `FechaPublicacion`: Fecha formateada con ícono
-    - `EditadoBadge`: Badge con indicador de edición
-    - `DestinatariosInfo`: Información de destinatarios (solo docente/director)
-    - `ContenidoHTML`: Contenedor con HTML sanitizado y renderizado
-    - `ComunicadoFooter`: Footer con auditoría y botones de acción
-    - `AuditoriaCard`: Card con información de auditoría
-    - `BotonesAccion`: Layout de botones de acción
-    - `VolverButton`: Botón de regreso
-    - `EstadisticasButton`: Botón de estadísticas (condicional)
-    - `EditarButton`: Botón de editar (condicional)
-    - `BannerDesactivado`: Banner de advertencia (comunicado desactivado)
-    - `BannerProgramado`: Banner informativo (comunicado programado)
-    - `ConfirmacionModal`: Modal de confirmación para desactivar/eliminar
-    - `ErrorAlert`: Componente de alertas de error
+    - [Button.jsx](src/components/ui/Button.jsx): Acciones “← Volver”, “📊 Estadísticas” y “✏️ Editar” con variantes outline/primary. Focus visible y `aria-label` donde aplique.
+    - [Card.jsx](src/components/ui/Card.jsx): Encabezado de metadatos y sección de auditoría. Uso de divisores con `--color-border-secondary` y sombras `--shadow-md`.
+    - [Modal.jsx](src/components/ui/Modal.jsx): Confirmaciones (desactivar/eliminar/reactivar) con focus trap y roles ARIA adecuados (`role="dialog"`, `aria-modal="true"`).
+    - [LoadingSpinner.jsx](src/components/ui/LoadingSpinner.jsx): Carga inicial y operaciones de marcado de lectura (inline) con `aria-busy`.
+    - [Toast.jsx](src/components/ui/Toast.jsx): Notifica errores de acceso/lectura y confirmaciones de acciones administrativas.
+    - [ProtectedRoute.jsx](src/components/auth/ProtectedRoute.jsx), [useProtectedRoute.js](src/hooks/useProtectedRoute.js), [useAuth.js](src/hooks/useAuth.js): Control de acceso por rol y estado de sesión.
+
+    - Propuestos (alineados al sistema de diseño):
+        - [ComunicadoHeader.jsx](src/components/communication/ComunicadoHeader.jsx): Header sticky local con “← Volver”, título “Comunicados” y menú contextual (⋮); sombra `--shadow-md`.
+        - [TipoPillBadge.jsx](src/components/ui/TipoPillBadge.jsx): Pastilla grande por tipo (académico/administrativo/evento/urgente/informativo) con colores institucionales y animación `pulse` para “Urgente”.
+        - [ContenidoHTML.jsx](src/components/communication/ContenidoHTML.jsx): Visor sanitizado del HTML (usa [htmlSanitizer.js](src/utils/htmlSanitizer.js)) con tipografía y listas alineadas a tokens; máximo ancho 800px.
+        - [EstadoBanner.jsx](src/components/ui/EstadoBanner.jsx): Banner de estado “Desactivado” (amarillo) y “Programado” (azul) visible para director/autor. Iconografía y contraste AA.
+        - [MetaDataGrid.jsx](src/components/communication/MetaDataGrid.jsx): Grid 4→2→1 con Autor (👤), Fecha (📅), Editado (✏️ con tooltip), y Destinatarios (👥 solo docente/director).
+        - [DetalleActions.jsx](src/components/communication/DetalleActions.jsx): Botonera centrada con transiciones y tamaños del sistema; accesible y responsive.
+
+    - Renderizado seguro y accesible:
+        - El contenido HTML admite solo la whitelist definida. Enlaces `a` con validación http/https y `rel="noopener noreferrer"`/`target="_blank"` opcional.
+        - Tooltips y menús con navegación por teclado y roles ARIA (menu/menuitem).
 - **Endpoints API:**
+#### **Lectura de Comunicados:**
     - `GET /comunicados/:id` - Obtener comunicado completo
     - `POST /comunicados-lecturas` - Marcar comunicado como leído
-    - `GET /comunicados/:id/acceso?usuario_id={id}&rol={rol}` - Validar acceso del usuario
-    - `PATCH /comunicados/:id/desactivar` - Desactivar comunicado (director)
+    - `GET /comunicados/:id/acceso` - Validar acceso del usuario a un comunicado específico
+
+#### **Gestión de Comunicados (Solo Autor/Director):**
+    - `PUT /comunicados/:id` - Editar comunicado existente
+    - `PATCH /comunicados/:id/desactivar` - Desactivar comunicado
     - `PATCH /comunicados/:id/reactivar` - Reactivar comunicado (director)
     - `DELETE /comunicados/:id` - Eliminar comunicado (director)
+
+#### **Consultas Relacionadas:**
+    - `GET /comunicados/programados` - Listar comunicados programados
+    - `GET /comunicados/mis-borradores` - Listar borradores propios
+    - `GET /comunicados/no-leidos/count` - Obtener contador de no leídos
+    - `GET /comunicados/actualizaciones?ultimo_check={timestamp}` - Verificar actualizaciones (polling)
 
 ---

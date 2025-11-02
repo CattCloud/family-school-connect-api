@@ -1,4 +1,4 @@
- generator client {
+generator client {
   provider = "prisma-client-js"
 }
 
@@ -59,6 +59,31 @@ enum RelacionTipo {
   tutor
 }
 
+/// Enumeración de tipos de comunicado
+enum TipoComunicado {
+  academico
+  administrativo
+  evento
+  urgente
+  informativo
+}
+
+/// Enumeración de estados de comunicado
+enum EstadoComunicado {
+  borrador
+  publicado
+  programado
+  archivado
+  cancelado
+}
+
+/// Enumeración de prioridades de comunicado
+enum PrioridadComunicado {
+  baja
+  normal
+  alta
+}
+
 /// Tabla: usuarios
 model Usuario {
   id                    String    @id @default(uuid()) @db.Uuid
@@ -102,6 +127,10 @@ model Usuario {
   ticketsCreados          TicketSoporte[]    @relation("TicketCreador")
   ticketsAsignados         TicketSoporte[]    @relation("TicketAsignado")
   respuestasTickets        RespuestaTicket[]
+  
+  // Nuevas relaciones para comunicados
+  comunicados_creados   Comunicado[] @relation("AutorComunicado")
+  comunicados_leidos    ComunicadoLectura[]
 
   @@unique([tipo_documento, nro_documento], name: "usuarios_documento_unique")
   @@map("usuarios")
@@ -281,6 +310,49 @@ model RelacionesFamiliares {
   @@map("relaciones_familiares")
 }
 
+/// Tabla: comunicados
+model Comunicado {
+  id                    String    @id @default(uuid()) @db.Uuid
+  titulo                String
+  contenido             String    @db.Text
+  tipo                  TipoComunicado
+  estado                EstadoComunicado    @default(borrador)
+  autor_id              String    @db.Uuid
+  autor                 Usuario    @relation("AutorComunicado", fields: [autor_id], references: [id])
+  publico_objetivo      String[]
+  niveles_objetivo       String[]
+  grados_objetivo        String[]
+  cursos_objetivo        String[]
+  fecha_creacion        DateTime  @default(now())
+  fecha_publicacion     DateTime?
+  fecha_programada      DateTime?
+  fecha_vigencia_desde DateTime?
+  fecha_vigencia_hasta DateTime?
+  requiere_confirmacion Boolean   @default(false)
+  prioridad            PrioridadComunicado    @default(normal)
+  editado               Boolean   @default(false)
+  año_academico         Int
+
+  // Relaciones
+  lecturas              ComunicadoLectura[]
+  notificaciones        Notificacion[] @relation("ComunicadoNotificaciones")
+  
+  @@map("comunicados")
+}
+
+/// Tabla: comunicados_lecturas
+model ComunicadoLectura {
+  id               String    @id @default(uuid()) @db.Uuid
+  comunicado_id    String    @db.Uuid
+  comunicado       Comunicado @relation(fields: [comunicado_id], references: [id], onDelete: Cascade)
+  usuario_id       String    @db.Uuid
+  usuario          Usuario    @relation(fields: [usuario_id], references: [id])
+  fecha_lectura    DateTime  @default(now())
+  
+  @@unique([comunicado_id, usuario_id])
+  @@map("comunicados_lecturas")
+}
+
 /// Tabla: encuestas
 model Encuesta {
   id                        String         @id @default(uuid()) @db.Uuid
@@ -412,6 +484,8 @@ model Notificacion {
   encuesta                 Encuesta?  @relation(fields: [encuesta_id], references: [id])
   ticket_id                String?   @db.Uuid
   ticket                   TicketSoporte? @relation(fields: [ticket_id], references: [id])
+  comunicado_id            String?   @db.Uuid
+  comunicado               Comunicado? @relation("ComunicadoNotificaciones", fields: [comunicado_id], references: [id])
 
   @@map("notificaciones")
 }

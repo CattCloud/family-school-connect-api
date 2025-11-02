@@ -14,9 +14,10 @@ const BaseQuerySchema = z.object({
       .number()
       .int()
       .refine((n) => [1, 2, 3].includes(n), 'Trimestre inválido. Debe ser 1, 2 o 3')
-  ),
-  curso_id: z.string().min(1),
-  componente_id: z.string().min(1),
+  )
+  .optional(),
+  curso_id: z.string().min(1).optional(),
+  componente_id: z.string().min(1).optional(),
 });
 
 // GET /calificaciones/estudiante/:estudiante_id

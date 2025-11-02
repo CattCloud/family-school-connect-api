@@ -1,8 +1,7 @@
 'use strict';
 
-const { PrismaClient } = require('@prisma/client');
-
-const prisma = new PrismaClient();
+// Importar directamente la instancia de Prisma del archivo de configuración
+const prisma = require('../config/prisma');
 
 // Función para validar fecha programada
 function validarFechaProgramada(fecha) {

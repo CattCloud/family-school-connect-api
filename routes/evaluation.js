@@ -15,11 +15,11 @@ const {
 
 const router = Router();
  
-// Estructura de evaluación: ver estructura actual por año (Docente/Director)
+// Estructura de evaluación: ver estructura actual por año (Docente/Director/Apoderado)
 router.get(
   '/',
   auth,
-  authorizeRole(['docente', 'director']),
+  authorizeRole(['docente', 'director', 'apoderado']),
   getEvaluationStructure
 );
 

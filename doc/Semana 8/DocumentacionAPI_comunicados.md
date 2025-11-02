@@ -700,7 +700,7 @@
 
 ---
 
-### **12. Obtener Todos los Niveles y Grados (Director)**
+### **12. Obtener Todos los Niveles y Grados (Director y Docente)**
 
 **Endpoint:** `GET /nivel-grado`  
 **Descripción:** Lista completa de niveles y grados de la institución  
@@ -863,9 +863,10 @@
 
 ### **14. Crear Comunicado (Publicado o Borrador)**
 
-**Endpoint:** `POST /comunicados`  
-**Descripción:** Crea un nuevo comunicado y lo publica o guarda como borrador  
-**Autenticación:** Bearer token (Rol: Docente con permisos / Director)  
+**Endpoint:** `POST /comunicados`
+**Descripción:** Crea un nuevo comunicado y lo publica o guarda como borrador
+**Autenticación:** Bearer token (Rol: Docente con permisos / Director)
+**Rate Limiting:** `comunicadosLimiter` (10 solicitudes por minuto)
 
 #### **Request Body (JSON):**
 ```json
@@ -874,4 +875,693 @@
   "tipo": "academico",
   "contenido_html": "<p>Estimados padres de familia,</p><p>Les recordamos que el próximo <strong>viernes 20 de octubre</strong> a las <strong>3:00 PM</strong> tendremos la reunión de padres.</p>",
   "publico_objetivo": ["padres"],
-  "niveles
+  "niveles": ["Primaria"],
+  "grados": ["1ro A", "2do B"],
+  "cursos": [],
+  "fecha_programada": "2025-10-20T15:00:00Z"
+}
+```
+
+#### **Response Success (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "comunicado": {
+      "id": "com_025",
+      "titulo": "Reunión de Padres del Segundo Trimestre",
+      "tipo": "academico",
+      "contenido": "<p>Estimados padres de familia,</p><p>Les recordamos que el próximo <strong>viernes 20 de octubre</strong> a las <strong>3:00 PM</strong> tendremos la reunión de padres.</p>",
+      "publico_objetivo": ["padres"],
+      "niveles_objetivo": ["Primaria"],
+      "grados_objetivo": ["1ro A", "2do B"],
+      "cursos_objetivo": [],
+      "fecha_creacion": "2025-10-18T14:30:00Z",
+      "fecha_publicacion": "2025-10-18T14:30:00Z",
+      "fecha_programada": null,
+      "estado": "publicado",
+      "editado": false,
+      "fecha_edicion": null,
+      "autor_id": "usr_doc_002",
+      "año_academico": 2025
+    },
+    "mensaje": "Comunicado publicado correctamente"
+  }
+}
+```
+
+#### **Response Success (201) - Programado:**
+```json
+{
+  "success": true,
+  "data": {
+    "comunicado": {
+      "id": "com_026",
+      "titulo": "Recordatorio de Entrega de Notas",
+      "tipo": "academico",
+      "contenido": "<p>Les recordamos que el próximo viernes se entregarán las notas del trimestre.</p>",
+      "publico_objetivo": ["padres"],
+      "niveles_objetivo": ["Secundaria"],
+      "grados_objetivo": [],
+      "cursos_objetivo": [],
+      "fecha_creacion": "2025-10-18T14:30:00Z",
+      "fecha_publicacion": null,
+      "fecha_programada": "2025-10-25T08:00:00Z",
+      "estado": "programado",
+      "editado": false,
+      "fecha_edicion": null,
+      "autor_id": "usr_dir_001",
+      "año_academico": 2025
+    },
+    "mensaje": "Comunicado programado correctamente"
+  }
+}
+```
+
+#### **Response Errors:**
+- **400 Bad Request - Campos faltantes:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_PARAMETERS",
+    "message": "Faltan campos requeridos"
+  }
+}
+```
+
+- **400 Bad Request - Título inválido:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_PARAMETERS",
+    "message": "El título debe tener entre 10 y 200 caracteres"
+  }
+}
+```
+
+- **400 Bad Request - Contenido inválido:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_PARAMETERS",
+    "message": "El contenido debe tener entre 20 y 5000 caracteres"
+  }
+}
+```
+
+- **403 Forbidden - Sin permisos:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ACCESS_DENIED",
+    "message": "No tienes permisos para crear este tipo de comunicado"
+  }
+}
+```
+
+### **Reglas de Negocio:**
+- **RN-52:** Validar longitud del título: entre 10 y 200 caracteres
+- **RN-53:** Validar longitud del contenido: entre 20 y 5000 caracteres
+- **RN-54:** Si `fecha_programada` es nula, se publica inmediatamente
+- **RN-55:** Si `fecha_programada` tiene valor, el estado es 'programado'
+- **RN-56:** Fecha programada debe ser al menos 30 minutos en el futuro
+- **RN-57:** Docentes solo pueden crear tipos 'academico' y 'evento'
+- **RN-58:** Director puede crear cualquier tipo de comunicado
+- **RN-59:** Se generan notificaciones automáticas solo para publicaciones inmediatas
+
+---
+
+### **15. Guardar Borrador de Comunicado**
+
+**Endpoint:** `POST /comunicados/borrador`
+**Descripción:** Guarda un comunicado como borrador sin publicarlo
+**Autenticación:** Bearer token (Rol: Docente con permisos / Director)
+**Rate Limiting:** `comunicadosLimiter` (10 solicitudes por minuto)
+
+#### **Request Body (JSON):**
+```json
+{
+  "titulo": "Borrador de Comunicado Importante",
+  "tipo": "academico",
+  "contenido_html": "<p>Este es un borrador que se completará más tarde...</p>",
+  "publico_objetivo": ["padres"],
+  "niveles": ["Primaria"],
+  "grados": ["3ro A"],
+  "cursos": []
+}
+```
+
+#### **Response Success (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "comunicado": {
+      "id": "com_027",
+      "titulo": "Borrador de Comunicado Importante",
+      "tipo": "academico",
+      "contenido": "<p>Este es un borrador que se completará más tarde...</p>",
+      "publico_objetivo": ["padres"],
+      "niveles_objetivo": ["Primaria"],
+      "grados_objetivo": ["3ro A"],
+      "cursos_objetivo": [],
+      "fecha_creacion": "2025-10-18T15:00:00Z",
+      "estado": "borrador",
+      "editado": false,
+      "fecha_edicion": null,
+      "autor_id": "usr_doc_002",
+      "año_academico": 2025
+    },
+    "mensaje": "Borrador guardado correctamente"
+  }
+}
+```
+
+### **Reglas de Negocio:**
+- **RN-60:** Los borradores no generan notificaciones
+- **RN-61:** Los borradores no son visibles para otros usuarios
+- **RN-62:** Solo el autor y el director pueden ver y editar borradores
+
+---
+
+## **SECCIÓN 4: GESTIÓN DE COMUNICADOS PROPIOS (HU-COM-03)**
+
+### **16. Editar Comunicado**
+
+**Endpoint:** `PUT /comunicados/:id`
+**Descripción:** Edita un comunicado existente
+**Autenticación:** Bearer token (Rol: Autor del comunicado / Director)
+**Rate Limiting:** `comunicadosLimiter` (10 solicitudes por minuto)
+
+#### **Path Parameters:**
+```
+{id} = ID del comunicado a editar
+```
+
+#### **Request Body (JSON):**
+```json
+{
+  "titulo": "Título Actualizado del Comunicado",
+  "tipo": "academico",
+  "contenido_html": "<p>Contenido actualizado del comunicado...</p>",
+  "publico_objetivo": ["padres"],
+  "niveles": ["Primaria"],
+  "grados": ["1ro A", "2do B"],
+  "cursos": []
+}
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "comunicado": {
+      "id": "com_025",
+      "titulo": "Título Actualizado del Comunicado",
+      "tipo": "academico",
+      "contenido": "<p>Contenido actualizado del comunicado...</p>",
+      "publico_objetivo": ["padres"],
+      "niveles_objetivo": ["Primaria"],
+      "grados_objetivo": ["1ro A", "2do B"],
+      "cursos_objetivo": [],
+      "fecha_creacion": "2025-10-18T14:30:00Z",
+      "fecha_publicacion": "2025-10-18T14:30:00Z",
+      "fecha_edicion": "2025-10-18T16:45:00Z",
+      "estado": "publicado",
+      "editado": true,
+      "autor_id": "usr_doc_002",
+      "año_academico": 2025
+    },
+    "mensaje": "Comunicado actualizado correctamente"
+  }
+}
+```
+
+#### **Response Errors:**
+- **403 Forbidden - Sin permisos:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ACCESS_DENIED",
+    "message": "No tienes permisos para editar este comunicado"
+  }
+}
+```
+
+- **404 Not Found:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "COMUNICADO_NOT_FOUND",
+    "message": "Comunicado no encontrado"
+  }
+}
+```
+
+### **Reglas de Negocio:**
+- **RN-63:** Solo el autor o un director pueden editar comunicados
+- **RN-64:** Comunicados publicados solo se pueden editar dentro de las primeras 24 horas
+- **RN-65:** Al editar, se establece `editado = true` y se registra `fecha_edicion`
+- **RN-66:** Los borradores se pueden editar en cualquier momento
+
+---
+
+### **17. Obtener Mis Borradores**
+
+**Endpoint:** `GET /comunicados/mis-borradores`
+**Descripción:** Lista los borradores del usuario autenticado
+**Autenticación:** Bearer token (Rol: Docente con permisos / Director)
+**Rate Limiting:** `comunicadosReadLimiter` (30 solicitudes por minuto)
+
+#### **Query Parameters:**
+```
+?page=1        # Número de página (default: 1)
+&limit=10      # Registros por página (default: 10)
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "borradores": [
+      {
+        "id": "com_027",
+        "titulo": "Borrador de Comunicado Importante",
+        "tipo": "academico",
+        "fecha_creacion": "2025-10-18T15:00:00Z",
+        "fecha_creacion_legible": "18 de octubre de 2025, 15:00",
+        "fecha_creacion_relativa": "Hace 3 horas"
+      },
+      {
+        "id": "com_028",
+        "titulo": "Recordatorio de Evento",
+        "tipo": "evento",
+        "fecha_creacion": "2025-10-17T10:30:00Z",
+        "fecha_creacion_legible": "17 de octubre de 2025, 10:30",
+        "fecha_creacion_relativa": "Ayer"
+      }
+    ],
+    "paginacion": {
+      "pagina": 1,
+      "limite": 10,
+      "total": 2,
+      "paginas": 1
+    }
+  }
+}
+```
+
+### **Reglas de Negocio:**
+- **RN-67:** Solo se muestran borradores del usuario autenticado
+- **RN-68:** Ordenados por fecha de creación descendente
+- **RN-69:** Incluye solo campos básicos para lista ligera
+
+---
+
+### **18. Publicar Borrador**
+
+**Endpoint:** `POST /comunicados/:id/publicar`
+**Descripción:** Publica un borrador existente
+**Autenticación:** Bearer token (Rol: Autor del borrador / Director)
+**Rate Limiting:** `comunicadosLimiter` (10 solicitudes por minuto)
+
+#### **Path Parameters:**
+```
+{id} = ID del borrador a publicar
+```
+
+#### **Request Body (JSON):**
+```json
+{
+  "fecha_programada": "2025-10-25T08:00:00Z"  // Opcional, para publicación programada
+}
+```
+
+#### **Response Success (200) - Publicación Inmediata:**
+```json
+{
+  "success": true,
+  "data": {
+    "comunicado": {
+      "id": "com_027",
+      "titulo": "Borrador de Comunicado Importante",
+      "tipo": "academico",
+      "estado": "publicado",
+      "fecha_publicacion": "2025-10-18T16:50:00Z",
+      "fecha_programada": null
+    },
+    "mensaje": "Comunicado publicado correctamente"
+  }
+}
+```
+
+#### **Response Success (200) - Publicación Programada:**
+```json
+{
+  "success": true,
+  "data": {
+    "comunicado": {
+      "id": "com_027",
+      "titulo": "Borrador de Comunicado Importante",
+      "tipo": "academico",
+      "estado": "programado",
+      "fecha_publicacion": null,
+      "fecha_programada": "2025-10-25T08:00:00Z"
+    },
+    "mensaje": "Comunicado programado correctamente"
+  }
+}
+```
+
+#### **Response Errors:**
+- **400 Bad Request - Estado inválido:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_STATE",
+    "message": "Solo se pueden publicar comunicados en estado borrador"
+  }
+}
+```
+
+### **Reglas de Negocio:**
+- **RN-70:** Solo se pueden publicar comunicados en estado 'borrador'
+- **RN-71:** Si no se especifica fecha_programada, se publica inmediatamente
+- **RN-72:** Si se especifica fecha_programada, cambia a estado 'programado'
+- **RN-73:** Al publicar inmediatamente, se generan notificaciones automáticas
+
+---
+
+### **19. Obtener Comunicados Programados**
+
+**Endpoint:** `GET /comunicados/programados`
+**Descripción:** Lista los comunicados programados del usuario
+**Autenticación:** Bearer token (Rol: Docente con permisos / Director)
+**Rate Limiting:** `comunicadosReadLimiter` (30 solicitudes por minuto)
+
+#### **Query Parameters:**
+```
+?page=1        # Número de página (default: 1)
+&limit=10      # Registros por página (default: 10)
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "comunicados_programados": [
+      {
+        "id": "com_026",
+        "titulo": "Recordatorio de Entrega de Notas",
+        "tipo": "academico",
+        "fecha_programada": "2025-10-25T08:00:00Z",
+        "fecha_programada_legible": "25 de octubre de 2025, 08:00",
+        "tiempo_restantante_ms": 552900000,
+        "tiempo_restante": {
+          "dias": 6,
+          "horas": 9,
+          "minutos": 30
+        }
+      }
+    ],
+    "paginacion": {
+      "pagina": 1,
+      "limite": 10,
+      "total": 1,
+      "paginas": 1
+    }
+  }
+}
+```
+
+### **Reglas de Negocio:**
+- **RN-74:** Director ve todos los comunicados programados
+- **RN-75:** Docentes solo ven sus propios comunicados programados
+- **RN-76:** Solo muestra programaciones futuras
+- **RN-77:** Incluye cálculo de tiempo restante
+
+---
+
+### **20. Cancelar Programación de Comunicado**
+
+**Endpoint:** `DELETE /comunicados/:id/programacion`
+**Descripción:** Cancela la programación de un comunicado y lo devuelve a estado borrador
+**Autenticación:** Bearer token (Rol: Autor del comunicado / Director)
+**Rate Limiting:** `comunicadosLimiter` (10 solicitudes por minuto)
+
+#### **Path Parameters:**
+```
+{id} = ID del comunicado programado
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "comunicado": {
+      "id": "com_026",
+      "titulo": "Recordatorio de Entrega de Notas",
+      "estado": "borrador",
+      "fecha_programada": null
+    },
+    "mensaje": "Programación cancelada correctamente"
+  }
+}
+```
+
+#### **Response Errors:**
+- **400 Bad Request - Estado inválido:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_STATE",
+    "message": "Solo se puede cancelar la programación de comunicados en estado programado"
+  }
+}
+```
+
+### **Reglas de Negocio:**
+- **RN-78:** Solo se pueden cancelar comunicados en estado 'programado'
+- **RN-79:** Al cancelar, el comunicado vuelve a estado 'borrador'
+- **RN-80:** Se elimina la fecha_programada
+
+---
+
+## **SECCIÓN 5: VALIDACIONES**
+
+### **21. Validar HTML**
+
+**Endpoint:** `POST /comunicados/validar-html`
+**Descripción:** Valida y sanitiza contenido HTML
+**Autenticación:** Bearer token (Rol: Docente con permisos / Director)
+**Rate Limiting:** `comunicadosReadLimiter` (30 solicitudes por minuto)
+
+#### **Request Body (JSON):**
+```json
+{
+  "contenido": "<p>Contenido <strong>válido</strong></p><script>alert('xss')</script>"
+}
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "contenido_sanitizado": "<p>Contenido <strong>válido</strong></p>",
+    "es_valido": false,
+    "elementos_peligrosos_detectados": true
+  }
+}
+```
+
+#### **Response Success (200) - HTML Válido:**
+```json
+{
+  "success": true,
+  "data": {
+    "contenido_sanitizado": "<p>Contenido <strong>válido</strong></p>",
+    "es_valido": true,
+    "elementos_peligrosos_detectados": false
+  }
+}
+```
+
+### **Reglas de Negocio:**
+- **RN-81:** Elimina etiquetas peligrosas: `<script>`, `<iframe>`, `<object>`, `<embed>`
+- **RN-82:** Retorna contenido sanitizado y indicador de validez
+- **RN-83:** No bloquea el envío, solo informa sobre elementos peligrosos
+
+---
+
+### **22. Validar Segmentación**
+
+**Endpoint:** `POST /comunicados/validar-segmentacion`
+**Descripción:** Valida si el usuario tiene permisos para la segmentación seleccionada
+**Autenticación:** Bearer token (Rol: Docente con permisos / Director)
+**Rate Limiting:** `comunicadosReadLimiter` (30 solicitudes por minuto)
+
+#### **Request Body (JSON):**
+```json
+{
+  "publico_objetivo": ["padres"],
+  "niveles": ["Primaria"],
+  "grados": ["1ro A", "2do B"],
+  "cursos": [],
+  "todos": false
+}
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "es_valida": true,
+    "mensaje": "Segmentación válida"
+  }
+}
+```
+
+#### **Response Success (200) - Segmentación Inválida:**
+```json
+{
+  "success": true,
+  "data": {
+    "es_valida": false,
+    "mensaje": "No tienes permisos para comunicarte con los destinatarios seleccionados"
+  }
+}
+```
+
+### **Reglas de Negocio:**
+- **RN-84:** Verifica que el docente tenga asignaciones en los niveles/grados seleccionados
+- **RN-85:** Director puede seleccionar cualquier segmentación
+- **RN-86:** Docentes solo pueden seleccionar sus grados/cursos asignados
+
+---
+
+## **SECCIÓN 6: GESTIÓN ADMINISTRATIVA (SOLO DIRECTOR)**
+
+### **23. Desactivar Comunicado**
+
+**Endpoint:** `PATCH /comunicados/:id/desactivar`
+**Descripción:** Desactiva un comunicado para que no sea visible
+**Autenticación:** Bearer token (Rol: Director)
+**Rate Limiting:** `comunicadosLimiter` (10 solicitudes por minuto)
+
+#### **Path Parameters:**
+```
+{id} = ID del comunicado a desactivar
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "comunicado_id": "com_015",
+    "estado": "desactivado",
+    "fecha_desactivacion": "2025-10-18T17:00:00Z",
+    "mensaje": "Comunicado desactivado correctamente. Ya no es visible para los destinatarios"
+  }
+}
+```
+
+### **Reglas de Negocio:**
+- **RN-87:** Solo el director puede desactivar comunicados
+- **RN-88:** Comunicados desactivados no aparecen en bandeja principal
+- **RN-89:** Comunicados desactivados son visibles solo para director
+- **RN-90:** Se pueden reactivar cambiando estado a 'publicado'
+
+---
+
+### **24. Eliminar Comunicado**
+
+**Endpoint:** `DELETE /comunicados/:id`
+**Descripción:** Elimina permanentemente un comunicado del sistema
+**Autenticación:** Bearer token (Rol: Director)
+**Rate Limiting:** `comunicadosLimiter` (10 solicitudes por minuto)
+
+#### **Path Parameters:**
+```
+{id} = ID del comunicado a eliminar
+```
+
+#### **Request Body (JSON):**
+```json
+{
+  "confirmacion": true,
+  "motivo": "Información incorrecta publicada por error"
+}
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "comunicado_id": "com_012",
+    "eliminado": true,
+    "fecha_eliminacion": "2025-10-18T17:30:00Z",
+    "mensaje": "Comunicado eliminado permanentemente"
+  }
+}
+```
+
+#### **Response Errors:**
+- **400 Bad Request - Sin confirmación:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_PARAMETERS",
+    "message": "Se requiere confirmación explícita para eliminar"
+  }
+}
+```
+
+### **Reglas de Negocio:**
+- **RN-91:** Solo el director puede eliminar comunicados
+- **RN-92:** Eliminación es permanente e irreversible
+- **RN-93:** Se eliminan también registros relacionados en `comunicados_lecturas`
+- **RN-94:** Requiere confirmación explícita en request body
+
+---
+
+## **NOTAS ADICIONALES**
+
+### **Middlewares Aplicados**
+- **Autenticación:** Todas las rutas requieren token JWT válido
+- **Autorización:** Algunas rutas requieren roles específicos
+- **Rate Limiting:**
+  - `comunicadosLimiter`: 10 solicitudes por minuto para operaciones de escritura
+  - `comunicadosReadLimiter`: 30 solicitudes por minuto para operaciones de lectura
+
+### **Formato de Errores Estandarizado**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Descripción técnica legible"
+  }
+}
+```
+
+### **Campos Comunes en Respuestas**
+- **Fechas legibles:** Formato "DD de MMMM de YYYY, HH:MM"
+- **Fechas relativas:** "Hace X días/horas/minutos"
+- **Paginación:** Incluye información de páginas totales y navegación

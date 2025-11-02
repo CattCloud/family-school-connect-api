@@ -1,11 +1,10 @@
 'use strict';
 
-const { PrismaClient } = require('@prisma/client');
 const comunicadosService = require('../services/comunicadosService');
 const { successResponse, errorResponse } = require('../utils/response');
 const logger = require('../utils/logger');
 
-const prisma = new PrismaClient();
+const prisma = require('../config/prisma');
 
 // ========================================
 // BANDEJA DE COMUNICADOS (HU-COM-00)
@@ -269,7 +268,7 @@ const obtenerContadorNoLeidosController = async (req, res) => {
 
     return successResponse(res, 200, {
       total_no_leidos: noLeidos.length,
-      por_tipo,
+      por_tipo: porTipo,
       ultimos_3: ultimos3
     });
 

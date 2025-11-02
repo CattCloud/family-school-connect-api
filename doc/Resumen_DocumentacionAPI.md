@@ -591,11 +591,84 @@
 
 ---
 
-### **16. Obtener Estructura de Evaluación Vigente**
+### **16. Obtener Cursos del Estudiante (Apoderado)**
 
-**Endpoint:** `GET /evaluation-structure`  
-**Descripción:** Componentes de evaluación configurados para el año  
-**Autenticación:** Bearer token (Roles: Docente, Director)
+**Endpoint:** `GET /cursos/estudiante/:estudiante_id`
+**Descripción:** Lista cursos del estudiante por año académico
+**Autenticación:** Bearer token (Rol: Apoderado)
+
+#### **Path Parameters:**
+```
+{estudiante_id} = ID del estudiante (requerido)
+```
+
+#### **Query Parameters:**
+```
+?año=2025  # Año académico (default: año actual)
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "estudiante": {
+      "id": "41a379f9-ec54-4e01-8d64-e0df693e8721",
+      "nombre_completo": "Estudiante Ejemplo"
+    },
+    "año_academico": 2025,
+    "cursos": [
+      {
+        "id": "cur_001",
+        "codigo_curso": "CP3001",
+        "nombre": "Matemáticas",
+        "nivel_grado": {
+          "nivel": "Primaria",
+          "grado": "3"
+        }
+      }
+    ],
+    "total_cursos": 1
+  }
+}
+```
+
+#### **Response Errors:**
+- **403 Forbidden - Estudiante no vinculado:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "STUDENT_NOT_LINKED",
+    "message": "El estudiante no está vinculado al apoderado"
+  }
+}
+```
+
+- **404 Not Found - Estudiante no encontrado:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "STUDENT_NOT_FOUND",
+    "message": "Estudiante no encontrado"
+  }
+}
+```
+
+#### **Reglas de Negocio:**
+- Solo usuarios con rol `apoderado` pueden acceder a este endpoint
+- El apoderado solo puede ver cursos de estudiantes vinculados activamente
+- Solo se retornan cursos con docentes asignados activos
+- Los cursos se ordenan alfabéticamente por nombre
+
+---
+
+### **17. Obtener Estructura de Evaluación Vigente**
+
+**Endpoint:** `GET /evaluation-structure`
+**Descripción:** Componentes de evaluación configurados para el año
+**Autenticación:** Bearer token (Roles: Docente, Director, Apoderado)
 
 #### **Query Parameters:**
 ```
@@ -1649,22 +1722,26 @@ Content-Disposition: attachment; filename="Guia_Plantilla_Calificaciones.pdf"
 
 ### **47. Obtener Calificaciones del Estudiante**
 
-**Endpoint:** `GET /calificaciones/estudiante/:estudiante_id`  
-**Descripción:** Lista calificaciones por componente de evaluación  
+**Endpoint:** `GET /calificaciones/estudiante/:estudiante_id`
+**Descripción:** Lista calificaciones por componente de evaluación
 **Autenticación:** Bearer token (Rol: Apoderado)
 
 #### **Path Parameters:**
 ```
-{estudiante_id} = ID del estudiante
+{estudiante_id} = ID del estudiante (requerido)
 ```
 
 #### **Query Parameters:**
 ```
-?año=2025          # Año académico (default: año actual)
-&trimestre=1        # Trimestre (opcional)
+?año=2025                    # Año académico (requerido)
+&trimestre=1                  # Trimestre (opcional)
+&curso_id=cur_001            # ID del curso (opcional)
+&componente_id=eval_001      # ID del componente (opcional)
 ```
 
 #### **Response Success (200):**
+
+**Caso 1: Con filtros específicos (trimestre, curso_id, componente_id)**
 ```json
 {
   "success": true,
@@ -1672,23 +1749,83 @@ Content-Disposition: attachment; filename="Guia_Plantilla_Calificaciones.pdf"
     "estudiante": {
       "id": "est_001",
       "codigo_estudiante": "P3001",
-      "nombre_completo": "María Elena Pérez García"
+      "nombre_completo": "María Elena Pérez García",
+      "nivel_grado": {
+        "nivel": "Primaria",
+        "grado": "3"
+      }
+    },
+    "curso": {
+      "id": "cur_001",
+      "nombre": "Matemáticas"
+    },
+    "componente": {
+      "id": "eval_001",
+      "nombre_item": "Examen",
+      "peso_porcentual": 40.00,
+      "tipo_evaluacion": "unica"
+    },
+    "trimestre": 1,
+    "año_academico": 2025,
+    "evaluaciones": [
+      {
+        "id": "cal_001",
+        "fecha_evaluacion": "2025-02-10",
+        "fecha_evaluacion_legible": "10 de febrero de 2025",
+        "calificacion_numerica": 18.5,
+        "calificacion_letra": "AD",
+        "observaciones": "Excelente trabajo",
+        "estado": "final",
+        "fecha_registro": "2025-02-10T15:30:00Z",
+        "registrado_por": {
+          "nombre": "Ana María Rodríguez Vega"
+        }
+      }
+    ],
+    "total_evaluaciones": 1,
+    "promedio_componente": 18.5,
+    "hay_notas_preliminares": false
+  }
+}
+```
+
+**Caso 2: Sin filtros específicos (solo año)**
+```json
+{
+  "success": true,
+  "data": {
+    "estudiante": {
+      "id": "est_001",
+      "codigo_estudiante": "P3001",
+      "nombre_completo": "María Elena Pérez García",
+      "nivel_grado": {
+        "nivel": "Primaria",
+        "grado": "3"
+      }
     },
     "año_academico": 2025,
-    "trimestre": 1,
     "calificaciones": [
       {
-        "id": "eval_001",
-        "nombre_componente": "Examen",
-        "peso_porcentual": 40.00,
-        "tipo_evaluacion": "unica",
+        "componente": {
+          "id": "eval_001",
+          "nombre_componente": "Examen",
+          "peso_porcentual": 40.00,
+          "tipo_evaluacion": "unica"
+        },
+        "trimestre": 1,
         "calificaciones": [
           {
             "id": "cal_001",
             "fecha_evaluacion": "2025-02-10",
+            "fecha_evaluacion_legible": "10 de febrero de 2025",
             "calificacion_numerica": 18.5,
             "calificacion_letra": "AD",
-            "observaciones": "Excelente trabajo"
+            "observaciones": "Excelente trabajo",
+            "estado": "final",
+            "fecha_registro": "2025-02-10T15:30:00Z",
+            "registrado_por": {
+              "nombre": "Ana María Rodríguez Vega"
+            }
           }
         ],
         "promedio_componente": 18.5,
@@ -1702,26 +1839,103 @@ Content-Disposition: attachment; filename="Guia_Plantilla_Calificaciones.pdf"
 }
 ```
 
+#### **Response Errors:**
+- **400 Bad Request - Parámetros inválidos:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_PARAMETERS",
+    "message": "estudiante_id y año son requeridos"
+  }
+}
+```
+
+- **403 Forbidden - Estudiante no vinculado:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "STUDENT_NOT_LINKED",
+    "message": "El estudiante no está vinculado al apoderado"
+  }
+}
+```
+
+- **404 Not Found - No hay calificaciones:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "NO_GRADES_FOUND",
+    "message": "No hay calificaciones registradas para el año 2025"
+  }
+}
+```
+
+#### **Reglas de Negocio:**
+- El parámetro `año` es requerido
+- Si se proporcionan `trimestre`, `curso_id` y `componente_id` juntos, se retornan las calificaciones para ese componente específico
+- Si no se proporcionan filtros específicos, se retornan todas las calificaciones del año agrupadas por componente y trimestre
+- Las calificaciones se ordenan por fecha de evaluación descendente
+- Solo los apoderados pueden acceder a este endpoint
+- El apoderado solo puede ver calificaciones de estudiantes vinculados activamente
+
 ---
 
 ### **48. Obtener Promedio por Componente**
 
-**Endpoint:** `GET /calificaciones/estudiante/:estudiante_id/promedio`  
-**Descripción:** Calcula promedio por componente de evaluación  
+**Endpoint:** `GET /calificaciones/estudiante/:estudiante_id/promedio`
+**Descripción:** Calcula promedio por componente de evaluación
 **Autenticación:** Bearer token (Rol: Apoderado)
 
 #### **Path Parameters:**
 ```
-{estudiante_id} = ID del estudiante
+{estudiante_id} = ID del estudiante (requerido)
 ```
 
 #### **Query Parameters:**
 ```
-?año=2025          # Año académico (default: año actual)
-&trimestre=1        # Trimestre (opcional)
+?año=2025                    # Año académico (requerido)
+&trimestre=1                  # Trimestre (opcional)
+&curso_id=cur_001            # ID del curso (opcional)
+&componente_id=eval_001      # ID del componente (opcional)
 ```
 
 #### **Response Success (200):**
+
+**Caso 1: Con filtros específicos (trimestre, curso_id, componente_id)**
+```json
+{
+  "success": true,
+  "data": {
+    "estudiante": {
+      "id": "est_001",
+      "codigo_estudiante": "P3001",
+      "nombre_completo": "María Elena Pérez García"
+    },
+    "curso": {
+      "id": "cur_001",
+      "nombre": "Matemáticas"
+    },
+    "componente": {
+      "id": "eval_001",
+      "nombre": "Examen",
+      "tipo": "unica"
+    },
+    "trimestre": 1,
+    "año_academico": 2025,
+    "total_evaluaciones": 1,
+    "suma_calificaciones": 18.5,
+    "promedio": 18.5,
+    "promedio_letra": "AD",
+    "estado": "final",
+    "mensaje": "Promedio oficial"
+  }
+}
+```
+
+**Caso 2: Sin filtros específicos (solo año o con trimestre)**
 ```json
 {
   "success": true,
@@ -1732,22 +1946,70 @@ Content-Disposition: attachment; filename="Guia_Plantilla_Calificaciones.pdf"
       "nombre_completo": "María Elena Pérez García"
     },
     "año_academico": 2025,
-    "trimestre": 1,
-    "promedios_por_componente": [
+    "promedios": [
       {
-        "id": "eval_001",
-        "nombre_componente": "Examen",
-        "peso_porcentual": 40.00,
+        "componente": {
+          "id": "eval_001",
+          "nombre_componente": "Examen",
+          "peso_porcentual": 40.00,
+          "tipo_evaluacion": "unica"
+        },
+        "trimestre": 1,
+        "curso": {
+          "id": "cur_001",
+          "nombre": "Matemáticas"
+        },
         "promedio": 18.5,
         "promedio_ponderado": 7.40
       }
     ],
-    "promedio_general": 16.45,
-    "promedio_letra": "A",
-    "nivel_desempeño": "Logro Esperado"
+    "total_componentes": 1
   }
 }
 ```
+
+#### **Response Errors:**
+- **400 Bad Request - Parámetros inválidos:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_PARAMETERS",
+    "message": "estudiante_id y año son requeridos"
+  }
+}
+```
+
+- **403 Forbidden - Estudiante no vinculado:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "STUDENT_NOT_LINKED",
+    "message": "El estudiante no está vinculado al apoderado"
+  }
+}
+```
+
+- **404 Not Found - No hay calificaciones:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "NO_GRADES_FOUND",
+    "message": "No hay calificaciones registradas para el filtro aplicado"
+  }
+}
+```
+
+#### **Reglas de Negocio:**
+- El parámetro `año` es requerido
+- Si se proporcionan `trimestre`, `curso_id` y `componente_id` juntos, se retorna el promedio para ese componente específico
+- Si no se proporcionan filtros específicos, se retornan los promedios de todos los componentes del año
+- Los promedios se calculan con 2 decimales de precisión
+- El estado del promedio puede ser "preliminar" (si hay evaluaciones preliminares) o "final" (si todas son finales)
+- Solo los apoderados pueden acceder a este endpoint
+- El apoderado solo puede ver promedios de estudiantes vinculados activamente
 
 ---
 
@@ -3011,16 +3273,32 @@ Content-Disposition: attachment; filename="nombre_original.pdf"
   "success": true,
   "data": {
     "jerarquia": {
+      "Inicial": [
+        {
+          "id": "ng_001",
+          "grado": "3",
+          "descripcion": "3 años"
+        }
+      ],
       "Primaria": [
         {
           "id": "ng_006",
           "grado": "3",
           "descripcion": "3ro de Primaria"
         }
+      ],
+      "Secundaria": [
+        {
+          "id": "ng_007",
+          "grado": "1",
+          "descripcion": "1ro de Secundaria"
+        }
       ]
     }
   }
 }
+
+
 ```
 
 ---

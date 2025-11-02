@@ -29,6 +29,7 @@ const academicsRoutes = require('./routes/academics');
 const templatesRoutes = require('./routes/templates');
 const messagingRoutes = require('./routes/messaging');
 const academicYearRoutes = require('./routes/academicYear');
+const coursesRoutes = require('./routes/courses');
 
 // Importar rutas del módulo de soporte técnico
 const supportRoutes = require('./routes/support');
@@ -94,6 +95,7 @@ app.use('/asistencias/estudiante', attendanceViewRoutes);
 
 // Módulo Académico General
 app.use('/cursos', academicsRoutes);
+app.use('/cursos', coursesRoutes);
 
 // Centro de Plantillas
 app.use('/plantillas', templatesRoutes);

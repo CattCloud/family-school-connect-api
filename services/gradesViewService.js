@@ -120,81 +120,195 @@ async function getComponenteInfo(componente_id, año) {
  */
 async function getStudentComponentGrades({ estudiante_id, año, trimestre, curso_id, componente_id }) {
   // Validaciones básicas
-  if (!estudiante_id || !año || !trimestre || !curso_id || !componente_id) {
+  if (!estudiante_id || !año) {
     throw httpError(
       'INVALID_PARAMETERS',
-      'estudiante_id, año, trimestre, curso_id y componente_id son requeridos',
+      'estudiante_id y año son requeridos',
       400
     );
   }
-  const tri = Number(trimestre);
-  if (![1, 2, 3].includes(tri)) {
-    throw httpError('INVALID_PARAMETERS', 'Trimestre inválido. Debe ser 1, 2 o 3', 400);
-  }
 
   const estudiante = await getEstudianteInfo(estudiante_id);
-  const curso = await getCursoInfo(curso_id, año);
-  const componente = await getComponenteInfo(componente_id, año);
 
+  // Si se proporcionan filtros específicos, usarlos
+  if (trimestre && curso_id && componente_id) {
+    const tri = Number(trimestre);
+    if (![1, 2, 3].includes(tri)) {
+      throw httpError('INVALID_PARAMETERS', 'Trimestre inválido. Debe ser 1, 2 o 3', 400);
+    }
+
+    const curso = await getCursoInfo(curso_id, año);
+    const componente = await getComponenteInfo(componente_id, año);
+
+    const evaluaciones = await prisma.evaluacion.findMany({
+      where: {
+        estudiante_id,
+        año_academico: año,
+        trimestre: tri,
+        curso_id,
+        estructura_evaluacion_id: componente_id,
+      },
+      include: {
+        registrante: { select: { nombre: true, apellido: true } },
+      },
+      orderBy: [{ fecha_evaluacion: 'desc' }],
+    });
+
+    if (evaluaciones.length === 0) {
+      throw httpError(
+        'NO_GRADES_FOUND',
+        `No hay calificaciones registradas para ${componente.nombre_item} en el Trimestre ${tri}`,
+        404
+      );
+    }
+
+    let suma = 0;
+    let hayPreliminar = false;
+
+    const items = evaluaciones.map((ev) => {
+      const num = toNumber(ev.calificacion_numerica);
+      const letra = toLetter(num);
+      const regNombre = `${ev.registrante?.nombre || ''} ${ev.registrante?.apellido || ''}`.trim();
+      if (Number.isFinite(num)) suma += num;
+      if (ev.estado === 'preliminar') hayPreliminar = true;
+
+      return {
+        id: ev.id,
+        fecha_evaluacion: ev.fecha_evaluacion.toISOString().slice(0, 10),
+        fecha_evaluacion_legible: formatSpanishDateISO(ev.fecha_evaluacion),
+        calificacion_numerica: num,
+        calificacion_letra: letra,
+        estado: ev.estado,
+        fecha_registro: ev.fecha_registro ? ev.fecha_registro.toISOString() : null,
+        registrado_por: {
+          nombre: regNombre || null,
+        },
+      };
+    });
+
+    const total = items.length;
+    const promedio = total > 0 ? round2(suma / total) : null;
+
+    return {
+      estudiante,
+      curso,
+      componente,
+      trimestre: tri,
+      año_academico: año,
+      evaluaciones: items,
+      total_evaluaciones: total,
+      promedio_componente: promedio,
+      hay_notas_preliminares: hayPreliminar,
+    };
+  }
+
+  // Si no se proporcionan filtros específicos, obtener todas las calificaciones del año
   const evaluaciones = await prisma.evaluacion.findMany({
     where: {
       estudiante_id,
       año_academico: año,
-      trimestre: tri,
-      curso_id,
-      estructura_evaluacion_id: componente_id,
+      ...(trimestre && { trimestre: Number(trimestre) }),
+      ...(curso_id && { curso_id }),
+      ...(componente_id && { estructura_evaluacion_id: componente_id }),
     },
     include: {
       registrante: { select: { nombre: true, apellido: true } },
+      curso: { select: { id: true, nombre: true } },
+      estructura_evaluacion: {
+        select: {
+          id: true,
+          nombre_item: true,
+          peso_porcentual: true,
+          tipo_evaluacion: true
+        }
+      },
     },
-    orderBy: [{ fecha_evaluacion: 'desc' }],
+    orderBy: [
+      { trimestre: 'asc' },
+      { curso_id: 'asc' },
+      { estructura_evaluacion_id: 'asc' },
+      { fecha_evaluacion: 'desc' }
+    ],
   });
 
   if (evaluaciones.length === 0) {
     throw httpError(
       'NO_GRADES_FOUND',
-      `No hay calificaciones registradas para ${componente.nombre_item} en el Trimestre ${tri}`,
+      `No hay calificaciones registradas para el año ${año}`,
       404
     );
   }
 
-  let suma = 0;
-  let hayPreliminar = false;
+  // Agrupar por componente y trimestre
+  const agrupadas = {};
+  evaluaciones.forEach(ev => {
+    const compId = ev.estructura_evaluacion_id;
+    const tri = ev.trimestre;
+    const key = `${compId}_${tri}`;
+    
+    if (!agrupadas[key]) {
+      agrupadas[key] = {
+        componente: {
+          id: ev.estructura_evaluacion.id,
+          nombre_componente: ev.estructura_evaluacion.nombre_item,
+          peso_porcentual: toNumber(ev.estructura_evaluacion.peso_porcentual),
+          tipo_evaluacion: ev.estructura_evaluacion.tipo_evaluacion,
+        },
+        trimestre: tri,
+        calificaciones: [],
+        promedio_componente: null,
+        promedio_ponderado: null,
+      };
+    }
 
-  const items = evaluaciones.map((ev) => {
     const num = toNumber(ev.calificacion_numerica);
-    const letra = toLetter(num);
     const regNombre = `${ev.registrante?.nombre || ''} ${ev.registrante?.apellido || ''}`.trim();
-    if (Number.isFinite(num)) suma += num;
-    if (ev.estado === 'preliminar') hayPreliminar = true;
-
-    return {
+    
+    agrupadas[key].calificaciones.push({
       id: ev.id,
       fecha_evaluacion: ev.fecha_evaluacion.toISOString().slice(0, 10),
       fecha_evaluacion_legible: formatSpanishDateISO(ev.fecha_evaluacion),
       calificacion_numerica: num,
-      calificacion_letra: letra,
+      calificacion_letra: toLetter(num),
+      observaciones: ev.observaciones,
       estado: ev.estado,
       fecha_registro: ev.fecha_registro ? ev.fecha_registro.toISOString() : null,
       registrado_por: {
         nombre: regNombre || null,
       },
-    };
+    });
   });
 
-  const total = items.length;
-  const promedio = total > 0 ? round2(suma / total) : null;
+  // Calcular promedios por componente
+  Object.values(agrupadas).forEach(grupo => {
+    const validas = grupo.calificaciones.filter(c => c.calificacion_numerica !== null);
+    if (validas.length > 0) {
+      const suma = validas.reduce((acc, c) => acc + c.calificacion_numerica, 0);
+      grupo.promedio_componente = round2(suma / validas.length);
+      grupo.promedio_ponderado = round2(
+        (grupo.promedio_componente * grupo.componente.peso_porcentual) / 100
+      );
+    }
+  });
+
+  // Convertir a array y ordenar
+  const resultado = Object.values(agrupadas).sort((a, b) => {
+    if (a.trimestre !== b.trimestre) return a.trimestre - b.trimestre;
+    return a.componente.nombre_componente.localeCompare(b.componente.nombre_componente);
+  });
+
+  // Calcular promedio general
+  const sumaPonderada = resultado.reduce((acc, g) => acc + (g.promedio_ponderado || 0), 0);
+  const promedio_general = resultado.length > 0 ? round2(sumaPonderada) : null;
+  const promedio_letra = promedio_general !== null ? toLetter(promedio_general) : null;
 
   return {
     estudiante,
-    curso,
-    componente,
-    trimestre: tri,
     año_academico: año,
-    evaluaciones: items,
-    total_evaluaciones: total,
-    promedio_componente: promedio,
-    hay_notas_preliminares: hayPreliminar,
+    calificaciones: resultado,
+    promedio_general,
+    promedio_letra,
+    nivel_desempeño: promedio_letra ? getNivelDesempeño(promedio_letra) : null,
   };
 }
 
@@ -203,70 +317,191 @@ async function getStudentComponentGrades({ estudiante_id, año, trimestre, curso
  * Calcula el promedio del componente para estudiante/curso/trimestre/año.
  */
 async function getStudentComponentAverage({ estudiante_id, año, trimestre, curso_id, componente_id }) {
-  if (!estudiante_id || !año || !trimestre || !curso_id || !componente_id) {
+  if (!estudiante_id || !año) {
     throw httpError(
       'INVALID_PARAMETERS',
-      'estudiante_id, año, trimestre, curso_id y componente_id son requeridos',
+      'estudiante_id y año son requeridos',
       400
     );
   }
-  const tri = Number(trimestre);
-  if (![1, 2, 3].includes(tri)) {
-    throw httpError('INVALID_PARAMETERS', 'Trimestre inválido. Debe ser 1, 2 o 3', 400);
+
+  const estudiante = await getEstudianteInfo(estudiante_id);
+
+  // Si se proporcionan filtros específicos, usarlos
+  if (trimestre && curso_id && componente_id) {
+    const tri = Number(trimestre);
+    if (![1, 2, 3].includes(tri)) {
+      throw httpError('INVALID_PARAMETERS', 'Trimestre inválido. Debe ser 1, 2 o 3', 400);
+    }
+
+    const curso = await getCursoInfo(curso_id, año);
+    const componente = await getComponenteInfo(componente_id, año);
+
+    const where = {
+      estudiante_id,
+      año_academico: año,
+      trimestre: tri,
+      curso_id,
+      estructura_evaluacion_id: componente_id,
+    };
+
+    // Necesitamos conocer si hay preliminares para el estado final
+    const [aggr, prelimCount] = await Promise.all([
+      prisma.evaluacion.aggregate({
+        where,
+        _sum: { calificacion_numerica: true },
+        _count: { _all: true },
+      }),
+      prisma.evaluacion.count({ where: { ...where, estado: 'preliminar' } }),
+    ]);
+
+    const total = aggr?._count?._all || 0;
+    if (total === 0) {
+      throw httpError('NO_GRADES_FOUND', 'No hay calificaciones registradas para el filtro aplicado', 404);
+    }
+
+    const suma = toNumber(aggr?._sum?.calificacion_numerica) || 0;
+    const promedio = round2(suma / total);
+    const promedio_letra = promedio != null ? toLetter(promedio) : null;
+    const estado = prelimCount > 0 ? 'preliminar' : 'final';
+
+    return {
+      estudiante,
+      curso,
+      componente: {
+        id: componente.id,
+        nombre: componente.nombre_item,
+        tipo: componente.tipo_evaluacion,
+      },
+      trimestre: tri,
+      año_academico: año,
+      total_evaluaciones: total,
+      suma_calificaciones: round2(suma),
+      promedio,
+      promedio_letra,
+      estado,
+      mensaje:
+        estado === 'preliminar'
+          ? 'Este promedio es preliminar y puede cambiar hasta el cierre del trimestre'
+          : 'Promedio oficial',
+    };
   }
 
-  // Verificaciones de existencia para devolver errores del contrato
-  await getEstudianteInfo(estudiante_id);
-  const componente = await getComponenteInfo(componente_id, año);
-  await getCursoInfo(curso_id, año);
+  // Si no se proporcionan filtros específicos, obtener promedios de todos los componentes
+  const evaluaciones = await prisma.evaluacion.findMany({
+    where: {
+      estudiante_id,
+      año_academico: año,
+      ...(trimestre && { trimestre: Number(trimestre) }),
+      ...(curso_id && { curso_id }),
+      ...(componente_id && { estructura_evaluacion_id: componente_id }),
+    },
+    include: {
+      curso: { select: { id: true, nombre: true } },
+      estructura_evaluacion: {
+        select: {
+          id: true,
+          nombre_item: true,
+          peso_porcentual: true,
+          tipo_evaluacion: true
+        }
+      },
+    },
+    orderBy: [
+      { trimestre: 'asc' },
+      { curso_id: 'asc' },
+      { estructura_evaluacion_id: 'asc' }
+    ],
+  });
 
-  const where = {
-    estudiante_id,
-    año_academico: año,
-    trimestre: tri,
-    curso_id,
-    estructura_evaluacion_id: componente_id,
-  };
-
-  // Necesitamos conocer si hay preliminares para el estado final
-  const [aggr, prelimCount] = await Promise.all([
-    prisma.evaluacion.aggregate({
-      where,
-      _sum: { calificacion_numerica: true },
-      _count: { _all: true },
-    }),
-    prisma.evaluacion.count({ where: { ...where, estado: 'preliminar' } }),
-  ]);
-
-  const total = aggr?._count?._all || 0;
-  if (total === 0) {
-    throw httpError('NO_GRADES_FOUND', 'No hay calificaciones registradas para el filtro aplicado', 404);
+  if (evaluaciones.length === 0) {
+    throw httpError(
+      'NO_GRADES_FOUND',
+      `No hay calificaciones registradas para el año ${año}`,
+      404
+    );
   }
 
-  const suma = toNumber(aggr?._sum?.calificacion_numerica) || 0;
-  const promedio = round2(suma / total);
-  const promedio_letra = promedio != null ? toLetter(promedio) : null;
-  const estado = prelimCount > 0 ? 'preliminar' : 'final';
+  // Agrupar por componente y trimestre
+  const agrupadas = {};
+  evaluaciones.forEach(ev => {
+    const compId = ev.estructura_evaluacion_id;
+    const tri = ev.trimestre;
+    const key = `${compId}_${tri}`;
+    
+    if (!agrupadas[key]) {
+      agrupadas[key] = {
+        componente: {
+          id: ev.estructura_evaluacion.id,
+          nombre_componente: ev.estructura_evaluacion.nombre_item,
+          peso_porcentual: toNumber(ev.estructura_evaluacion.peso_porcentual),
+          tipo_evaluacion: ev.estructura_evaluacion.tipo_evaluacion,
+        },
+        trimestre: tri,
+        curso: ev.curso ? {
+          id: ev.curso.id,
+          nombre: ev.curso.nombre
+        } : null,
+        evaluaciones: [],
+        promedio: null,
+        promedio_ponderado: null,
+      };
+    }
+
+    const num = toNumber(ev.calificacion_numerica);
+    
+    agrupadas[key].evaluaciones.push({
+      id: ev.id,
+      calificacion_numerica: num,
+      calificacion_letra: toLetter(num),
+      estado: ev.estado,
+    });
+  });
+
+  // Calcular promedios por componente
+  Object.values(agrupadas).forEach(grupo => {
+    const validas = grupo.evaluaciones.filter(c => c.calificacion_numerica !== null);
+    if (validas.length > 0) {
+      const suma = validas.reduce((acc, c) => acc + c.calificacion_numerica, 0);
+      grupo.promedio = round2(suma / validas.length);
+      grupo.promedio_ponderado = round2(
+        (grupo.promedio * grupo.componente.peso_porcentual) / 100
+      );
+    }
+  });
+
+  // Convertir a array y ordenar
+  const resultado = Object.values(agrupadas).sort((a, b) => {
+    if (a.trimestre !== b.trimestre) return a.trimestre - b.trimestre;
+    return a.componente.nombre_componente.localeCompare(b.componente.nombre_componente);
+  });
 
   return {
-    componente: {
-      id: componente.id,
-      nombre: componente.nombre_item,
-      tipo: componente.tipo_evaluacion,
-    },
-    total_evaluaciones: total,
-    suma_calificaciones: round2(suma),
-    promedio,
-    promedio_letra,
-    estado,
-    mensaje:
-      estado === 'preliminar'
-        ? 'Este promedio es preliminar y puede cambiar hasta el cierre del trimestre'
-        : 'Promedio oficial',
+    estudiante,
+    año_academico: año,
+    promedios: resultado,
+    total_componentes: resultado.length
   };
+}
+
+/**
+ * Determina el nivel de desempeño según la calificación letra
+ */
+function getNivelDesempeño(calificacion_letra) {
+  if (!calificacion_letra) return null;
+  
+  const niveles = {
+    'AD': 'Logro Destacado',
+    'A': 'Logro Esperado',
+    'B': 'En Proceso',
+    'C': 'En Inicio'
+  };
+  
+  return niveles[calificacion_letra] || null;
 }
 
 module.exports = {
   getStudentComponentGrades,
   getStudentComponentAverage,
+  getNivelDesempeño,
 };
