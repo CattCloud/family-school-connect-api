@@ -1,0 +1,20 @@
+
+capítulo 6: Validación
+introducción breve y corta
+métricas (indicadores)
+Las metricas/indicadores no tienen que ser complejas,mientras respondan el objetivo del modulo
+-	Definir con detalle y precision cada metrica(indicadores) y las tecnologias que se usaran
+-	Indicar formulas si son necesarias y fundamentarlas
+-	
+Instancias de prueba (Como evaluaras el seguimiento y comunicación academico)
+Son los usuarios que acceden al sistema
+Las instancias de prueba es la unidad ,seran varias (3 a menos) 
+-	Detallas cuales son las instancias de prueba para el sistema
+-	Proceso y metodologia de validacion -> Como se estan aplicando las metricas a las instancias de prueba
+-	Que se espera de esa instancia de prueba  	
+-	Solucion Esperada
+Pruebas(Aplicación de las metricas)
+-	Capturas de las pruebas y resultados obtenidos
+
+resultados
+Cuadros estadisticos, graficos, forma de presentarlo 

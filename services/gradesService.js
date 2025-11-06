@@ -5,6 +5,7 @@ const logger = require('../utils/logger');
 const { generateGradesTemplateExcel, parseGradesFile } = require('./excelService');
 const { saveTextReport } = require('./reportsService');
 const { saveValidation, readValidation, deleteValidation } = require('./validationStore');
+const NotificationsService = require('./notificationsService');
 
 // ============ Utiles comunes ============
 function getCurrentAcademicYear() {
@@ -238,6 +239,8 @@ async function loadGrades({ validacion_id, procesar_solo_validos = true, generar
     );
   }
 
+  const evaluacionesInsertadas = []; // Para notificaciones automáticas
+  
   await prisma.$transaction(async (tx) => {
     for (const reg of registros_validos) {
       const codigo = reg.codigo_estudiante;
@@ -286,7 +289,7 @@ async function loadGrades({ validacion_id, procesar_solo_validos = true, generar
       }
 
       // Insert real
-      await tx.evaluacion.create({
+      const nuevaEvaluacion = await tx.evaluacion.create({
         data: {
           estudiante_id: estId,
           curso_id,
@@ -302,8 +305,54 @@ async function loadGrades({ validacion_id, procesar_solo_validos = true, generar
         },
       });
       insertados++;
+      
+      // Recopilar evaluaciones para notificaciones
+      evaluacionesInsertadas.push({
+        ...nuevaEvaluacion,
+        estudiante_id: estId
+      });
     }
   });
+
+  // Generar notificaciones automáticas para padres
+  let estadisticasNotificaciones = {
+    notificaciones_creadas: 0,
+    alertas_bajo_rendimiento: 0,
+    padres_notificados: 0
+  };
+
+  if (generar_alertas && evaluacionesInsertadas.length > 0) {
+    try {
+      // Obtener información del componente para el contexto
+      const componenteInfo = await prisma.estructuraEvaluacion.findUnique({
+        where: { id: componente_id },
+        select: { nombre_item: true }
+      });
+
+      const contextoPadres = {
+        año_academico: year,
+        trimestre,
+        curso: `${curso.nombre} - ${curso.nivel_grado.grado} ${curso.nivel_grado.nivel}`,
+        componente: componenteInfo?.nombre_item || 'Componente',
+        fecha_evaluacion: fechaEval.toISOString().slice(0, 10)
+      };
+
+      estadisticasNotificaciones = await NotificationsService.crearNotificacionesCalificaciones(
+        evaluacionesInsertadas,
+        contextoPadres
+      );
+      
+      logger.info(`Notificaciones de calificaciones generadas exitosamente`, {
+        curso_id,
+        trimestre,
+        componente_id,
+        ...estadisticasNotificaciones
+      });
+    } catch (notifError) {
+      logger.error('Error al generar notificaciones de calificaciones:', notifError);
+      // No fallar la carga si fallan las notificaciones
+    }
+  }
 
   const nowIso = new Date().toISOString();
 
@@ -315,9 +364,13 @@ async function loadGrades({ validacion_id, procesar_solo_validos = true, generar
     fecha_evaluacion: fechaEval.toISOString().slice(0, 10),
   };
 
-  // Alertas automáticas (no implementadas aún)
+  // Alertas automáticas (ahora implementadas)
   const alertas_generadas = generar_alertas
-    ? { total: 0, bajo_rendimiento: 0, estudiantes_afectados: [] }
+    ? {
+        total: estadisticasNotificaciones.notificaciones_creadas,
+        bajo_rendimiento: estadisticasNotificaciones.alertas_bajo_rendimiento,
+        estudiantes_afectados: evaluacionesInsertadas.map(e => e.estudiante_id)
+      }
     : { total: 0, bajo_rendimiento: 0, estudiantes_afectados: [] };
 
   return {

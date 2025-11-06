@@ -5,6 +5,7 @@ const logger = require('../utils/logger');
 const { generateAttendanceTemplateExcel, parseAttendanceFile } = require('./excelService');
 const { saveTextReport } = require('./reportsService');
 const { saveValidation, readValidation, deleteValidation } = require('./validationStore');
+const NotificationsService = require('./notificationsService');
 
 // ============ Utiles comunes ============
 function getCurrentAcademicYear() {
@@ -310,6 +311,7 @@ async function loadAttendance({ validacion_id, reemplazar_existente = false }, u
   let insertados = 0;
   let omitidos = 0;
   let reemplazados = 0;
+  const asistenciasInsertadas = []; // Para notificaciones automáticas
 
   await prisma.$transaction(async (tx) => {
     if (existentesCount > 0 && reemplazar_existente) {
@@ -350,7 +352,7 @@ async function loadAttendance({ validacion_id, reemplazar_existente = false }, u
         hora = null;
       }
 
-      await tx.asistencia.create({
+      const nuevaAsistencia = await tx.asistencia.create({
         data: {
           estudiante_id: estId,
           fecha: fechaObj,
@@ -362,8 +364,54 @@ async function loadAttendance({ validacion_id, reemplazar_existente = false }, u
         },
       });
       insertados++;
+      
+      // Recopilar asistencias para notificaciones
+      asistenciasInsertadas.push({
+        ...nuevaAsistencia,
+        estudiante_id: estId
+      });
     }
   });
+
+  // Generar notificaciones automáticas para padres
+  let estadisticasNotificaciones = {
+    notificaciones_creadas: 0,
+    alertas_criticas: 0,
+    alertas_tardanza: 0,
+    padres_notificados: 0
+  };
+
+  if (asistenciasInsertadas.length > 0) {
+    try {
+      // Determinar trimestre basado en la fecha (simplificado)
+      const mes = fechaObj.getMonth() + 1;
+      let trimestre;
+      if (mes >= 3 && mes <= 5) trimestre = 1;
+      else if (mes >= 6 && mes <= 8) trimestre = 2;
+      else trimestre = 3;
+
+      const contextoPadres = {
+        año_academico: year,
+        fecha: fecha,
+        curso: `${curso.nombre} - ${curso.nivel_grado.grado} ${curso.nivel_grado.nivel}`,
+        trimestre
+      };
+
+      estadisticasNotificaciones = await NotificationsService.crearNotificacionesAsistencia(
+        asistenciasInsertadas,
+        contextoPadres
+      );
+      
+      logger.info(`Notificaciones de asistencia generadas exitosamente`, {
+        curso_id,
+        fecha,
+        ...estadisticasNotificaciones
+      });
+    } catch (notifError) {
+      logger.error('Error al generar notificaciones de asistencia:', notifError);
+      // No fallar la carga si fallan las notificaciones
+    }
+  }
 
   // Opcional: invalidar validación para evitar replays
   await deleteValidation(validacion_id).catch(() => {});
@@ -382,6 +430,7 @@ async function loadAttendance({ validacion_id, reemplazar_existente = false }, u
       omitidos,
       reemplazados,
     },
+    notificaciones_generadas: estadisticasNotificaciones,
     fecha_carga: new Date().toISOString(),
     registrado_por: {
       id: user.id,

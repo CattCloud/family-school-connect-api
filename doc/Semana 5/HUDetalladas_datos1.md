@@ -131,9 +131,10 @@
         - C: 0-10
     - **CA-06:** Después de inserción exitosa:
         - Mostrar notificación de éxito: "✅ XX calificaciones registradas correctamente"
-        - **Activar sistema de alertas automáticas** (HU-ACAD-16):
+        - **Activar sistema de alertas automáticas** :
             - Evaluar cada nota registrada
             - Si `calificacion_numerica < 11`, generar alerta de bajo rendimiento
+            - Si `calificacion_numerica > 11` -> → confirmación nota subida
             - Enviar notificaciones a padres afectados (WhatsApp + plataforma)
         - Actualizar vista de calificaciones para padres en tiempo real
 
