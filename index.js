@@ -13,6 +13,7 @@ const authRoutes = require('./routes/auth');
 const usersRoutes = require('./routes/users');
 const comunicadosRoutes = require('./routes/comunicados');
 const encuestasRoutes = require('./routes/encuestas');
+const respuestasEncuestasRoutes = require('./routes/respuestas-encuestas');
 const academicSummaryRoutes = require('./routes/academicSummary');
 
 // Importar rutas faltantes según doc/Semana 4/Falta.md
@@ -76,6 +77,7 @@ app.use('/auth', authRoutes);
 app.use('/usuarios', usersRoutes);
 app.use('/comunicados', comunicadosRoutes);
 app.use('/encuestas', encuestasRoutes);
+app.use('/respuestas-encuestas', respuestasEncuestasRoutes);
 
 // Rutas de Gestión de Usuarios y Permisos (Semana 4)
 app.use('/teachers', teachersRoutes);

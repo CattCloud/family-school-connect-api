@@ -1,0 +1,612 @@
+/**
+ * Simulación de 14 días (Fase 3) para generar datos de métricas vía logs.
+ * No depende del middleware de runtime. Inserta directamente en:
+ * - auth_logs (login/logout)
+ * - access_logs (accesos a módulos calificaciones/asistencia)
+ * - comunicados_lecturas (lectura de comunicados)
+ * - notificaciones (creación y lectura)
+ * - respuestas_encuestas (respuestas mínimas)
+ * - tickets_soporte (creación y resolución)
+ *
+ * Requisitos previos:
+ * - Tablas auth_logs y access_logs creadas (ver migración 20251107001500_create_logging_tables).
+ * - Seed base ejecutado: usuarios (Carlos/María/Jorge/Ana), 1 estudiante, 8 cursos.
+ * - Pre-carga de comunicados y encuestas ejecutada (02_generar_comunicados_encuestas.js).
+ */
+
+const { PrismaClient } = require('@prisma/client');
+const { randomUUID } = require('crypto');
+
+const prisma = new PrismaClient();
+
+const ANIO = 2025;
+// Parámetros CLI/ENV: --start=YYYY-MM-DD --end=YYYY-MM-DD --days=N
+const argv = process.argv.slice(2);
+const argMap = Object.fromEntries(
+  argv
+    .filter((a) => a.startsWith('--'))
+    .map((a) => {
+      const [k, v] = a.replace(/^--/, '').split('=');
+      return [k.toLowerCase(), v ?? 'true'];
+    })
+);
+const startStr = argMap.start || process.env.SIM_START || process.env.SIM_START_DATE;
+const endStr = argMap.end || process.env.SIM_END || process.env.SIM_END_DATE;
+const daysStr = argMap.days || process.env.SIM_DAYS;
+const DEFAULT_START = '2025-10-27';
+const DEFAULT_DAYS = 14;
+
+// Construcción de fechas con TZ -05:00
+const FECHA_INICIO = new Date((startStr || DEFAULT_START) + 'T00:00:00-05:00');
+const FECHA_FIN = endStr
+  ? new Date(endStr + 'T23:59:59-05:00')
+  : new Date(new Date((startStr || DEFAULT_START) + 'T00:00:00-05:00').getTime() + ((parseInt(daysStr || DEFAULT_DAYS, 10) - 1) * 24 * 60 * 60 * 1000));
+
+const MS_PER_DIA = 24 * 60 * 60 * 1000;
+const TOTAL_DIAS = Math.max(1, Math.floor((FECHA_FIN - FECHA_INICIO) / MS_PER_DIA) + 1);
+
+// Utilidades
+function addMinutes(date, mins) {
+  const d = new Date(date);
+  d.setMinutes(d.getMinutes() + mins);
+  return d;
+}
+function addHours(date, hours) {
+  const d = new Date(date);
+  d.setHours(d.getHours() + hours);
+  return d;
+}
+function addDays(date, n) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+function pickCourseId(cursos, idx) {
+  if (!cursos || cursos.length === 0) return null;
+  return cursos[idx % cursos.length].id;
+}
+function roleTimeDistribution(rol) {
+  // Ventanas horarias por rol (aprox, en horas)
+  if (rol === 'apoderado') return [
+    { start: 7, end: 9 },
+    { start: 14, end: 18 },
+    { start: 20, end: 22 }
+  ];
+  if (rol === 'docente') return [
+    { start: 8, end: 10 },
+    { start: 13, end: 15 }
+  ];
+  if (rol === 'director') return [
+    { start: 9, end: 11 },
+    { start: 15, end: 17 }
+  ];
+  if (rol === 'administrador') return [
+    { start: 8, end: 10 },
+    { start: 14, end: 17 }
+  ];
+  return [{ start: 9, end: 17 }];
+}
+function timestampForDay(dayZeroBase, rol, loginIndex = 0) {
+  // dayZeroBase es el Date del día (00:00). Escoge un rango horario por rol y genera una hora aleatoria.
+  const slots = roleTimeDistribution(rol);
+  const slot = slots[loginIndex % slots.length];
+  const hour = randInt(slot.start, slot.end - 1);
+  const minute = randInt(0, 59);
+  const second = randInt(0, 59);
+  const ts = new Date(dayZeroBase);
+  ts.setHours(hour, minute, second, 0);
+  // Introduce ruido leve ±15 min
+  return addMinutes(ts, randInt(-15, 15));
+}
+
+async function getUsuariosClave() {
+  const padre = await prisma.usuario.findFirst({ where: { nombre: 'Carlos' } });
+  const docente = await prisma.usuario.findFirst({ where: { nombre: 'María' } });
+  const director = await prisma.usuario.findFirst({ where: { nombre: 'Jorge' } });
+  const administrador = await prisma.usuario.findFirst({ where: { nombre: 'Ana' } });
+  if (!padre || !docente || !director || !administrador) {
+    throw new Error('Usuarios clave no encontrados (Carlos, María, Jorge, Ana). Ejecute seeds base.');
+  }
+  return { padre, docente, director, administrador };
+}
+
+async function getEstudiantePrincipal() {
+  let est = await prisma.estudiante.findFirst({ where: { codigo_estudiante: 'EST-2025-001' } });
+  if (!est) {
+    est = await prisma.estudiante.findFirst();
+  }
+  if (!est) throw new Error('No se encontró estudiante. Ejecute seeds base.');
+  return est;
+}
+
+async function getCursosActivos() {
+  const cursos = await prisma.curso.findMany({ where: { año_academico: ANIO, estado_activo: true }, orderBy: { nombre: 'asc' } });
+  if (!cursos || cursos.length === 0) throw new Error('No se encontraron cursos. Ejecute seeds base.');
+  return cursos;
+}
+
+// Inserciones primitivas
+async function insertAuth(userId, evento, exito, ts, sessionId, ip = '190.237.100.10', ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)') {
+  await prisma.$executeRawUnsafe(
+    `INSERT INTO auth_logs (id, usuario_id, evento, exito, timestamp, ip_address, user_agent, session_id, año_academico)
+     VALUES (gen_random_uuid(), $1::uuid, $2, $3, $4::timestamp, $5, $6, $7::uuid, $8)`,
+    userId, evento, exito, ts, ip, ua, sessionId, ANIO
+  );
+}
+async function insertAccess(userId, sessionId, modulo, estudianteId, cursoId, ts, durSec, url) {
+  await prisma.$executeRawUnsafe(
+    `INSERT INTO access_logs (id, usuario_id, session_id, modulo, estudiante_id, curso_id, timestamp, duracion_sesion, url_visitada, año_academico)
+     VALUES (gen_random_uuid(), $1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6::timestamp, $7, $8, $9)`,
+    userId, sessionId, modulo, estudianteId, cursoId, ts, durSec, url, ANIO
+  );
+}
+async function markComunicadoReadByTitle(userId, title, readTs) {
+  const comunicado = await prisma.comunicado.findFirst({ where: { titulo: title, año_academico: ANIO } });
+  if (!comunicado) return;
+
+  // Salvaguarda: nunca registrar lecturas antes de la publicación (+1h)
+  let minReadTs = readTs;
+  if (comunicado.fecha_publicacion) {
+    const minAllowed = new Date(new Date(comunicado.fecha_publicacion).getTime() + 60 * 60 * 1000);
+    if (minReadTs < minAllowed) minReadTs = minAllowed;
+  }
+
+  // upsert-like manual por unique (comunicado_id, usuario_id)
+  const exists = await prisma.comunicadoLectura.findFirst({
+    where: { comunicado_id: comunicado.id, usuario_id: userId }
+  });
+
+  if (!exists) {
+    await prisma.comunicadoLectura.create({
+      data: {
+        comunicado_id: comunicado.id,
+        usuario_id: userId,
+        fecha_lectura: minReadTs
+      }
+    });
+  } else if (exists.fecha_lectura && minReadTs > exists.fecha_lectura) {
+    // Corrige lecturas existentes si quedaron antes de la fecha de publicación
+    await prisma.comunicadoLectura.update({
+      where: { id: exists.id },
+      data: { fecha_lectura: minReadTs }
+    });
+  }
+}
+async function uniqueTicketNumber(base) {
+  // Genera un número de ticket único probando variaciones cortas y, si colisiona, usa UUID parcial
+  for (let i = 0; i < 5; i++) {
+    const candidate = `${base}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const exists = await prisma.ticketSoporte.findFirst({ where: { numero_ticket: candidate } });
+    if (!exists) return candidate;
+  }
+  return `${base}-${randomUUID().slice(0, 8).toUpperCase()}`;
+}
+
+async function createTicketAndResolve(creadorId, categoria, prioridad, titulo, desc, createdTs, horasResolucion, asignadoId) {
+  const base = `TCK-${createdTs.getTime()}`;
+  const numero = await uniqueTicketNumber(base);
+
+  const ticket = await prisma.ticketSoporte.create({
+    data: {
+      numero_ticket: numero,
+      titulo,
+      descripcion: desc,
+      categoria,
+      prioridad,
+      estado: 'pendiente',
+      usuario_id: creadorId,
+      asignado_a: asignadoId || null,
+      fecha_creacion: createdTs,
+      año_academico: ANIO
+    }
+  });
+
+  const asignTs = addHours(createdTs, Math.min(2, horasResolucion / 3));
+  const resolvedTs = addHours(createdTs, horasResolucion);
+
+  await prisma.ticketSoporte.update({
+    where: { id: ticket.id },
+    data: {
+      estado: 'resuelto',
+      fecha_asignacion: asignTs,
+      fecha_resolucion: resolvedTs,
+      tiempo_respuesta_horas: horasResolucion
+    }
+  });
+}
+async function createNotificacion(userId, tipo, titulo, contenido, creadoTs, criticidad, estudianteId, comunicadoId) {
+  const datos = criticidad ? { criticidad } : null;
+  const notif = await prisma.notificacion.create({
+    data: {
+      usuario_id: userId,
+      tipo,
+      titulo,
+      contenido,
+      datos_adicionales: datos,
+      canal: 'plataforma',
+      estado_plataforma: 'entregada',
+      fecha_creacion: creadoTs,
+      estudiante_id: estudianteId || null,
+      comunicado_id: comunicadoId || null,
+      año_academico: ANIO
+    }
+  });
+  return notif;
+}
+async function markNotificacionLeida(notifId, readTs) {
+  await prisma.notificacion.update({
+    where: { id: notifId },
+    data: { estado_plataforma: 'leida', fecha_lectura: readTs }
+  });
+}
+async function responderEncuestaPorTitulo(userId, titulo, respTs) {
+  const enc = await prisma.encuesta.findFirst({ where: { titulo, año_academico: ANIO } });
+  if (!enc) return;
+  const exists = await prisma.respuestaEncuesta.findFirst({ where: { encuesta_id: enc.id, usuario_id: userId } });
+  if (!exists) {
+    await prisma.respuestaEncuesta.create({
+      data: {
+        encuesta_id: enc.id,
+        usuario_id: userId,
+        fecha_respuesta: respTs
+      }
+    });
+  }
+}
+
+// Cuota diaria de alertas automáticas reducida para ~35-40 en 14 días (2-3 por día)
+function getDailyAlertQuota(dayIndex) {
+  const threeDays = [1, 4, 8, 10]; // algunos días con 3 alertas
+  return threeDays.includes(dayIndex) ? 3 : 2;
+}
+
+// Genera alertas automáticas por día con REALISMO:
+// - No todas las alertas se visualizan (85% aprox)
+// - Tiempos de reacción más variables (2-8h, no 1-4h)
+// - Menos accesos post-alerta (1-2, no 5-6)
+async function generateAutoAlertsForDay(dayIndex, dayDate, padreId, estudianteId, cursos) {
+  const count = getDailyAlertQuota(dayIndex);
+  
+  for (let i = 0; i < count; i++) {
+    let tipo = 'asistencia';
+    let titulo = '';
+    let contenido = '';
+    let modulo = 'asistencia';
+
+    if (i % 3 === 0) {
+      titulo = 'Alerta de tardanza';
+      contenido = 'Se registró tardanza en el día.';
+    } else if (i % 3 === 1) {
+      titulo = 'Alerta de falta injustificada';
+      contenido = 'Se registró falta injustificada.';
+    } else {
+      tipo = 'calificacion';
+      titulo = 'Alerta de calificación baja';
+      contenido = 'Se registró calificación por debajo del umbral.';
+      modulo = 'calificaciones';
+    }
+
+    const notifTs = addHours(dayDate, 11 + (i * 2)); // espaciar más las alertas
+    const notif = await createNotificacion(padreId, tipo, titulo, contenido, notifTs, 'alta', estudianteId, null);
+    
+    // REALISMO: No todas las alertas se visualizan (15% quedan sin leer)
+    const shouldRead = Math.random() > 0.15; // 85% probabilidad de lectura
+    
+    if (shouldRead) {
+      // Variabilidad en tiempo de reacción (2-8h, con contexto de fin de semana/laboral)
+      let reactionHours;
+      const isWeekend = [6, 7, 13, 14].includes(dayIndex); // sábado/domingo
+      if (isWeekend) {
+        reactionHours = randInt(4, 12); // reacción más lenta fines de semana
+      } else {
+        reactionHours = randInt(2, 6); // más rápida días laborales
+      }
+      
+      const readTs = addHours(notifTs, reactionHours);
+      await markNotificacionLeida(notif.id, readTs);
+
+      // Acceso post-alerta reducido (1-2 accesos, no 5-6)
+      const postAccesos = randInt(1, 2);
+      for (let j = 0; j < postAccesos; j++) {
+        const sessionId = randomUUID();
+        const tsLogin = addMinutes(readTs, 5 + (j * 15));
+        await insertAuth(padreId, 'login', true, tsLogin, sessionId);
+        const dur = randInt(30, 120); // duración más variable
+        const cursoId = pickCourseId(cursos, i + j);
+        const url = modulo === 'calificaciones'
+          ? `/calificaciones/estudiante/${estudianteId}/curso/${cursoId}`
+          : `/asistencia/estudiante/${estudianteId}`;
+        await insertAccess(padreId, sessionId, modulo, estudianteId, cursoId, addMinutes(tsLogin, 2), dur, url);
+        await insertAuth(padreId, 'logout', true, addMinutes(tsLogin, 8), sessionId);
+      }
+    }
+    // Si shouldRead = false, la alerta queda sin visualizar (más realista)
+  }
+}
+
+// Simulación de una sesión de login + accesos
+async function simularSesionAccesos(usuario, rol, dayDate, consultas, estudiante, cursos, loginIndex = 0) {
+  const loginTs = timestampForDay(dayDate, rol, loginIndex);
+  const sessionId = randomUUID();
+  await insertAuth(usuario.id, 'login', true, loginTs, sessionId);
+  // Accesos
+  let accessIndex = 0;
+  for (const c of consultas) {
+    const { modulo, cantidad } = c;
+    for (let i = 0; i < cantidad; i++) {
+      const ts = addMinutes(loginTs, 1 + accessIndex * 3 + randInt(0, 2));
+      const dur = randInt(12, 180); // segundos
+      const cursoId = (modulo === 'calificaciones' || modulo === 'asistencia') ? pickCourseId(cursos, accessIndex) : null;
+      const url = modulo === 'calificaciones'
+        ? `/calificaciones/estudiante/${estudiante.id}/curso/${cursoId}`
+        : modulo === 'asistencia'
+          ? `/asistencia/estudiante/${estudiante.id}`
+          : `/${modulo}`;
+      await insertAccess(usuario.id, sessionId, modulo, estudiante.id, cursoId, ts, dur, url);
+      accessIndex++;
+    }
+  }
+  // Logout (opcional)
+  const logoutTs = addMinutes(loginTs, 10 + consultas.reduce((acc, c) => acc + (c.cantidad * 3), 0));
+  await insertAuth(usuario.id, 'logout', true, logoutTs, sessionId);
+}
+
+// Cronograma realista basado en PropuestaReajuste.md
+// Aplicando principios de comportamiento humano natural:
+// - Curva de novedad (alta actividad D1-D3, luego decae)
+// - Variabilidad semanal (menor actividad fines de semana)
+// - Fatiga digital (disminución gradual D10-D14)
+// - Días sin acceso (4-5 días de 14)
+// - Atención selectiva (no todo se lee/visualiza)
+function buildCronograma(padreId) {
+  return [
+    // Día 1 (Domingo) - Exploración inicial alta
+    {
+      padre:   { logins: 2, consultas: [{ modulo: 'calificaciones', cantidad: 2 }, { modulo: 'asistencia', cantidad: 2 }] },
+      docente: { logins: 0 },
+      director:{ logins: 1 },
+      admin:   { logins: 1 },
+      actions: [
+        { type: 'read_comunicado', title: 'Bienvenida al Trimestre II - Año Académico 2025', delayH: 6 }
+      ]
+    },
+    // Día 2 (Lunes) - Exploración inicial
+    {
+      padre:   { logins: 2, consultas: [{ modulo: 'calificaciones', cantidad: 2 }, { modulo: 'asistencia', cantidad: 1 }] },
+      docente: { logins: 1 },
+      director:{ logins: 0 },
+      admin:   { logins: 0 },
+      actions: [
+        { type: 'read_comunicado', title: 'Nuevas medidas de seguridad sanitaria - Actualización', delayH: 12 }
+      ]
+    },
+    // Día 3 (Martes) - Exploración inicial
+    {
+      padre:   { logins: 1, consultas: [{ modulo: 'calificaciones', cantidad: 2 }, { modulo: 'asistencia', cantidad: 1 }] },
+      docente: { logins: 1 },
+      director:{ logins: 1 },
+      admin:   { logins: 0 },
+      actions: [
+        { type: 'create_ticket', by: 'padre', categoria: 'acceso_plataforma', prioridad: 'normal', titulo: 'No puedo visualizar calificaciones del trimestre anterior', horasResolucion: 16 },
+        { type: 'read_comunicado', title: 'Cronograma de evaluaciones parciales - Noviembre 2025', delayH: 18 }
+      ]
+    },
+    // Día 4 (Miércoles) - Uso regular
+    {
+      padre:   { logins: 1, consultas: [{ modulo: 'asistencia', cantidad: 1 }] },
+      docente: { logins: 0 },
+      director:{ logins: 0 },
+      admin:   { logins: 1 },
+      actions: [
+        { type: 'read_comunicado', title: 'Suspensión de clases por motivos de fuerza mayor - 15 de marzo', delayH: 8 }
+      ]
+    },
+    // Día 5 (Jueves) - Uso regular
+    {
+      padre:   { logins: 1, consultas: [{ modulo: 'calificaciones', cantidad: 1 }] },
+      docente: { logins: 1 },
+      director:{ logins: 1 },
+      admin:   { logins: 0 },
+      actions: []
+    },
+    // Día 6 (Viernes) - Fin de semana cercano
+    {
+      padre:   { logins: 0, consultas: [] }, // SIN ACCESO - día ocupado
+      docente: { logins: 1 },
+      director:{ logins: 0 },
+      admin:   { logins: 1 },
+      actions: [
+        { type: 'create_ticket', by: 'docente', categoria: 'funcionalidad_academica', prioridad: 'alta', titulo: 'Error al cargar archivo de calificaciones en formato CSV', horasResolucion: 14 }
+      ]
+    },
+    // Día 7 (Sábado) - Fin de semana
+    {
+      padre:   { logins: 0, consultas: [] }, // SIN ACCESO - fin de semana
+      docente: { logins: 0 },
+      director:{ logins: 1 },
+      admin:   { logins: 0 },
+      actions: [
+        { type: 'read_comunicado', title: 'Invitación a Jornada de Integración Familiar - 25 de marzo', delayH: 36 } // lectura tardía fin de semana
+      ]
+    },
+    // Día 8 (Domingo) - Fin de semana
+    {
+      padre:   { logins: 1, consultas: [{ modulo: 'asistencia', cantidad: 1 }] }, // acceso ligero domingo
+      docente: { logins: 0 },
+      director:{ logins: 0 },
+      admin:   { logins: 0 },
+      actions: []
+    },
+    // Día 9 (Lunes) - Vuelta a actividad
+    {
+      padre:   { logins: 1, consultas: [{ modulo: 'calificaciones', cantidad: 1 }, { modulo: 'asistencia', cantidad: 1 }] },
+      docente: { logins: 1 },
+      director:{ logins: 1 },
+      admin:   { logins: 0 },
+      actions: [
+        { type: 'read_comunicado', title: 'Recordatorio: Entrega de informes de progreso académico', delayH: 22 }
+      ]
+    },
+    // Día 10 (Martes) - Fatiga digital
+    {
+      padre:   { logins: 1, consultas: [{ modulo: 'asistencia', cantidad: 1 }] },
+      docente: { logins: 0 },
+      director:{ logins: 1 },
+      admin:   { logins: 1 },
+      actions: [
+        { type: 'answer_survey', title: 'Satisfacción con la comunicación institucional y seguimiento académico', delayH: 14 }
+      ]
+    },
+    // Día 11 (Miércoles) - SIN ACCESO
+    {
+      padre:   { logins: 0, consultas: [] }, // SIN ACCESO - día ocupado/cansancio
+      docente: { logins: 1 },
+      director:{ logins: 0 },
+      admin:   { logins: 0 },
+      actions: []
+    },
+    // Día 12 (Jueves) - Uso ocasional
+    {
+      padre:   { logins: 1, consultas: [{ modulo: 'calificaciones', cantidad: 2 }] },
+      docente: { logins: 1 },
+      director:{ logins: 1 },
+      admin:   { logins: 1 },
+      actions: [
+        { type: 'answer_survey', title: 'Valoración del curso de Matemática - Trimestre II', delayH: 26 },
+        { type: 'read_comunicado', title: 'Comunicado Primaria: Actividades complementarias de reforzamiento', delayH: 15 }
+      ]
+    },
+    // Día 13 (Viernes) - SIN ACCESO
+    {
+      padre:   { logins: 0, consultas: [] }, // SIN ACCESO - padre ocupado en trabajo
+      docente: { logins: 1 },
+      director:{ logins: 0 },
+      admin:   { logins: 0 },
+      actions: []
+    },
+    // Día 14 (Sábado) - Fin de simulación, acceso ligero
+    {
+      padre:   { logins: 1, consultas: [{ modulo: 'calificaciones', cantidad: 1 }] },
+      docente: { logins: 0 },
+      director:{ logins: 1 },
+      admin:   { logins: 0 },
+      actions: [
+        { type: 'answer_survey', title: 'Satisfacción con módulos CORE - Mixta', delayH: 28 },
+        { type: 'read_comunicado', title: 'Comunicado Primaria: Reunión de padres de familia - Diciembre', delayH: 20 }
+      ]
+    }
+  ];
+}
+
+async function main() {
+  console.log(`🚀 Iniciando simulación de ${TOTAL_DIAS} días (rango ${FECHA_INICIO.toISOString().slice(0,10)} a ${FECHA_FIN.toISOString().slice(0,10)})...`);
+  
+  const { padre, docente, director, administrador } = await getUsuariosClave();
+  const estudiante = await getEstudiantePrincipal();
+  const cursos = await getCursosActivos();
+
+  const cronograma = buildCronograma(padre.id);
+
+  for (let dia = 1; dia <= TOTAL_DIAS; dia++) {
+    const dayDate = addDays(FECHA_INICIO, dia - 1);
+    process.stdout.write(`\n📅 Día ${dia} (${dayDate.toISOString().slice(0,10)})\n`);
+    const dayCfg = cronograma[dia - 1];
+    // Simular logins y accesos
+    if (dayCfg.padre?.logins) {
+      for (let i = 0; i < dayCfg.padre.logins; i++) {
+        await simularSesionAccesos(padre, 'apoderado', dayDate, dayCfg.padre.consultas || [], estudiante, cursos, i);
+      }
+    }
+    if (dayCfg.docente?.logins) {
+      for (let i = 0; i < dayCfg.docente.logins; i++) {
+        await simularSesionAccesos(docente, 'docente', dayDate, dayCfg.docente.consultas || [], estudiante, cursos, i);
+      }
+    }
+    if (dayCfg.director?.logins) {
+      for (let i = 0; i < dayCfg.director.logins; i++) {
+        await simularSesionAccesos(director, 'director', dayDate, dayCfg.director.consultas || [], estudiante, cursos, i);
+      }
+    }
+    if (dayCfg.admin?.logins) {
+      for (let i = 0; i < (dayCfg.admin.logins || 0); i++) {
+        await simularSesionAccesos(administrador, 'administrador', dayDate, [], estudiante, cursos, i);
+      }
+    }
+
+    // Acciones específicas del día
+    if (dayCfg.actions && dayCfg.actions.length > 0) {
+      for (const act of dayCfg.actions) {
+        if (act.type === 'read_comunicado') {
+          // lectura diferida por el padre
+          const readTs = addHours(dayDate, act.delayH || 2);
+          await markComunicadoReadByTitle(padre.id, act.title, readTs);
+        } else if (act.type === 'create_ticket') {
+          const creator = act.by === 'padre' ? padre.id : act.by === 'docente' ? docente.id : director.id;
+          const assignTo = administrador.id;
+          const createdTs = addHours(dayDate, 10);
+          await createTicketAndResolve(creator, act.categoria, act.prioridad, act.titulo, act.titulo, createdTs, act.horasResolucion || 12, assignTo);
+        } else if (act.type === 'create_alert') {
+          // crea notificación y reacción + accesos post-alerta
+          let titulo = '';
+          let contenido = '';
+          let tipo = '';
+          if (act.alert.startsWith('asistencia')) {
+            tipo = 'asistencia';
+            if (act.alert.endsWith('tardanza')) {
+              titulo = 'Alerta de tardanza';
+              contenido = 'Se registró tardanza en el día.';
+            } else {
+              titulo = 'Alerta de falta injustificada';
+              contenido = 'Se registró falta injustificada.';
+            }
+          } else if (act.alert === 'calificacion_baja') {
+            tipo = 'calificacion';
+            titulo = 'Alerta de calificación baja';
+            contenido = 'Se registró calificación por debajo del umbral.';
+          }
+          const notifTs = addHours(dayDate, 11);
+          const notif = await createNotificacion(padre.id, tipo, titulo, contenido, notifTs, act.criticidad || 'alta', estudiante.id, null);
+          const readTs = addHours(notifTs, act.reactHours ? Math.round(act.reactHours) : 2);
+          await markNotificacionLeida(notif.id, readTs);
+
+          // Accesos post-alerta (dentro de 24h)
+          const modulo = tipo === 'calificacion' ? 'calificaciones' : 'asistencia';
+          for (let i = 0; i < (act.postAccess || 1); i++) {
+            const sessionId = randomUUID();
+            const tsLogin = addMinutes(readTs, 1 + i * 10);
+            await insertAuth(padre.id, 'login', true, tsLogin, sessionId);
+            const dur = randInt(12, 180);
+            const cursoId = pickCourseId(cursos, i);
+            const url = modulo === 'calificaciones'
+              ? `/calificaciones/estudiante/${estudiante.id}/curso/${cursoId}`
+              : `/asistencia/estudiante/${estudiante.id}`;
+            await insertAccess(padre.id, sessionId, modulo, estudiante.id, cursoId, addMinutes(tsLogin, 1), dur, url);
+            await insertAuth(padre.id, 'logout', true, addMinutes(tsLogin, 10), sessionId);
+          }
+        } else if (act.type === 'answer_survey') {
+          const ts = addHours(dayDate, act.delayH || 18);
+          await responderEncuestaPorTitulo(padre.id, act.title, ts);
+        }
+      }
+    }
+
+    // Alertas automáticas del día (complemento para alcanzar ~60 en 14 días)
+    await generateAutoAlertsForDay(dia, dayDate, padre.id, estudiante.id, cursos);
+
+    process.stdout.write(`✅ Día ${dia} completado\n`);
+  }
+
+  console.log('\n✅ Simulación de 14 días finalizada.');
+}
+
+main()
+  .catch((e) => {
+    console.error('❌ Error en simulación:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

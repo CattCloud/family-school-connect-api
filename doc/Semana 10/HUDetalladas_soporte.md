@@ -618,56 +618,44 @@
 
 - **Tipo:** Página completa de administración (`/dashboard/soporte/bandeja-tickets`)
 - **Componentes principales:**
-    - `BandejaTicketsPage`: Componente contenedor principal
-    - `TicketsHeader`: Header con título y estadísticas
-    - `EstadisticasCard`: Card con 4 métricas principales
-    - `NuevoTicketsBadge`: Badge animado con contador de tickets nuevos
-    - `TabsEstados`: Pestañas de navegación por estado
-    - `FiltrosAvanzados`: Panel de filtros y búsqueda
-    - `BusquedaInput`: Input de búsqueda con debounce
-    - `CategoriaSelect`: Select de filtro por categoría
-    - `PrioridadCheckboxes`: Checkboxes de filtro por prioridad
-    - `UsuarioAutocomplete`: Autocompletado para búsqueda por usuario
-    - `DateRangePicker`: Selector de rango de fechas
-    - `SLASelect`: Select de filtro por tiempo de respuesta
-    - `AplicarFiltrosButton`: Botón para aplicar filtros
-    - `LimpiarFiltrosButton`: Botón para resetear filtros
-    - `TicketsGrid`: Grid de tarjetas de tickets
-    - `TicketCard`: Tarjeta individual de ticket
-    - `EstadoBadge`: Badge de estado con color e icono
-    - `CategoriaBadge`: Badge de categoría con color e icono
-    - `PrioridadBadge`: Badge de prioridad con color e icono
-    - `UsuarioInfo`: Información del usuario con rol y contacto
-    - `AccionesDinamicas`: Botones de acción según estado
-    - `SeleccionCheckbox`: Checkbox para selección múltiple
-    - `AccionesLote`: Controles superiores para acciones masivas
-    - `PaginationComponent`: Componente de paginación
-    - `EmptyState`: Estado vacío con ilustración
-    - `LoadingSpinner`: Indicador de carga
-    - `ToastNotification`: Toast de feedback
-    - `ErrorAlert`: Componente de alertas de error
-    - `ConfirmacionModal`: Modal de confirmación para acciones masivas
-    - `ExportarButton`: Botón para exportar a CSV
+  - Reutilizables existentes
+    - [DashboardLayout.jsx](src/components/layout/DashboardLayout.jsx:1) — Layout institucional base; garantiza consistencia de navegación, espaciados y fondos según tokens.
+    - [Header.jsx](src/components/layout/Header.jsx:1) — Encabezado con acciones y título; integra badges y controles globales.
+    - [Sidebar.jsx](src/components/layout/Sidebar.jsx:1) — Navegación lateral con estados activo/hover alineados al sistema de diseño.
+    - [Card.jsx](src/components/ui/Card.jsx:1) — Contenedor para tarjetas de ticket y paneles (estadísticas, filtros); usa sombras y radios estandarizados.
+    - [Button.jsx](src/components/ui/Button.jsx:1) — CTA principales/secundarios/outline para acciones por estado y en lote; variantes primary/secondary/outline/ghost.
+    - [Input.jsx](src/components/ui/Input.jsx:1) — Campo para búsqueda con debounce y entradas de texto de filtros; focus ring accesible.
+    - [Modal.jsx](src/components/ui/Modal.jsx:1) — Confirmaciones (cambios masivos, asignaciones) con overlay y focus trap.
+    - [LoadingSpinner.jsx](src/components/ui/LoadingSpinner.jsx:1) — Indicadores de carga por bloque y pantalla completa.
+    - [Toast.jsx](src/components/ui/Toast.jsx:1) — Feedback de acciones (éxito/error/warn/info) y errores de API.
+    - [TipoBadge.jsx](src/components/ui/TipoBadge.jsx:1) — Badge base reutilizable (colores/íconos) para estado/categoría/prioridad.
+    - [EmptyState.jsx](src/components/academic/EmptyState.jsx:1) — Estado vacío reutilizado con ilustración y CTA.
+  - Nuevos componentes propuestos
+    - [TicketsHeader.jsx](src/components/support/TicketsHeader.jsx:1) — Header específico con título “Bandeja de Tickets” + KPIs y badge de nuevos.
+    - [KpiStat.jsx](src/components/support/KpiStat.jsx:1) — Métrica unitaria (nuevas/en proceso/resueltas/SLA promedio); variante con color semántico.
+    - [TabsEstados.jsx](src/components/support/TabsEstados.jsx:1) — Tabs por estado con contador y underline animado; accesible por teclado.
+    - [SupportFilters.jsx](src/components/support/SupportFilters.jsx:1) — Contenedor de filtros con disposición responsive y resumen de filtros activos.
+      - [SearchInput.jsx](src/components/support/SearchInput.jsx:1) — Búsqueda con debounce 300ms, icono y clear.
+      - [CategorySelect.jsx](src/components/support/CategorySelect.jsx:1) — Select de categorías con íconos.
+      - [PriorityFilter.jsx](src/components/support/PriorityFilter.jsx:1) — Chips/checkboxes de prioridad (Crítica/Alta/Normal/Baja).
+      - [UserAutocomplete.jsx](src/components/support/UserAutocomplete.jsx:1) — Autocompletado por nombre/email con lista virtualizada.
+      - [DateRangePicker.jsx](src/components/support/DateRangePicker.jsx:1) — Rango de fechas con presets (“Hoy/Semana/Mes/Todo”).
+      - [SlaFilter.jsx](src/components/support/SlaFilter.jsx:1) — Select para ventanas SLA (12/24/48h).
+    - [TicketsGrid.jsx](src/components/support/TicketsGrid.jsx:1) — Grid responsivo (2 cols desktop, 1 col tablet/móvil) con animaciones.
+    - [TicketCard.jsx](src/components/support/TicketCard.jsx:1) — Tarjeta de ticket con número, badges de estado/categoría/prioridad, metadatos y acciones contextuales.
+    - [EstadoBadge.jsx](src/components/support/EstadoBadge.jsx:1) — Wrapper de TipoBadge para mapear estados “Pendiente/En Proceso/Resuelto/Cerrado”.
+    - [CategoriaBadge.jsx](src/components/support/CategoriaBadge.jsx:1) — Wrapper de TipoBadge para categorías (Login/Calificaciones/etc.).
+    - [PrioridadBadge.jsx](src/components/support/PrioridadBadge.jsx:1) — Wrapper de TipoBadge para prioridades (Crítica/Alta/Normal/Baja).
+    - [BulkActionsBar.jsx](src/components/support/BulkActionsBar.jsx:1) — Barra fija con acciones masivas y contador de selección.
+    - [Pagination.jsx](src/components/support/Pagination.jsx:1) — Paginación accesible con total y tamaños 10/20/50/100.
+    - [ExportCsvButton.jsx](src/components/support/ExportCsvButton.jsx:1) — Exportación de tickets visibles/filtrados (descarga Blob).
+    - [ConfirmBulkModal.jsx](src/components/support/ConfirmBulkModal.jsx:1) — Confirmación de acciones masivas con resumen (n elementos, estado destino).
 - **Librerías adicionales:**
     - **React Hook Form:** Para gestión de filtros
     - **React Datepicker:** Para selector de rango de fechas
     - **React Spring:** Para animaciones suaves
     - **React Virtualized:** Para listas largas (optimización)
     - **React Select:** Para selects con búsqueda
-- **Endpoints API:**
-    - `GET /soporte/admin/tickets` - Listado completo de tickets
-    - `GET /soporte/admin/tickets/estado/:estado` - Tickets por estado
-    - `GET /soporte/admin/tickets/busqueda?q=:termino` - Búsqueda de tickets
-    - `GET /soporte/admin/tickets/filtros` - Tickets con filtros aplicados
-    - `PATCH /soporte/admin/tickets/:id/estado` - Cambiar estado de ticket
-    - `PATCH /soporte/admin/tickets/estado-masivo` - Cambiar estado en lote
-    - `PATCH /soporte/admin/tickets/asignar` - Asignar tickets en lote
-    - `GET /soporte/admin/tickets/exportar` - Exportar tickets a CSV
-    - `GET /soporte/admin/estadisticas` - Estadísticas generales
-    - `GET /soporte/admin/categorias` - Lista de categorías disponibles
-    - `GET /soporte/admin/prioridades` - Lista de prioridades disponibles
-    - `GET /soporte/admin/usuarios/busqueda?q=:termino` - Búsqueda de usuarios
-    - `WebSocket /soporte/admin/actualizaciones` - Actualizaciones en tiempo real
 
 ---
 
@@ -1134,37 +1122,30 @@
 
 - **Tipo:** Página completa (`/dashboard/soporte/centro-ayuda`)
 - **Componentes principales:**
-    - `CentroAyudaPage`: Componente contenedor principal
-    - `AyudaHeader`: Header fijo con título y buscador
-    - `BuscadorGlobal`: Input de búsqueda con debounce
-    - `TabsNavegacion`: Pestañas FAQ y Guías
-    - `FiltrosCategoria`: Botones de filtro por categoría
-    - `FAQAccordion`: Componente de preguntas colapsables
-    - `PreguntaFAQ`: Item individual de pregunta/respuesta
-    - `CategoriaBadge`: Badge de categoría con color
-    - `ContadorVistas`: Contador de vistas de pregunta
-    - `GuiasGrid`: Grid de tarjetas de guías
-    - `GuiaCard`: Tarjeta individual de guía
-    - `GuiaPreviewModal`: Modal con visor de PDF
-    - `PDFViewer`: Componente de visualización de PDF
-    - `BotonFlotanteTicket`: Botón flotante de creación de ticket
-    - `ConfirmacionTicketModal`: Modal de confirmación
-    - `EmptyState`: Estado vacío con ilustración
-    - `SearchResults`: Resultados destacados de búsqueda
-    - `LoadingSpinner`: Indicador de carga
-- **Endpoints API:**
-    - `GET /soporte/faq` - Lista completa de preguntas frecuentes
-    - `GET /soporte/faq/categoria/:categoria` - Preguntas por categoría
-    - `GET /soporte/faq/busqueda?q=:termino` - Búsqueda en FAQ
-    - `POST /soporte/faq/:id/vista` - Registrar vista de pregunta
-    - `GET /soporte/guias` - Lista completa de guías
-    - `GET /soporte/guias/categoria/:categoria` - Guías por categoría
-    - `GET /soporte/guias/busqueda?q=:termino` - Búsqueda en guías
-    - `GET /soporte/guias/:id/pdf` - Descarga de archivo PDF
-    - `POST /soporte/guias/:id/descarga` - Registrar descarga de guía
-    - `GET /soporte/estadisticas/faq` - Preguntas más vistas (admin)
-    - `GET /soporte/estadisticas/guias` - Guías más descargadas (admin)
-    - `POST /soporte/busqueda/registro` - Registrar término buscado (anónimo)
+  - Reutilizables existentes
+    - [DashboardLayout.jsx](src/components/layout/DashboardLayout.jsx:1) — Estructura de página consistente con el dashboard.
+    - [Header.jsx](src/components/layout/Header.jsx:1) — Encabezado con buscador y accesos.
+    - [Sidebar.jsx](src/components/layout/Sidebar.jsx:1) — Navegación lateral del módulo.
+    - [Card.jsx](src/components/ui/Card.jsx:1) — Contenedor para FAQ/Guías y bloques de filtros.
+    - [Button.jsx](src/components/ui/Button.jsx:1) — Acciones primarias/secundarias (ver guía, descargar, limpiar filtros).
+    - [Input.jsx](src/components/ui/Input.jsx:1) — Buscador global y campos de filtro.
+    - [Modal.jsx](src/components/ui/Modal.jsx:1) — Previsualización de guías PDF y confirmaciones.
+    - [LoadingSpinner.jsx](src/components/ui/LoadingSpinner.jsx:1) — Carga de listas/resultados.
+    - [Toast.jsx](src/components/ui/Toast.jsx:1) — Feedback de descarga/errores de contenido.
+    - [TipoBadge.jsx](src/components/ui/TipoBadge.jsx:1) — Badges de categoría/estado de guía.
+    - [EmptyState.jsx](src/components/academic/EmptyState.jsx:1) — Mensajes cuando no hay resultados o categorías vacías.
+  - Nuevos componentes propuestos
+    - [AyudaHeader.jsx](src/components/support/AyudaHeader.jsx:1) — Header fijo con título “Centro de Ayuda” + buscador global.
+    - [TabsNavegacion.jsx](src/components/support/TabsNavegacion.jsx:1) — Tabs “FAQ” / “Guías” con contador y animación.
+    - [FiltrosCategoria.jsx](src/components/support/FiltrosCategoria.jsx:1) — Botonera horizontal con scroll en móvil y contador por categoría.
+    - [FAQAccordion.jsx](src/components/support/FAQAccordion.jsx:1) — Acordeón accesible para preguntas frecuentes.
+    - [PreguntaFAQ.jsx](src/components/support/PreguntaFAQ.jsx:1) — Ítem de pregunta con badge de categoría, contador de vistas e interacción expand/collapse.
+    - [GuiasGrid.jsx](src/components/support/GuiasGrid.jsx:1) — Grid responsivo de guías (3/2/1 columnas).
+    - [GuiaCard.jsx](src/components/support/GuiaCard.jsx:1) — Tarjeta con thumbnail, metadatos y acciones (ver/descargar).
+    - [GuiaPreviewModal.jsx](src/components/support/GuiaPreviewModal.jsx:1) — Modal con visor PDF y detalles laterales.
+    - [PDFViewer.jsx](src/components/support/PDFViewer.jsx:1) — Visor embebido con controles de zoom y navegación.
+    - [BotonFlotanteTicket.jsx](src/components/support/BotonFlotanteTicket.jsx:1) — FAB para crear ticket desde el centro de ayuda.
+    - [SearchResults.jsx](src/components/support/SearchResults.jsx:1) — Lista compacta de resultados destacados al tipear.
 
 ---
 
@@ -1739,31 +1720,6 @@
     - **React Quill:** Para editor de texto enriquecido
     - **Recharts:** Para gráficos de estadísticas
     - **React Dropzone:** Para upload de archivos
-- **Endpoints API:**
-    - `GET /soporte/admin/faq` - Listado completo de FAQ
-    - `POST /soporte/admin/faq` - Crear nueva pregunta FAQ
-    - `PATCH /soporte/admin/faq/:id` - Actualizar pregunta FAQ
-    - `DELETE /soporte/admin/faq/:id` - Eliminar pregunta FAQ
-    - `PATCH /soporte/admin/faq/reordenar` - Reordenar preguntas
-    - `GET /soporte/admin/guias` - Listado completo de guías
-    - `POST /soporte/admin/guias` - Crear nueva guía
-    - `PATCH /soporte/admin/guias/:id` - Actualizar guía
-    - `DELETE /soporte/admin/guias/:id` - Eliminar guía
-    - `POST /soporte/admin/guias/:id/pdf` - Subir archivo PDF
-    - `GET /soporte/admin/categorias/faq` - Listado categorías FAQ
-    - `POST /soporte/admin/categorias/faq` - Crear categoría FAQ
-    - `PATCH /soporte/admin/categorias/faq/:id` - Actualizar categoría FAQ
-    - `DELETE /soporte/admin/categorias/faq/:id` - Eliminar categoría FAQ
-    - `GET /soporte/admin/categorias/guias` - Listado categorías guías
-    - `POST /soporte/admin/categorias/guias` - Crear categoría guías
-    - `PATCH /soporte/admin/categorias/guias/:id` - Actualizar categoría guías
-    - `DELETE /soporte/admin/categorias/guias/:id` - Eliminar categoría guías
-    - `GET /soporte/admin/estadisticas` - Estadísticas generales
-    - `POST /soporte/admin/importar/faq` - Importar FAQ desde CSV
-    - `GET /soporte/admin/exportar/faq` - Exportar FAQ a CSV
-    - `GET /soporte/admin/guias/:id/versiones` - Historial de versiones
-    - `POST /soporte/admin/guias/:id/programar` - Programar publicación
-
 ---
 
 ### **Reglas de Negocio Específicas del Módulo (RN-SOP)**
@@ -2324,42 +2280,32 @@
 
 - **Tipo:** Página completa (`/dashboard/soporte/tickets/:id`)
 - **Componentes principales:**
-    - `TicketDetallePage`: Componente contenedor principal
-    - `TicketHeader`: Header sticky con información del ticket
-    - `EstadoBadge`: Badge de estado con color e icono
-    - `CategoriaBadge`: Badge de categoría con color e icono
-    - `FechaCreacion`: Componente de fecha formateada
-    - `TiempoRespuesta`: Componente de tiempo de respuesta
-    - `ConversacionChat`: Contenedor de conversación tipo chat
-    - `MensajeUsuario`: Componente de mensaje de usuario
-    - `MensajeAdmin`: Componente de mensaje de administrador
-    - `UsuarioAvatar`: Avatar con iniciales o imagen
-    - `AdminAvatar`: Avatar con ícono de soporte
-    - `ArchivoAdjunto`: Componente de archivo adjunto
-    - `ListaArchivos`: Lista de archivos adjuntos
-    - `CampoRespuesta`: Campo de respuesta del usuario
-    - `BotonAdjuntar`: Botón para adjuntar archivos
-    - `EnviarRespuestaButton`: Botón para enviar respuesta
-    - `ConfirmacionModal`: Modal de confirmación de envío
-    - `PreviewImagenModal`: Modal para preview de imágenes
-    - `EmptyState`: Estado vacío si no hay mensajes
-    - `LoadingSpinner`: Indicador de carga
-    - `ErrorAlert`: Componente de alertas de error
-    - `ToastNotification`: Toast de feedback
+  - Reutilizables existentes
+    - [Card.jsx](src/components/ui/Card.jsx:1) — Contenedores del header y burbujas de conversación.
+    - [Button.jsx](src/components/ui/Button.jsx:1) — Acciones “Ver/Descargar/Enviar”.
+    - [Input.jsx](src/components/ui/Input.jsx:1) — Base para textarea de respuesta (con estilos del sistema).
+    - [Modal.jsx](src/components/ui/Modal.jsx:1) — Confirmación de envío, preview de imagen/archivo.
+    - [LoadingSpinner.jsx](src/components/ui/LoadingSpinner.jsx:1) — Carga de mensajes y adjuntos.
+    - [Toast.jsx](src/components/ui/Toast.jsx:1) — Feedback de envío/descarga/errores.
+    - [TipoBadge.jsx](src/components/ui/TipoBadge.jsx:1) — Badges de estado y categoría del ticket.
+    - [EmptyState.jsx](src/components/academic/EmptyState.jsx:1) — Conversación vacía o sin adjuntos.
+  - Nuevos componentes propuestos
+    - [TicketHeader.jsx](src/components/support/TicketHeader.jsx:1) — Header sticky con número, estado, categoría y metadatos.
+    - [ConversacionChat.jsx](src/components/support/ConversacionChat.jsx:1) — Contenedor scrollable de conversación con gestión de auto-scroll y anclas.
+    - [MensajeUsuario.jsx](src/components/support/MensajeUsuario.jsx:1) — Burbuja de usuario (border primario, avatar iniciales).
+    - [MensajeAdmin.jsx](src/components/support/MensajeAdmin.jsx:1) — Burbuja de admin (info-light, avatar con ícono).
+    - [UsuarioAvatar.jsx](src/components/support/UsuarioAvatar.jsx:1) — Avatar con fallback de iniciales.
+    - [AdminAvatar.jsx](src/components/support/AdminAvatar.jsx:1) — Avatar con ícono/imagen de soporte.
+    - [ArchivoAdjunto.jsx](src/components/support/ArchivoAdjunto.jsx:1) — Item de archivo con ícono por tipo y acción de descarga.
+    - [ListaArchivos.jsx](src/components/support/ListaArchivos.jsx:1) — Contenedor de adjuntos por mensaje.
+    - [CampoRespuesta.jsx](src/components/support/CampoRespuesta.jsx:1) — Textarea con contador (1–1000), estados y accesibilidad.
+    - [EnviarRespuestaButton.jsx](src/components/support/EnviarRespuestaButton.jsx:1) — Botón con estado loading/disabled según validación.
+    - [PreviewImagenModal.jsx](src/components/support/PreviewImagenModal.jsx:1) — Modal de visualización de imágenes adjuntas.
 - **Librerías adicionales:**
     - **React Hook Form:** Para gestión de formulario de respuesta
     - **React Dropzone:** Para adjuntar archivos
     - **React Spring:** Para animaciones suaves
     - **React Virtualized:** Para conversaciones largas (optimización)
-- **Endpoints API:**
-    - `GET /soporte/tickets/:id` - Obtener información completa del ticket
-    - `GET /soporte/tickets/:id/mensajes` - Obtener mensajes del ticket
-    - `GET /soporte/tickets/:id/archivos` - Obtener archivos adjuntos
-    - `POST /soporte/tickets/:id/mensajes` - Enviar nueva respuesta
-    - `POST /soporte/tickets/:id/leido` - Marcar ticket como leído
-    - `GET /soporte/archivos/:id/descargar` - Descargar archivo adjunto
-    - `PATCH /soporte/tickets/:id/estado` - Actualizar estado del ticket
-    - `WebSocket /soporte/tickets/:id/conversacion` - Actualizaciones en tiempo real
 
 ---
 
@@ -2897,16 +2843,6 @@
     - **React Datepicker:** Para selector de rango de fechas
     - **React Spring:** Para animaciones suaves
     - **React Virtualized:** Para listas largas (optimización)
-- **Endpoints API:**
-    - `GET /soporte/tickets/usuario/:id` - Listado de tickets del usuario
-    - `GET /soporte/tickets/usuario/:id/estado/:estado` - Tickets por estado
-    - `GET /soporte/tickets/usuario/:id/busqueda?q=:termino` - Búsqueda de tickets
-    - `GET /soporte/tickets/usuario/:id/filtros` - Tickets con filtros aplicados
-    - `PATCH /soporte/tickets/:id/leido` - Marcar ticket como leído
-    - `GET /soporte/tickets/usuario/:id/estadisticas` - Estadísticas del usuario
-    - `GET /soporte/categorias` - Lista de categorías disponibles
-    - `GET /soporte/estados` - Lista de estados disponibles
-    - `WebSocket /soporte/actualizaciones/:usuario_id` - Actualizaciones en tiempo real
 
 ---
 
@@ -3417,33 +3353,28 @@
 
 - **Tipo:** Página completa de formulario (`/dashboard/soporte/crear-ticket`)
 - **Componentes principales:**
-    - `CrearTicketPage`: Componente contenedor principal
-    - `FormularioHeader`: Header con título y breadcrumb
-    - `TituloInput`: Campo de texto para título con validación
-    - `CategoriaSelect`: Select desplegable de categorías
-    - `DescripcionTextarea`: Textarea expandible con contador
-    - `ArchivosUpload`: Área de drag & drop para archivos
-    - `ArchivoPreview`: Preview individual de archivo adjunto
-    - `EnviarTicketButton`: Botón principal de envío con estados
-    - `CancelarButton`: Botón de cancelación
-    - `ConfirmacionModal`: Modal de pre-confirmación
-    - `ExitoModal`: Modal de éxito con número de ticket
-    - `ErrorAlert`: Componente de alertas de error
-    - `LoadingSpinner`: Indicador de carga
-    - `ProgressBar`: Barra de progreso para upload de archivos
-    - `ToastNotification`: Toast de feedback rápido
+  - Reutilizables existentes
+    - [Card.jsx](src/components/ui/Card.jsx:1) — Secciones del formulario (problema, adjuntos, acciones).
+    - [Input.jsx](src/components/ui/Input.jsx:1) — Título y campos básicos con validación visual.
+    - [Button.jsx](src/components/ui/Button.jsx:1) — “Enviar Ticket”/“Cancelar” con estados hover/disabled/loading.
+    - [Modal.jsx](src/components/ui/Modal.jsx:1) — Preconfirmación de envío y modal de éxito.
+    - [LoadingSpinner.jsx](src/components/ui/LoadingSpinner.jsx:1) — Estado de envío y uploads.
+    - [Toast.jsx](src/components/ui/Toast.jsx:1) — Mensajería de validación/errores backend.
+  - Nuevos componentes propuestos
+    - [FormularioHeader.jsx](src/components/support/FormularioHeader.jsx:1) — Header sticky con breadcrumb “Inicio > Soporte > Crear Ticket”.
+    - [TituloInput.jsx](src/components/support/TituloInput.jsx:1) — Campo con contador (10–200), helper/error y accesibilidad.
+    - [CategoriaSelect.jsx](src/components/support/CategoriaSelect.jsx:1) — Select con íconos por categoría y validación requerida.
+    - [DescripcionTextarea.jsx](src/components/support/DescripcionTextarea.jsx:1) — Textarea auto-expandible con contador (20–1000).
+    - [FileDropzone.jsx](src/components/support/FileDropzone.jsx:1) — Drag & drop (máx 3 archivos, 5MB, PDF/JPG/PNG) con estados hover/drag-over.
+    - [ArchivoPreview.jsx](src/components/support/ArchivoPreview.jsx:1) — Tarjeta de archivo con miniatura/ícono, tamaño y eliminar.
+    - [ConfirmacionModal.jsx](src/components/support/ConfirmacionModal.jsx:1) — Resumen de envío (título/categoría/archivos).
+    - [ExitoModal.jsx](src/components/support/ExitoModal.jsx:1) — Éxito con número de ticket y accesos rápidos.
+    - [ProgressBar.jsx](src/components/support/ProgressBar.jsx:1) — Progreso de subida de archivos.
 - **Librerías adicionales:**
     - **React Hook Form:** Para gestión y validación de formularios
     - **React Dropzone:** Para drag & drop de archivos
     - **Lucide React:** Para iconos consistentes
     - **React Spring:** Para animaciones suaves
-- **Endpoints API:**
-    - `POST /soporte/tickets` - Crear nuevo ticket de soporte
-    - `GET /soporte/categorias` - Obtener lista de categorías disponibles
-    - `POST /soporte/tickets/validar` - Validar formulario antes de enviar
-    - `POST /soporte/archivos/upload` - Subir archivos adjuntos
-    - `GET /soporte/tickets/numero-siguiente` - Obtener siguiente número de ticket
-    - `POST /soporte/tickets/:id/archivos` - Asociar archivos a ticket existente
 
 ---
 
@@ -4190,61 +4121,36 @@
 
 - **Tipo:** Página completa de administración (`/dashboard/soporte/admin/tickets/:id`)
 - **Componentes principales:**
-    - `GestionTicketPage`: Componente contenedor principal
-    - `TicketAdminHeader`: Header con información y controles
-    - `EstadoBadge`: Badge de estado con color e icono
-    - `PrioridadBadge`: Badge de prioridad con color e icono
-    - `CategoriaBadge`: Badge de categoría con color e icono
-    - `UsuarioInfo`: Información completa del usuario
-    - `AccionesRapidas`: Panel de acciones rápidas
-    - `CambiarEstadoSelect`: Select para cambiar estado
-    - `CambiarPrioridadSelect`: Select para cambiar prioridad
-    - `AsignarButton`: Botón para asignar ticket
-    - `ContactarButton`: Botón para contactar usuario
-    - `ConversacionAdminChat`: Contenedor de conversación
-    - `MensajeUsuario`: Componente de mensaje de usuario
-    - `MensajeAdmin`: Componente de mensaje de administrador
-    - `UsuarioAvatar`: Avatar con iniciales o imagen
-    - `AdminAvatar`: Avatar con foto o ícono
-    - `ArchivoAdjunto`: Componente de archivo adjunto
-    - `ListaArchivos`: Lista de archivos adjuntos
-    - `RespuestaAdmin`: Campo de respuesta del administrador
-    - `PlantillasRespuesta`: Botones de respuesta rápida
-    - `EditorTextoEnriquecido`: Editor con toolbar
-    - `OpcionesNotificacion`: Checkboxes de notificación
-    - `AdjuntarArchivosButton`: Botón para adjuntar archivos
-    - `EnviarRespuestaButton`: Botón para enviar respuesta
-    - `ResolverTicketButton`: Botón para resolver ticket
-    - `NotasInternas`: Campo para notas internas
-    - `HistorialCambios`: Timeline de cambios
-    - `ResolucionModal`: Modal de confirmación de resolución
-    - `PreviewImagenModal`: Modal para preview de imágenes
-    - `EmptyState`: Estado vacío si no hay mensajes
-    - `LoadingSpinner`: Indicador de carga
-    - `ErrorAlert`: Componente de alertas de error
-    - `ToastNotification`: Toast de feedback
+  - Reutilizables existentes
+    - [Card.jsx](src/components/ui/Card.jsx:1) — Paneles de información y burbujas de conversación.
+    - [Button.jsx](src/components/ui/Button.jsx:1) — Acciones: asignar, contactar, enviar, resolver.
+    - [Input.jsx](src/components/ui/Input.jsx:1) — Campos auxiliares (justificaciones, notas internas).
+    - [Modal.jsx](src/components/ui/Modal.jsx:1) — Confirmación de cambios críticos y resolución.
+    - [LoadingSpinner.jsx](src/components/ui/LoadingSpinner.jsx:1) — Carga por bloque (mensajes, adjuntos, estado).
+    - [Toast.jsx](src/components/ui/Toast.jsx:1) — Feedback de estado/prioridad/nota/adjuntos.
+    - [TipoBadge.jsx](src/components/ui/TipoBadge.jsx:1) — Estado/prioridad/categoría con mapeo de colores.
+    - [RichTextEditor.jsx](src/components/communication/RichTextEditor.jsx:1) — Editor enriquecido para respuestas administrativas (toolbar accesible).
+  - Nuevos componentes propuestos
+    - [TicketAdminHeader.jsx](src/components/support/TicketAdminHeader.jsx:1) — Header con número, estado, prioridad, categoría, usuario y controles rápidos.
+    - [AccionesRapidas.jsx](src/components/support/AccionesRapidas.jsx:1) — Grupo de acciones (estado/prioridad/asignar/contactar) con confirmaciones.
+    - [CambiarEstadoSelect.jsx](src/components/support/CambiarEstadoSelect.jsx:1) — Select con reglas de transición y warnings.
+    - [CambiarPrioridadSelect.jsx](src/components/support/CambiarPrioridadSelect.jsx:1) — Select con justificación para cambios drásticos.
+    - [AsignarButton.jsx](src/components/support/AsignarButton.jsx:1) — Acción para auto asignación o a otro admin.
+    - [ContactarButton.jsx](src/components/support/ContactarButton.jsx:1) — Enlaces mailto/tel con iconos.
+    - [ConversacionAdminChat.jsx](src/components/support/ConversacionAdminChat.jsx:1) — Chat con scroll y anclaje al último mensaje.
+    - [PlantillasRespuesta.jsx](src/components/support/PlantillasRespuesta.jsx:1) — Chips de plantillas rápidas con inserción en editor.
+    - [OpcionesNotificacion.jsx](src/components/support/OpcionesNotificacion.jsx:1) — Checkboxes para email/WhatsApp al enviar.
+    - [ResolverTicketButton.jsx](src/components/support/ResolverTicketButton.jsx:1) — CTA “Resolver” con estados y guardas.
+    - [ResolucionModal.jsx](src/components/support/ResolucionModal.jsx:1) — Modal con textarea requerido (20–500) y opción “enviar encuesta”.
+    - [NotasInternas.jsx](src/components/support/NotasInternas.jsx:1) — Campo oculto (solo admin) con persistencia y etiqueta clara.
+    - [HistorialCambios.jsx](src/components/support/HistorialCambios.jsx:1) — Timeline de auditoría por tipo (estado/prioridad/asignación).
+    - [PreviewImagenModal.jsx](src/components/support/PreviewImagenModal.jsx:1) — Visualización ampliada de imágenes adjuntas.
 - **Librerías adicionales:**
     - **React Hook Form:** Para gestión de formulario de respuesta
     - **React Dropzone:** Para adjuntar archivos
     - **React Quill:** Para editor de texto enriquecido
     - **React Spring:** Para animaciones suaves
     - **React Virtualized:** Para conversaciones largas (optimización)
-- **Endpoints API:**
-    - `GET /soporte/admin/tickets/:id` - Obtener información completa del ticket
-    - `GET /soporte/admin/tickets/:id/mensajes` - Obtener mensajes del ticket
-    - `GET /soporte/admin/tickets/:id/archivos` - Obtener archivos adjuntos
-    - `POST /soporte/admin/tickets/:id/mensajes` - Enviar nueva respuesta
-    - `PATCH /soporte/admin/tickets/:id/estado` - Cambiar estado del ticket
-    - `PATCH /soporte/admin/tickets/:id/prioridad` - Cambiar prioridad del ticket
-    - `PATCH /soporte/admin/tickets/:id/asignar` - Asignar ticket a administrador
-    - `POST /soporte/admin/tickets/:id/notas-internas` - Agregar nota interna
-    - `POST /soporte/admin/tickets/:id/archivos` - Adjuntar archivos
-    - `POST /soporte/admin/tickets/:id/resolver` - Resolver ticket
-    - `POST /soporte/admin/tickets/:id/notificar-email` - Enviar notificación por email
-    - `POST /soporte/admin/tickets/:id/notificar-whatsapp` - Enviar notificación por WhatsApp
-    - `GET /soporte/admin/tickets/:id/historial` - Obtener historial de cambios
-    - `GET /soporte/admin/plantillas-respuesta` - Obtener plantillas de respuesta
-    - `WebSocket /soporte/admin/tickets/:id/conversacion` - Actualizaciones en tiempo real
 
 ---
 

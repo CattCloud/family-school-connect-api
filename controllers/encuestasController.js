@@ -259,6 +259,87 @@ class EncuestasController {
       return res.status(500).json(error('Error al obtener mis respuestas'));
     }
   }
+
+  // ============================================================================
+  // MÉTODOS NUEVOS PARA RESULTADOS DE ENCUESTAS
+  // ============================================================================
+
+  // Obtener resultados agregados por pregunta
+  async obtenerResultadosPorPregunta(req, res) {
+    try {
+      const { id: usuarioId, rol: usuarioRol } = req.user;
+      const { id } = req.params;
+
+      console.log(`[DEBUG] Controller obtenerResultadosPorPregunta - Inicio: encuestaId=${id}, usuarioId=${usuarioId}, usuarioRol=${usuarioRol}`);
+
+      const resultado = await encuestasService.obtenerResultadosPorPregunta(id, {
+        usuarioId,
+        usuarioRol
+      });
+
+      console.log(`[DEBUG] Controller obtenerResultadosPorPregunta - Resultado:`, JSON.stringify(resultado, null, 2));
+
+      if (!resultado.success) {
+        return res.status(400).json(resultado);
+      }
+
+      return res.status(200).json(resultado);
+
+    } catch (err) {
+      console.error('[DEBUG] Controller obtenerResultadosPorPregunta - Error:', err);
+      return res.status(500).json(error('Error al obtener resultados por pregunta'));
+    }
+  }
+
+  // Obtener estadísticas generales de encuesta
+  async obtenerEstadisticasGenerales(req, res) {
+    try {
+      const { id: usuarioId, rol: usuarioRol } = req.user;
+      const { id } = req.params;
+
+      console.log(`[DEBUG] Controller obtenerEstadisticasGenerales - Inicio: encuestaId=${id}, usuarioId=${usuarioId}, usuarioRol=${usuarioRol}`);
+
+      const resultado = await encuestasService.obtenerEstadisticasGenerales(id, usuarioId, usuarioRol);
+
+      console.log(`[DEBUG] Controller obtenerEstadisticasGenerales - Resultado:`, JSON.stringify(resultado, null, 2));
+
+      if (!resultado.success) {
+        return res.status(400).json(resultado);
+      }
+
+      return res.status(200).json(resultado);
+
+    } catch (err) {
+      console.error('[DEBUG] Controller obtenerEstadisticasGenerales - Error:', err);
+      return res.status(500).json(error('Error al obtener estadísticas generales'));
+    }
+  }
+
+  // Obtener tabla paginada de respuestas
+  async obtenerTablaRespuestas(req, res) {
+    try {
+      const { id: usuarioId, rol: usuarioRol } = req.user;
+      
+      // Los filtros vienen en req.query
+      const filtros = req.query;
+
+      console.log(`[DEBUG] Controller obtenerTablaRespuestas - Inicio: filtros=${JSON.stringify(filtros)}, usuarioId=${usuarioId}, usuarioRol=${usuarioRol}`);
+
+      const resultado = await encuestasService.obtenerTablaRespuestas(filtros, usuarioId, usuarioRol);
+
+      console.log(`[DEBUG] Controller obtenerTablaRespuestas - Resultado:`, JSON.stringify(resultado, null, 2));
+
+      if (!resultado.success) {
+        return res.status(400).json(resultado);
+      }
+
+      return res.status(200).json(resultado);
+
+    } catch (err) {
+      console.error('[DEBUG] Controller obtenerTablaRespuestas - Error:', err);
+      return res.status(500).json(error('Error al obtener tabla de respuestas'));
+    }
+  }
 }
 
 module.exports = new EncuestasController();

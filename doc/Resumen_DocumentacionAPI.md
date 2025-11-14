@@ -3747,17 +3747,19 @@ Content-Disposition: attachment; filename="nombre_original.pdf"
 
 ### **91. Obtener Lista de Encuestas**
 
-**Endpoint:** `GET /encuestas`  
-**Descripción:** Lista de encuestas del usuario con paginación y filtros  
+**Endpoint:** `GET /encuestas`
+**Descripción:** Lista de encuestas del usuario con paginación y filtros
 **Autenticación:** Bearer token (Todos los roles)
 
 #### **Query Parameters:**
 ```
 ?page=1                      # Número de página (default: 1)
-&limit=12                     # Registros por página (default: 12)
-&estado=todos                  # Estado: todos, activa, cerrada (default: todos)
-&tipo=todos                   # Tipo: todos, satisfaccion, academica (default: todos)
-&busqueda=satisfaccion          # Búsqueda por texto (opcional)
+&limit=12                     # Registros por página (default: 12, max: 50)
+&estado=todos                  # Estado: todos, activas, respondidas, vencidas (default: todos)
+&tipo=todos                   # Tipo: todos, institucionales, propias (default: todos)
+&busqueda=satisfaccion          # Búsqueda por texto (min 2 caracteres) (opcional)
+&ordenamiento=mas_reciente      # Orden: mas_reciente, mas_antiguo, por_vencimiento, por_nombre (default: mas_reciente)
+&autor_id=usr_doc_001          # Filtrar por autor específico (UUID) (opcional)
 ```
 
 #### **Response Success (200):**
@@ -3789,6 +3791,25 @@ Content-Disposition: attachment; filename="nombre_original.pdf"
   }
 }
 ```
+
+#### **Response Errors:**
+- **400 Bad Request - Parámetros inválidos:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "BAD_REQUEST",
+    "message": "Parámetros inválidos"
+  }
+}
+```
+
+#### **Reglas de Negocio:**
+- El parámetro `estado` acepta: 'todos', 'activas', 'respondidas', 'vencidas'
+- El parámetro `tipo` acepta: 'todos', 'institucionales', 'propias'
+- El parámetro `ordenamiento` permite: 'mas_reciente', 'mas_antiguo', 'por_vencimiento', 'por_nombre'
+- El parámetro `busqueda` debe tener mínimo 2 caracteres
+- El parámetro `limit` tiene un máximo de 50 registros por página
 
 ---
 
@@ -4043,6 +4064,489 @@ Content-Disposition: attachment; filename="nombre_original.pdf"
   }
 }
 ```
+
+---
+```
+
+---
+
+### **99. Obtener Resultados Agregados por Pregunta**
+
+**Endpoint:** `GET /encuestas/:id/resultados/preguntas`
+**Descripción:** Obtiene resultados agregados por pregunta de una encuesta específica
+**Autenticación:** Bearer token (Roles: Director, Administrador)
+
+#### **Path Parameters:**
+```
+{id} = ID de la encuesta
+```
+
+#### **Query Parameters:**
+```
+?nivel=Primaria       # Nivel académico para filtrar respuestas (opcional)
+&grado=3              # Grado específico para filtrar respuestas (opcional)
+&curso=Matemáticas    # Nombre del curso para filtrar respuestas (opcional)
+&rol=apoderado        # Rol de los respondientes (opcional)
+&fecha_inicio=2025-01-01  # Fecha inicio (YYYY-MM-DD) (opcional)
+&fecha_fin=2025-12-31     # Fecha fin (YYYY-MM-DD) (opcional)
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "encuesta": {
+      "id": "enc_001",
+      "titulo": "Encuesta de satisfacción",
+      "fecha_cierre": "2025-10-31T23:59:59Z"
+    },
+    "filtros_aplicados": {
+      "nivel": "Primaria",
+      "grado": "3",
+      "curso": "Matemáticas",
+      "rol": "apoderado",
+      "fecha_inicio": "2025-01-01",
+      "fecha_fin": "2025-12-31"
+    },
+    "resumen_respuestas": {
+      "total_respuestas": 25,
+      "respuestas_validas": 23,
+      "respuestas_filtradas": 20,
+      "porcentaje_respuesta": 83.33
+    },
+    "resultados_por_pregunta": [
+      {
+        "pregunta": {
+          "id": "preg_001",
+          "texto": "¿Cómo califica el servicio recibido?",
+          "tipo": "escala",
+          "requerida": true
+        },
+        "estadisticas": {
+          "total_respuestas": 20,
+          "respuestas_validas": 20,
+          "sin_respuesta": 0,
+          "promedio": 4.2,
+          "mediana": 4,
+          "moda": 4,
+          "desviacion_estandar": 0.8
+        },
+        "distribucion": {
+          "opciones": [
+            {
+              "id": "opt_001",
+              "texto": "Muy bueno",
+              "valor": 5,
+              "cantidad": 8,
+              "porcentaje": 40.0
+            },
+            {
+              "id": "opt_002",
+              "texto": "Bueno",
+              "valor": 4,
+              "cantidad": 10,
+              "porcentaje": 50.0
+            },
+            {
+              "id": "opt_003",
+              "texto": "Regular",
+              "valor": 3,
+              "cantidad": 2,
+              "porcentaje": 10.0
+            }
+          ],
+          "valor_minimo": 3,
+          "valor_maximo": 5
+        },
+        "analisis_cualitativo": {
+          "comentarios_relevantes": [],
+          "tendencias": "La mayoría de respondientes califican positivamente el servicio"
+        }
+      },
+      {
+        "pregunta": {
+          "id": "preg_002",
+          "texto": "¿Qué aspectos mejoraría?",
+          "tipo": "texto_abierto",
+          "requerida": false
+        },
+        "estadisticas": {
+          "total_respuestas": 20,
+          "respuestas_validas": 15,
+          "sin_respuesta": 5,
+          "respuestas_con_texto": 15,
+          "respuestas_vacias": 0
+        },
+        "analisis_cualitativo": {
+          "respuestas_texto": [
+            {
+              "respuesta": "Mejorar los tiempos de respuesta",
+              "fecha_respuesta": "2025-10-05T10:00:00Z"
+            },
+            {
+              "respuesta": "Más claridad en las instrucciones",
+              "fecha_respuesta": "2025-10-06T11:30:00Z"
+            }
+          ],
+          "temas_recurrentes": [
+            {
+              "tema": "tiempos de respuesta",
+              "frecuencia": 3
+            },
+            {
+              "tema": "claridad de instrucciones",
+              "frecuencia": 2
+            }
+          ],
+          "palabras_clave": ["tiempo", "respuesta", "claridad", "instrucciones"]
+        }
+      }
+    ],
+    "fecha_generacion": "2025-10-10T10:00:00Z",
+    "generado_por": {
+      "id": "usr_dir_001",
+      "nombre": "Carlos Méndez"
+    }
+  }
+}
+```
+
+#### **Response Errors:**
+- **403 Forbidden - Sin permisos de director:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ACCESS_DENIED",
+    "message": "Solo directores y administradores pueden ver resultados de encuestas"
+  }
+}
+```
+
+- **404 Not Found - Encuesta no encontrada:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "SURVEY_NOT_FOUND",
+    "message": "Encuesta no encontrada"
+  }
+}
+```
+
+#### **Reglas de Negocio:**
+- Solo directores y administradores pueden acceder a este endpoint
+- Los filtros por nivel, grado, curso y rol son opcionales y se aplican como AND
+- Las fechas de inicio y fin filtran por fecha de respuesta
+- Las preguntas de tipo texto_abierto incluyen análisis cualitativo de respuestas
+- Las preguntas de escala incluyen estadísticas descriptivas y distribución de frecuencias
+
+---
+
+### **100. Obtener Estadísticas Generales de Encuesta**
+
+**Endpoint:** `GET /encuestas/:id/estadisticas`
+**Descripción:** Obtiene estadísticas generales y métricas de rendimiento de una encuesta
+**Autenticación:** Bearer token (Roles: Director, Administrador)
+
+#### **Path Parameters:**
+```
+{id} = ID de la encuesta
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "encuesta": {
+      "id": "enc_001",
+      "titulo": "Encuesta de satisfacción",
+      "tipo": "satisfaccion",
+      "estado": "activa",
+      "fecha_creacion": "2025-10-01T10:00:00Z",
+      "fecha_cierre": "2025-10-31T23:59:59Z",
+      "autor": {
+        "id": "usr_dir_001",
+        "nombre": "Carlos Méndez"
+      }
+    },
+    "metricas_generales": {
+      "total_destinatarios": 30,
+      "total_respuestas": 25,
+      "tasa_respuesta": 83.33,
+      "respuestas_completas": 23,
+      "respuestas_parciales": 2,
+      "tasa_completitud": 92.0
+    },
+    "distribucion_respuestas": {
+      "por_fecha": [
+        {
+          "fecha": "2025-10-05",
+          "cantidad": 5,
+          "porcentaje_acumulado": 20.0
+        },
+        {
+          "fecha": "2025-10-06",
+          "cantidad": 8,
+          "porcentaje_acumulado": 52.0
+        },
+        {
+          "fecha": "2025-10-07",
+          "cantidad": 12,
+          "porcentaje_acumulado": 100.0
+        }
+      ],
+      "por_rol": [
+        {
+          "rol": "apoderado",
+          "cantidad": 18,
+          "porcentaje": 72.0
+        },
+        {
+          "rol": "docente",
+          "cantidad": 5,
+          "porcentaje": 20.0
+        },
+        {
+          "rol": "administrativo",
+          "cantidad": 2,
+          "porcentaje": 8.0
+        }
+      ],
+      "por_nivel": [
+        {
+          "nivel": "Primaria",
+          "cantidad": 15,
+          "porcentaje": 60.0
+        },
+        {
+          "nivel": "Secundaria",
+          "cantidad": 10,
+          "porcentaje": 40.0
+        }
+      ]
+    },
+    "metricas_calidad": {
+      "tiempo_promedio_completado": 125,
+      "tiempo_mediano_completado": 110,
+      "tiempo_minimo_completado": 60,
+      "tiempo_maximo_completado": 300,
+      "preguntas_mas_omitidas": [
+        {
+          "pregunta_id": "preg_005",
+          "texto": "¿Comentarios adicionales?",
+          "tasa_omision": 25.0
+        }
+      ],
+      "preguntas_mas_tardias": [
+        {
+          "pregunta_id": "preg_003",
+          "texto": "¿Aspectos a mejorar?",
+          "tiempo_promedio": 45,
+          "orden_pregunta": 3
+        }
+      ]
+    },
+    "indicadores_rendimiento": {
+      "velocidad_respuesta": "rápida",
+      "calidad_respuestas": "alta",
+      "satisfaccion_respondientes": 4.2,
+      "completitud_datos": "excelente"
+    },
+    "fecha_analisis": "2025-10-10T10:00:00Z",
+    "analizado_por": {
+      "id": "usr_dir_001",
+      "nombre": "Carlos Méndez"
+    }
+  }
+}
+```
+
+#### **Response Errors:**
+- **403 Forbidden - Sin permisos:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ACCESS_DENIED",
+    "message": "Solo directores y administradores pueden ver estadísticas de encuestas"
+  }
+}
+```
+
+- **404 Not Found - Encuesta no encontrada:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "SURVEY_NOT_FOUND",
+    "message": "Encuesta no encontrada"
+  }
+}
+```
+
+#### **Reglas de Negocio:**
+- Solo directores y administradores pueden acceder a este endpoint
+- Las métricas incluyen distribución temporal, demográfica y de calidad
+- El tiempo de completación se mide en segundos
+- Los indicadores de rendimiento se calculan automáticamente según umbrales predefinidos
+- Se incluyen análisis de preguntas problemáticas (alta omisión o tiempo de respuesta)
+
+---
+
+### **101. Obtener Tabla de Respuestas (Paginada)**
+
+**Endpoint:** `GET /respuestas-encuestas`
+**Descripción:** Obtiene tabla paginada de respuestas a encuestas con filtros avanzados
+**Autenticación:** Bearer token (Roles: Director, Administrador)
+
+#### **Query Parameters:**
+```
+?encuesta_id=enc_001   # ID de la encuesta (requerido)
+&page=1               # Número de página (default: 1)
+&limit=20             # Registros por página (default: 20, max: 100)
+&nivel=Primaria       # Filtrar por nivel académico (opcional)
+&grado=3              # Filtrar por grado específico (opcional)
+&curso=Matemáticas    # Filtrar por curso (opcional)
+&rol=apoderado        # Filtrar por rol del respondiente (opcional)
+&order=fecha_respuesta DESC  # Ordenamiento (default: fecha_respuesta DESC)
+&fecha_inicio=2025-01-01     # Fecha inicio de respuesta (opcional)
+&fecha_fin=2025-12-31        # Fecha fin de respuesta (opcional)
+```
+
+#### **Response Success (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "encuesta": {
+      "id": "enc_001",
+      "titulo": "Encuesta de satisfacción",
+      "total_respuestas": 25
+    },
+    "filtros_aplicados": {
+      "nivel": "Primaria",
+      "grado": "3",
+      "curso": "Matemáticas",
+      "rol": "apoderado",
+      "fecha_inicio": "2025-01-01",
+      "fecha_fin": "2025-12-31"
+    },
+    "respuestas": [
+      {
+        "id": "resp_001",
+        "fecha_respuesta": "2025-10-05T10:30:00Z",
+        "fecha_respuesta_legible": "5 de octubre de 2025, 10:30",
+        "respondiente": {
+          "id": "usr_pad_001",
+          "nombre": "Juan Pérez",
+          "rol": "apoderado"
+        },
+        "contexto_academico": {
+          "nivel": "Primaria",
+          "grado": "3",
+          "cursos": ["Matemáticas", "Comunicación"],
+          "estudiantes_vinculados": 1
+        },
+        "respuestas": [
+          {
+            "pregunta": {
+              "id": "preg_001",
+              "texto": "¿Cómo califica el servicio recibido?",
+              "tipo": "escala"
+            },
+            "respuesta": {
+              "opcion_id": "opt_001",
+              "opcion_texto": "Muy bueno",
+              "valor": 5,
+              "texto_abierto": null
+            }
+          },
+          {
+            "pregunta": {
+              "id": "preg_002",
+              "texto": "¿Qué aspectos mejoraría?",
+              "tipo": "texto_abierto"
+            },
+            "respuesta": {
+              "opcion_id": null,
+              "opcion_texto": null,
+              "valor": null,
+              "texto_abierto": "Mejorar los tiempos de respuesta del sistema"
+            }
+          }
+        ],
+        "metadatos": {
+          "tiempo_total": 125,
+          "dispositivo": "móvil",
+          "ip": "192.168.1.1",
+          "navegador": "Chrome Mobile"
+        }
+      }
+    ],
+    "paginacion": {
+      "pagina_actual": 1,
+      "total_paginas": 2,
+      "total_registros": 25,
+      "limit": 20,
+      "has_next": true,
+      "has_prev": false,
+      "registros_desde": 1,
+      "registros_hasta": 20
+    },
+    "estadisticas_filtros": {
+      "total_con_filtros": 20,
+      "porcentaje_del_total": 80.0
+    },
+    "fecha_consulta": "2025-10-10T10:00:00Z"
+  }
+}
+```
+
+#### **Response Errors:**
+- **400 Bad Request - Parámetros inválidos:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_PARAMETERS",
+    "message": "encuesta_id es requerido, limit no puede exceder 100"
+  }
+}
+```
+
+- **403 Forbidden - Sin permisos:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ACCESS_DENIED",
+    "message": "Solo directores y administradores pueden ver respuestas detalladas"
+  }
+}
+```
+
+- **404 Not Found - Encuesta no encontrada:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "SURVEY_NOT_FOUND",
+    "message": "Encuesta no encontrada"
+  }
+}
+```
+
+#### **Reglas de Negocio:**
+- Solo directores y administradores pueden acceder a este endpoint
+- El parámetro `encuesta_id` es obligatorio
+- Los filtros por nivel, grado, curso, rol y fechas se aplican como AND
+- El parámetro `limit` tiene un máximo de 100 registros por página
+- El ordenamiento por defecto es `fecha_respuesta DESC`
+- Se incluyen metadatos técnicos de la respuesta (tiempo, dispositivo, IP)
+- La paginación incluye estadísticas de los filtros aplicados
 
 ---
 

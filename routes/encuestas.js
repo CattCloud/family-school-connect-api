@@ -52,4 +52,18 @@ router.post('/respuestas', encuestasController.enviarRespuestas);
 // GET /encuestas/:id/mis-respuestas
 router.get('/:id/mis-respuestas', encuestasController.obtenerMisRespuestas);
 
+// SECCIÓN 6: VER RESULTADOS DE ENCUESTA (HU-ENC-05)
+
+// 10. Obtener Resultados Agregados por Pregunta
+// GET /encuestas/:id/resultados/preguntas
+router.get('/:id/resultados/preguntas', encuestasController.obtenerResultadosPorPregunta);
+
+// 11. Obtener Estadísticas Generales de Encuesta
+// GET /encuestas/:id/estadisticas
+router.get('/:id/estadisticas', encuestasController.obtenerEstadisticasGenerales);
+
+// 12. Obtener Tabla de Respuestas
+// GET /respuestas-encuestas
+//router.get('/respuestas-encuestas', encuestasController.obtenerTablaRespuestas);
+
 module.exports = router;

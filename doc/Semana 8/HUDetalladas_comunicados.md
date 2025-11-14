@@ -1,3 +1,6 @@
+# **Historias de Usuario Detalladas - Módulo de Comunicados**
+
+
 # **Historia de Usuario Detallada - HU-COM-02**
 
 ## **PREREQUISITOS Y DEPENDENCIAS**
@@ -538,12 +541,15 @@
 
     - Propuestos (alineados al sistema de diseño):
         - [StepProgressBar.jsx](src/components/ui/StepProgressBar.jsx): Barra accesible (ARIA `aria-current="step"`) de 3 pasos con estados completado/activo/pendiente. Colores basados en primarios (active `--color-primary-600`, completo `--color-tertiary-500`).
-        - [DateTimeScheduleField.jsx](src/components/ui/DateTimeScheduleField.jsx): Control unificado “Inmediato/Programado” con radios + date/time. Valida “≥ 30 min” y deshabilita fecha/hora cuando es inmediato. Estados de error con `--color-error`.
+        - [Select.jsx](src/components/ui/Select.jsx): Selector DS para “Tipo de Comunicado” con íconos, navegación por teclado y estados hover/focus usando tokens (`--color-border-focus`, `--color-primary-600`).
+        - [RadioGroup.jsx](src/components/ui/RadioGroup.jsx): Grupo de radios DS para “Inmediato vs Programado”; control accesible (roving tabIndex) y estilos consistentes. Usado como primitivo en `DateTimeScheduleField`.
+        - [DateTimeScheduleField.jsx](src/components/communication/DateTimeScheduleField.jsx): Control unificado “Inmediato/Programado” con radios + date/time. Valida “≥ 30 min” y deshabilita fecha/hora cuando es inmediato. Estados de error con `--color-error`.
         - [RichTextEditor.jsx](src/components/communication/RichTextEditor.jsx): Wrapper de editor (TinyMCE/Quill) con toolbar restringida, conteo de caracteres, autosave en localStorage y toggle “Vista Previa” split. Expone `onChange(html, textLength)` para validación 20–5000 chars.
         - [AudienceTreeSelect.jsx](src/components/communication/AudienceTreeSelect.jsx): Árbol jerárquico triestado con expand/collapse, búsqueda inline y restricciones por rol. Para docente: limita a `AsignacionDocenteCurso` y fija rol “Padres”.
         - [AudienceSummaryPanel.jsx](src/components/communication/AudienceSummaryPanel.jsx): Panel lateral con totales y desglose (niveles/grados/cursos/roles) y botón “Previsualizar Lista” (abre Modal con tabla).
         - [AutoSaveIndicator.jsx](src/components/ui/AutoSaveIndicator.jsx): Etiqueta discreta “💾 Guardado automáticamente hace XXs” con actualización de timestamp; color `--color-text-muted`.
         - [htmlSanitizer.js](src/utils/htmlSanitizer.js): Utilidad para pre-sanitizar contenido según whitelist (`p,strong,em,u,h1-h3,ul,ol,li,a,br,span`) previo a envío a backend.
+        - [SafeHtmlRenderer.jsx](src/components/ui/SafeHtmlRenderer.jsx): Renderizador seguro para la vista previa final del Paso 3 basado en DOMPurify v3.3.0 [package.json](package.json:1); aplica whitelist y limpia atributos peligrosos.
         - [FormErrorSummary.jsx](src/components/ui/FormErrorSummary.jsx): Resumen de errores de validación al pie del step, con enlaces a campos (accesible).
 
     - Formularios y validación (reutilizable):
@@ -1583,7 +1589,7 @@
     - Propuestos (alineados al sistema de diseño):
         - [ComunicadoHeader.jsx](src/components/communication/ComunicadoHeader.jsx): Header sticky local con “← Volver”, título “Comunicados” y menú contextual (⋮); sombra `--shadow-md`.
         - [TipoPillBadge.jsx](src/components/ui/TipoPillBadge.jsx): Pastilla grande por tipo (académico/administrativo/evento/urgente/informativo) con colores institucionales y animación `pulse` para “Urgente”.
-        - [ContenidoHTML.jsx](src/components/communication/ContenidoHTML.jsx): Visor sanitizado del HTML (usa [htmlSanitizer.js](src/utils/htmlSanitizer.js)) con tipografía y listas alineadas a tokens; máximo ancho 800px.
+        - [ContenidoHTML.jsx](src/components/communication/ContenidoHTML.jsx): Visor sanitizado del HTML (usa [htmlSanitizer.js](src/utils/htmlSanitizer.js) y basado en DOMPurify v3.3.0 [package.json](package.json:1)) con tipografía y listas alineadas a tokens; máximo ancho 800px.
         - [EstadoBanner.jsx](src/components/ui/EstadoBanner.jsx): Banner de estado “Desactivado” (amarillo) y “Programado” (azul) visible para director/autor. Iconografía y contraste AA.
         - [MetaDataGrid.jsx](src/components/communication/MetaDataGrid.jsx): Grid 4→2→1 con Autor (👤), Fecha (📅), Editado (✏️ con tooltip), y Destinatarios (👥 solo docente/director).
         - [DetalleActions.jsx](src/components/communication/DetalleActions.jsx): Botonera centrada con transiciones y tamaños del sistema; accesible y responsive.

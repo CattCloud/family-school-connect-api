@@ -40,8 +40,8 @@ const responderEncuestaSchema = z.object({
 });
 
 const obtenerEncuestasSchema = z.object({
-  page: z.number().int().min(1).default(1),
-  limit: z.number().int().min(1).max(50).default(12),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(12),
   estado: z.enum(['todos', 'activas', 'respondidas', 'vencidas']).default('todos'),
   tipo: z.enum(['todos', 'institucionales', 'propias']).default('todos'),
   autor_id: z.string().uuid().optional(),
@@ -1417,6 +1417,861 @@ class EncuestasService {
       console.error('Error al obtener mis respuestas:', err);
       return error('Error al obtener mis respuestas');
     }
+  }
+
+  // ============================================================================
+  // MÉTODOS NUEVOS PARA RESULTADOS DE ENCUESTAS
+  // ============================================================================
+
+  /**
+   * Obtener resultados agregados por pregunta
+   * @param {string} encuestaId - ID de la encuesta
+   * @param {object} opciones - Opciones de filtrado
+   * @returns {object} Resultados agregados por pregunta
+   */
+  async obtenerResultadosPorPregunta(encuestaId, opciones = {}) {
+    try {
+      // Validar permisos de acceso (mismo patrón que otros métodos)
+      const validacion = await this.validarAccesoParaResultados(encuestaId, opciones.usuarioId, opciones.usuarioRol);
+      if (!validacion.success) {
+        return validacion;
+      }
+
+      // Esquema de validación para parámetros
+      const resultadosSchema = z.object({
+        incluir_respuestas_texto: z.boolean().default(true),
+        limite_respuestas_texto: z.number().int().min(1).max(50).default(10)
+      });
+
+      const opcionesValidadas = resultadosSchema.parse(opciones);
+
+      // Obtener encuesta con preguntas y opciones
+      const encuesta = await prisma.encuesta.findUnique({
+        where: { id: encuestaId },
+        include: {
+          preguntas: {
+            include: {
+              opciones: {
+                orderBy: { orden: 'asc' }
+              }
+            },
+            orderBy: { orden: 'asc' }
+          }
+        }
+      });
+
+      if (!encuesta) {
+        return notFound('Encuesta no encontrada');
+      }
+
+      // Verificar que la encuesta tenga respuestas
+      const totalRespuestas = await prisma.respuestaEncuesta.count({
+        where: { encuesta_id: encuestaId }
+      });
+
+      if (totalRespuestas === 0) {
+        return {
+          success: false,
+          error: {
+            code: 'NO_RESPONSES_FOUND',
+            message: 'Esta encuesta aún no tiene respuestas'
+          }
+        };
+      }
+
+      // Obtener respuestas agrupadas por pregunta
+      const resultados = await Promise.all(
+        encuesta.preguntas.map(async (pregunta) => {
+          const respuestasPregunta = await prisma.respuestaPregunta.findMany({
+            where: { pregunta_id: pregunta.id },
+            include: {
+              respuesta: {
+                select: {
+                  id: true,
+                  fecha_respuesta: true
+                }
+              }
+            }
+          });
+
+          // Calcular agregaciones según tipo de pregunta
+          let agregacion = {};
+          
+          switch (pregunta.tipo) {
+            case 'texto_corto':
+            case 'texto_largo':
+              agregacion = await this.agregarRespuestasTexto(respuestasPregunta, opcionesValidadas.limite_respuestas_texto);
+              break;
+              
+            case 'opcion_unica':
+              agregacion = await this.agregarOpcionesUnicas(pregunta.opciones, respuestasPregunta);
+              break;
+              
+            case 'opcion_multiple':
+              agregacion = await this.agregarOpcionesMultiples(pregunta.opciones, respuestasPregunta);
+              break;
+              
+            case 'escala_1_5':
+              agregacion = await this.agregarEscalas(respuestasPregunta);
+              break;
+          }
+
+          return {
+            pregunta_id: pregunta.id,
+            texto: pregunta.texto,
+            tipo: pregunta.tipo,
+            obligatoria: pregunta.obligatoria,
+            total_respuestas: respuestasPregunta.length,
+            respuestas_porcentaje: Math.round((respuestasPregunta.length / totalRespuestas) * 100),
+            agregacion
+          };
+        })
+      );
+
+      return {
+        success: true,
+        data: {
+          encuesta: {
+            id: encuesta.id,
+            titulo: encuesta.titulo,
+            total_respuestas: totalRespuestas,
+            porcentaje_participacion: Math.round((totalRespuestas / 100) * 100) // TODO: calcular destinatarios reales
+          },
+          resultados_por_pregunta: resultados
+        }
+      };
+
+    } catch (err) {
+      console.error('Error al obtener resultados por pregunta:', err);
+      return error('Error al obtener resultados por pregunta');
+    }
+  }
+
+  /**
+   * Obtener estadísticas generales de encuesta
+   * @param {string} encuestaId - ID de la encuesta
+   * @param {string} usuarioId - ID del usuario (para permisos)
+   * @param {string} usuarioRol - Rol del usuario
+   * @returns {object} Métricas generales y KPIs
+   */
+  async obtenerEstadisticasGenerales(encuestaId, usuarioId, usuarioRol) {
+    try {
+      // Validar permisos
+      const validacion = await this.validarAccesoParaResultados(encuestaId, usuarioId, usuarioRol);
+      if (!validacion.success) {
+        return validacion;
+      }
+
+      // Obtener encuesta básica
+      const encuesta = await prisma.encuesta.findUnique({
+        where: { id: encuestaId },
+        include: {
+          autor: {
+            select: {
+              nombre: true,
+              apellido: true,
+              rol: true
+            }
+          },
+          _count: {
+            select: {
+              respuestas: true
+            }
+          }
+        }
+      });
+
+      if (!encuesta) {
+        return notFound('Encuesta no encontrada');
+      }
+
+      // Calcular métricas generales
+      const totalRespuestas = encuesta._count.respuestas;
+      const tiempoPromedio = await this.calcularTiempoPromedioRespuesta(encuestaId);
+      const tasaCompletitud = await this.calcularTasaCompletitud(encuestaId);
+      const respuestasUltimas24h = await this.contarRespuestasUltimas24h(encuestaId);
+      const proyeccionTotal = await this.calcularProyeccionTotal(encuestaId, encuesta.fecha_vencimiento);
+
+      // Distribución temporal
+      const distribucionTemporal = await this.obtenerDistribucionTemporal(encuestaId);
+
+      // Insights automáticos
+      const insights = await this.generarInsights(encuestaId);
+
+      return {
+        success: true,
+        data: {
+          encuesta: {
+            id: encuesta.id,
+            titulo: encuesta.titulo,
+            fecha_creacion: encuesta.fecha_creacion,
+            fecha_vencimiento: encuesta.fecha_vencimiento,
+            estado: encuesta.estado,
+            autor: encuesta.autor
+          },
+          metricas_generales: {
+            total_destinatarios: 100, // TODO: calcular destinatarios reales
+            total_respuestas: totalRespuestas,
+            porcentaje_participacion: Math.round((totalRespuestas / 100) * 100), // TODO: destinatarios reales
+            tiempo_promedio_respuesta_minutos: tiempoPromedio,
+            tasa_completitud: tasaCompletitud,
+            respuestas_ultimas_24h: respuestasUltimas24h,
+            proyeccion_total_estimado: proyeccionTotal
+          },
+          distribucion_respuestas: distribucionTemporal,
+          indicadores_rendimiento: insights
+        }
+      };
+
+    } catch (err) {
+      console.error('Error al obtener estadísticas generales:', err);
+      return error('Error al obtener estadísticas generales');
+    }
+  }
+
+  /**
+   * Obtener tabla paginada de respuestas
+   * @param {object} filtros - Filtros de búsqueda
+   * @param {string} usuarioId - ID del usuario (para permisos)
+   * @param {string} usuarioRol - Rol del usuario
+   * @returns {object} Lista paginada de respuestas
+   */
+  async obtenerTablaRespuestas(filtros, usuarioId, usuarioRol) {
+    try {
+      // Esquema de validación
+      const tablaSchema = z.object({
+        encuesta_id: z.string().uuid(),
+        page: z.coerce.number().int().min(1).default(1),
+        limit: z.coerce.number().int().min(1).max(100).default(20),
+        nivel: z.string().optional(),
+        grado: z.string().optional(),
+        curso: z.string().optional(),
+        rol: z.string().optional(),
+        order: z.string().default('fecha_respuesta DESC')
+      });
+
+      const filtrosValidados = tablaSchema.parse(filtros);
+      const { encuesta_id, page, limit } = filtrosValidados;
+
+      // Validar permisos para ver respuestas
+      const validacion = await this.validarAccesoParaResultados(encuesta_id, usuarioId, usuarioRol);
+      if (!validacion.success) {
+        return validacion;
+      }
+
+      // Obtener título de la encuesta
+      const encuestaInfo = await prisma.encuesta.findUnique({
+        where: { id: encuesta_id },
+        select: { titulo: true }
+      });
+
+      const skip = (page - 1) * limit;
+
+      // Construir filtros de segmentación (corregido: pasar usuarioId separado)
+      const whereClause = await this.construirFiltrosSegmentacion(encuesta_id, filtrosValidados, usuarioRol, usuarioId);
+
+      // Obtener respuestas con información del respondiente
+      const respuestas = await prisma.respuestaEncuesta.findMany({
+        where: whereClause,
+        include: {
+          usuario: {
+            select: {
+              id: true,
+              nombre: true,
+              apellido: true,
+              rol: true
+            }
+          },
+          estudiante: {
+            include: {
+              nivel_grado: {
+                select: {
+                  nivel: true,
+                  grado: true
+                }
+              }
+            }
+          },
+          respuestasPregunta: {
+            include: {
+              pregunta: {
+                select: {
+                  id: true,
+                  texto: true,
+                  tipo: true
+                }
+              }
+            },
+            take: 3 // Limitar a 3 respuestas en el resumen
+          }
+        },
+        orderBy: this.parsearOrdenamiento(filtrosValidados.order),
+        skip,
+        take: limit
+      });
+
+      // Obtener total para paginación
+      const totalRespuestas = await prisma.respuestaEncuesta.count({
+        where: whereClause
+      });
+
+      // Procesar respuestas para el frontend
+      const respuestasProcesadas = respuestas.map(respuesta => {
+        // Crear resumen de respuestas clave
+        const respuestasResumen = respuesta.respuestasPregunta.map(rp => {
+          let valor = null;
+          
+          switch (rp.pregunta.tipo) {
+            case 'opcion_unica':
+              valor = rp.valor_opcion_id; // El frontend puede mapear el texto si es necesario
+              break;
+            case 'escala_1_5':
+              valor = rp.valor_escala;
+              break;
+            default:
+              valor = rp.valor_texto ? rp.valor_texto.substring(0, 50) + '...' : null;
+          }
+
+          return {
+            pregunta_id: rp.pregunta_id,
+            tipo: rp.pregunta.tipo,
+            texto_pregunta: rp.pregunta.texto,
+            valor: valor,
+            valor_opcion_id: rp.valor_opcion_id,
+            valor_escala: rp.valor_escala
+          };
+        });
+
+        return {
+          respuesta_id: respuesta.id,
+          fecha_respuesta: respuesta.fecha_respuesta,
+          fecha_respuesta_legible: new Date(respuesta.fecha_respuesta).toLocaleDateString('es-ES', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          }),
+          tiempo_respuesta_minutos: respuesta.tiempo_respuesta_minutos,
+          completitud_porcentaje: Math.round((respuesta.respuestasPregunta.length / 5) * 100), // TODO: preguntas reales
+          respondiente: {
+            id: respuesta.usuario.id,
+            nombre_completo: `${respuesta.usuario.nombre} ${respuesta.usuario.apellido}`,
+            rol: respuesta.usuario.rol,
+            estudiante_relacionado: respuesta.estudiante ? {
+              id: respuesta.estudiante.id,
+              nombre_completo: `${respuesta.estudiante.nombre} ${respuesta.estudiante.apellido}`,
+              grado: respuesta.estudiante.nivel_grado.grado,
+              nivel: respuesta.estudiante.nivel_grado.nivel
+            } : null
+          },
+          respuestas_resumen: respuestasResumen,
+          respuestas_omitidas: Math.max(0, respuesta.respuestasPregunta.length - 3),
+          ip_respuesta: respuesta.ip_respuesta
+        };
+      });
+
+      return {
+        success: true,
+        data: {
+          encuesta: {
+            id: encuesta_id,
+            titulo: encuestaInfo ? encuestaInfo.titulo : "Encuesta con respuestas"
+          },
+          respuestas: respuestasProcesadas,
+          paginacion: {
+            pagina_actual: page,
+            limite: limit,
+            total_registros: totalRespuestas,
+            total_paginas: Math.ceil(totalRespuestas / limit),
+            has_next: page < Math.ceil(totalRespuestas / limit),
+            has_prev: page > 1
+          },
+          filtros_aplicados: {
+            encuesta_id,
+            nivel: filtrosValidados.nivel || null,
+            grado: filtrosValidados.grado || null,
+            curso: filtrosValidados.curso || null,
+            rol: filtrosValidados.rol || null,
+            page,
+            limit
+          },
+          estadisticas_filtros: {
+            total_sin_filtros: await prisma.respuestaEncuesta.count({ where: { encuesta_id } }),
+            total_con_filtros: totalRespuestas,
+            porcentaje_cocentaje: Math.round((totalRespuestas / await prisma.respuestaEncuesta.count({ where: { encuesta_id } })) * 100)
+          }
+        }
+      };
+
+    } catch (err) {
+      console.error('Error al obtener tabla de respuestas:', err);
+      return error('Error al obtener tabla de respuestas');
+    }
+  }
+
+  // ============================================================================
+  // MÉTODOS AUXILIARES PRIVADOS
+  // ============================================================================
+
+  /**
+   * Validar acceso para ver resultados
+   */
+  async validarAccesoParaResultados(encuestaId, usuarioId, usuarioRol) {
+    // Implementar lógica similar a validarAccesoEncuesta pero para resultados
+    // Autor de encuesta, director, o usuario que ya respondió (si mostrar_resultados=true)
+    
+    const encuesta = await prisma.encuesta.findUnique({
+      where: { id: encuestaId },
+      select: {
+        id: true,
+        autor_id: true,
+        mostrar_resultados: true
+      }
+    });
+
+    if (!encuesta) {
+      return notFound('Encuesta no encontrada');
+    }
+
+    // Autor siempre puede ver resultados
+    if (encuesta.autor_id === usuarioId) {
+      return { success: true };
+    }
+
+    // Director siempre puede ver resultados
+    if (usuarioRol === 'director') {
+      return { success: true };
+    }
+
+    // Usuario que respondió puede ver si mostrar_resultados=true
+    if (encuesta.mostrar_resultados) {
+      const yaRespondio = await prisma.respuestaEncuesta.findUnique({
+        where: {
+          encuesta_id_usuario_id: {
+            encuesta_id: encuestaId,
+            usuario_id: usuarioId
+          }
+        }
+      });
+
+      if (yaRespondio) {
+        return { success: true };
+      }
+    }
+
+    return {
+      success: false,
+      error: {
+        code: 'FORBIDDEN',
+        message: 'No tienes permisos para ver los resultados de esta encuesta'
+      }
+    };
+  }
+
+  /**
+   * Agregar respuestas de texto (muestra aleatoria)
+   */
+  async agregarRespuestasTexto(respuestasPregunta, limite) {
+    const textos = respuestasPregunta
+      .filter(r => r.valor_texto)
+      .map(r => r.valor_texto)
+      .sort(() => 0.5 - Math.random()) // Shuffle aleatorio
+      .slice(0, limite);
+
+    return {
+      tipo: 'texto',
+      respuestas_texto: textos,
+      total_respuestas_texto: textos.length
+    };
+  }
+
+  /**
+   * Agregar opciones únicas
+   */
+  async agregarOpcionesUnicas(opciones, respuestasPregunta) {
+    const conteos = {};
+    
+    // Inicializar contadores
+    opciones.forEach(opcion => {
+      conteos[opcion.id] = {
+        opcion_id: opcion.id,
+        texto: opcion.texto,
+        cantidad: 0,
+        porcentaje: 0
+      };
+    });
+
+    // Contar respuestas
+    respuestasPregunta.forEach(respuesta => {
+      if (respuesta.valor_opcion_id && conteos[respuesta.valor_opcion_id]) {
+        conteos[respuesta.valor_opcion_id].cantidad++;
+      }
+    });
+
+    // Calcular porcentajes
+    const total = respuestasPregunta.length;
+    Object.values(conteos).forEach(conteo => {
+      conteo.porcentaje = total > 0 ? Math.round((conteo.cantidad / total) * 100) : 0;
+    });
+
+    return {
+      tipo: 'opciones',
+      opciones: Object.values(conteos)
+    };
+  }
+
+  /**
+   * Agregar opciones múltiples
+   */
+  async agregarOpcionesMultiples(opciones, respuestasPregunta) {
+    const conteos = {};
+    
+    // Inicializar contadores
+    opciones.forEach(opcion => {
+      conteos[opcion.id] = {
+        opcion_id: opcion.id,
+        texto: opcion.texto,
+        cantidad: 0,
+        porcentaje: 0
+      };
+    });
+
+    // Contar votos
+    let totalSelecciones = 0;
+    respuestasPregunta.forEach(respuesta => {
+      if (respuesta.valor_opciones) {
+        respuesta.valor_opciones.forEach(opcionId => {
+          if (conteos[opcionId]) {
+            conteos[opcionId].cantidad++;
+            totalSelecciones++;
+          }
+        });
+      }
+    });
+
+    // Calcular porcentajes (base: total de respuestas)
+    const totalRespuestas = respuestasPregunta.length;
+    Object.values(conteos).forEach(conteo => {
+      conteo.porcentaje = totalRespuestas > 0 ? Math.round((conteo.cantidad / totalRespuestas) * 100) : 0;
+    });
+
+    return {
+      tipo: 'opciones_multiples',
+      total_selecciones: totalSelecciones,
+      promedio_selecciones_por_usuario: totalRespuestas > 0 ? Math.round((totalSelecciones / totalRespuestas) * 10) / 10 : 0,
+      total_respuestas: totalRespuestas,
+      opciones: Object.values(conteos)
+    };
+  }
+
+  /**
+   * Agregar escalas
+   */
+  async agregarEscalas(respuestasPregunta) {
+    const valores = respuestasPregunta
+      .filter(r => r.valor_escala !== null)
+      .map(r => r.valor_escala);
+
+    if (valores.length === 0) {
+      return {
+        tipo: 'escala',
+        promedio: 0,
+        mediana: 0,
+        distribucion: [],
+        etiquetas: ['Muy insatisfecho', 'Insatisfecho', 'Neutral', 'Satisfecho', 'Muy satisfecho']
+      };
+    }
+
+    // Calcular distribución
+    const distribucion = [1, 2, 3, 4, 5].map(valor => {
+      const cantidad = valores.filter(v => v === valor).length;
+      return {
+        valor,
+        cantidad,
+        porcentaje: Math.round((cantidad / valores.length) * 100)
+      };
+    });
+
+    // Calcular promedio y mediana
+    const promedio = valores.reduce((sum, val) => sum + val, 0) / valores.length;
+    const valoresOrdenados = [...valores].sort((a, b) => a - b);
+    const mediana = valoresOrdenados.length % 2 === 0
+      ? (valoresOrdenados[valoresOrdenados.length / 2 - 1] + valoresOrdenados[valoresOrdenados.length / 2]) / 2
+      : valoresOrdenados[Math.floor(valoresOrdenados.length / 2)];
+
+    return {
+      tipo: 'escala',
+      promedio: Math.round(promedio * 10) / 10,
+      mediana: Math.round(mediana * 10) / 10,
+      distribucion,
+      etiquetas: ['Muy insatisfecho', 'Insatisfecho', 'Neutral', 'Satisfecho', 'Muy satisfecho']
+    };
+  }
+
+  /**
+   * Calcular tiempo promedio de respuesta
+   */
+  async calcularTiempoPromedioRespuesta(encuestaId) {
+    const respuestas = await prisma.respuestaEncuesta.findMany({
+      where: {
+        encuesta_id: encuestaId,
+        tiempo_respuesta_minutos: { not: null }
+      },
+      select: { tiempo_respuesta_minutos: true }
+    });
+
+    if (respuestas.length === 0) return 0;
+
+    const total = respuestas.reduce((sum, r) => sum + r.tiempo_respuesta_minutos, 0);
+    return Math.round((total / respuestas.length) * 10) / 10;
+  }
+
+  /**
+   * Calcular tasa de completitud
+   */
+  async calcularTasaCompletitud(encuestaId) {
+    const totalRespuestas = await prisma.respuestaEncuesta.count({
+      where: { encuesta_id: encuestaId }
+    });
+
+    if (totalRespuestas === 0) return 0;
+
+    // Obtener número total de preguntas en la encuesta
+    const totalPreguntas = await prisma.preguntaEncuesta.count({
+      where: { encuesta_id: encuestaId }
+    });
+
+    if (totalPreguntas === 0) return 0;
+
+    const respuestasCompletas = await prisma.respuestaEncuesta.count({
+      where: {
+        encuesta_id: encuestaId,
+        respuestasPregunta: {
+          // Contar respuestas que tienen al menos tantas respuestas como preguntas
+          some: {}
+        }
+      }
+    });
+
+    return Math.round((respuestasCompletas / totalRespuestas) * 100);
+  }
+
+  /**
+   * Contar respuestas de las últimas 24 horas
+   */
+  async contarRespuestasUltimas24h(encuestaId) {
+    const hace24h = new Date();
+    hace24h.setHours(hace24h.getHours() - 24);
+
+    return await prisma.respuestaEncuesta.count({
+      where: {
+        encuesta_id: encuestaId,
+        fecha_respuesta: {
+          gte: hace24h
+        }
+      }
+    });
+  }
+
+  /**
+   * Calcular proyección total
+   */
+  async calcularProyeccionTotal(encuestaId, fechaVencimiento) {
+    if (!fechaVencimiento) return null;
+
+    const ahora = new Date();
+    const fechaCreacion = new Date(); // Usar fecha actual como referencia
+    const diasTranscurridos = Math.ceil((ahora - fechaCreacion) / (1000 * 60 * 60 * 24));
+    const diasTotales = Math.ceil((new Date(fechaVencimiento) - ahora) / (1000 * 60 * 60 * 24));
+
+    if (diasTranscurridos <= 0 || diasTotales <= 0) return null;
+
+    const respuestasActuales = await prisma.respuestaEncuesta.count({
+      where: { encuesta_id: encuestaId }
+    });
+
+    const tasaDiaria = respuestasActuales / Math.max(diasTranscurridos, 1);
+    return Math.round(tasaDiaria * diasTotales);
+  }
+
+  /**
+   * Obtener distribución temporal
+   */
+  async obtenerDistribucionTemporal(encuestaId) {
+    try {
+      const respuestas = await prisma.respuestaEncuesta.findMany({
+        where: { encuesta_id: encuestaId },
+        select: { fecha_respuesta: true },
+        orderBy: { fecha_respuesta: 'asc' }
+      });
+
+      // Agrupar por día
+      const distribucionPorDia = {};
+      
+      respuestas.forEach(respuesta => {
+        const fecha = new Date(respuesta.fecha_respuesta).toISOString().split('T')[0]; // YYYY-MM-DD
+        if (!distribucionPorDia[fecha]) {
+          distribucionPorDia[fecha] = 0;
+        }
+        distribucionPorDia[fecha]++;
+      });
+
+      const totalRespuestas = respuestas.length;
+      const porDia = Object.entries(distribucionPorDia).map(([fecha, cantidad]) => ({
+        fecha,
+        respuestas: cantidad,
+        porcentaje: Math.round((cantidad / totalRespuestas) * 100)
+      }));
+
+      return { por_dia: porDia };
+    } catch (error) {
+      console.error('Error al obtener distribución temporal:', error);
+      return { por_dia: [] };
+    }
+  }
+
+  /**
+   * Generar insights automáticos
+   */
+  async generarInsights(encuestaId) {
+    try {
+      const encuesta = await prisma.encuesta.findUnique({
+        where: { id: encuestaId },
+        include: {
+          preguntas: {
+            include: {
+              _count: {
+                select: { respuestas: true }
+              }
+            }
+          }
+        }
+      });
+
+      if (!encuesta) {
+        return {};
+      }
+
+      // Encontrar pregunta más/menos respondida
+      const preguntasConRespuestas = encuesta.preguntas.map(p => ({
+        pregunta_id: p.id,
+        texto: p.texto,
+        total_respuestas: p._count.respuestas
+      }));
+
+      const preguntaMasRespondida = preguntasConRespuestas.reduce((max, p) =>
+        p.total_respuestas > max.total_respuestas ? p : max, preguntasConRespuestas[0]);
+      
+      const preguntaMenosRespondida = preguntasConRespuestas.reduce((min, p) =>
+        p.total_respuestas < min.total_respuestas ? p : min, preguntasConRespuestas[0]);
+
+      // Calcular tendencia de participación (comparar últimas 24h vs promedio diario)
+      const hace48h = new Date();
+      hace48h.setHours(hace48h.getHours() - 48);
+      const hace24h = new Date();
+      hace24h.setHours(hace24h.getHours() - 24);
+
+      const respuestasUltimas24h = await prisma.respuestaEncuesta.count({
+        where: {
+          encuesta_id: encuestaId,
+          fecha_respuesta: { gte: hace24h }
+        }
+      });
+
+      const respuestas24hAnteriores = await prisma.respuestaEncuesta.count({
+        where: {
+          encuesta_id: encuestaId,
+          fecha_respuesta: { gte: hace48h, lt: hace24h }
+        }
+      });
+
+      let tendencia = 'estable';
+      if (respuestasUltimas24h > respuestas24hAnteriores * 1.2) {
+        tendencia = 'creciente';
+      } else if (respuestasUltimas24h < respuestas24hAnteriores * 0.8) {
+        tendencia = 'decreciente';
+      }
+
+      // Días restantes para vencer
+      let diasRestantesParaVencer = null;
+      if (encuesta.fecha_vencimiento) {
+        const ahora = new Date();
+        const fechaVenc = new Date(encuesta.fecha_vencimiento);
+        const diffTime = fechaVenc - ahora;
+        diasRestantesParaVencer = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      }
+
+      return {
+        pregunta_mas_respondida: {
+          pregunta_id: preguntaMasRespondida?.pregunta_id,
+          texto: preguntaMasRespondida?.texto,
+          tasa_respuesta: preguntaMasRespondida?.total_respuestas
+        },
+        pregunta_menos_respondida: {
+          pregunta_id: preguntaMenosRespondida?.pregunta_id,
+          texto: preguntaMenosRespondida?.texto,
+          tasa_respuesta: preguntaMenosRespondida?.total_respuestas
+        },
+        tendencia_participacion: tendencia,
+        dias_restantes_para_vencer: diasRestantesParaVencer
+      };
+    } catch (error) {
+      console.error('Error al generar insights:', error);
+      return {};
+    }
+  }
+
+  /**
+   * Construir filtros de segmentación
+   */
+  async construirFiltrosSegmentacion(encuestaId, filtros, usuarioRol, usuarioId) {
+    const whereClause = { encuesta_id: encuestaId };
+
+    // Filtros adicionales según parámetros
+    if (filtros.nivel) {
+      // TODO: Implementar filtro por nivel cuando se tenga la relación
+    }
+    
+    if (filtros.grado) {
+      // TODO: Implementar filtro por grado cuando se tenga la relación
+    }
+    
+    if (filtros.curso) {
+      // TODO: Implementar filtro por curso cuando se tenga la relación
+    }
+    
+    if (filtros.rol) {
+      whereClause.usuario = {
+        rol: filtros.rol
+      };
+    }
+
+    // Restricciones según rol del usuario
+    if (usuarioRol === 'apoderado') {
+      // Padres solo pueden ver sus propias respuestas
+      whereClause.usuario_id = usuarioId;
+    } else if (usuarioRol === 'docente') {
+      // Docentes solo pueden ver respuestas de sus encuestas (ya validado en permisos)
+      // No se aplican restricciones adicionales
+    }
+    // Los directores ven todas las respuestas sin restricciones adicionales
+
+    return whereClause;
+  }
+
+  /**
+   * Parsear ordenamiento
+   */
+  parsearOrdenamiento(orderString) {
+    if (!orderString) return { fecha_respuesta: 'desc' };
+    
+    const [campo, direccion] = orderString.split(' ');
+    const campoMapeado = campo.toLowerCase() === 'fecha_respuesta' ? 'fecha_respuesta' : 'fecha_respuesta';
+    
+    return {
+      [campoMapeado]: direccion && direccion.toLowerCase() === 'asc' ? 'asc' : 'desc'
+    };
   }
 }
 
