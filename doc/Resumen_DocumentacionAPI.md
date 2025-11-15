@@ -5260,7 +5260,7 @@ Content-Disposition: attachment; filename="nombre_original.pdf"
 
 ### **114. Obtener FAQs**
 
-**Endpoint:** `GET /soporte/ayuda/faqs`
+**Endpoint:** `GET /soporte/faqs`
 **Descripción:** Lista preguntas frecuentes del centro de ayuda
 **Autenticación:** Bearer token (Todos los roles)
 
@@ -5307,7 +5307,7 @@ Content-Disposition: attachment; filename="nombre_original.pdf"
 
 ### **115. Obtener Detalle de FAQ**
 
-**Endpoint:** `GET /soporte/ayuda/faqs/:id`
+**Endpoint:** `GET /soporte/faqs/:id`
 **Descripción:** Obtiene detalles de una pregunta frecuente específica
 **Autenticación:** Bearer token (Todos los roles)
 
@@ -5343,7 +5343,7 @@ Content-Disposition: attachment; filename="nombre_original.pdf"
 
 ### **116. Obtener Categorías de FAQs**
 
-**Endpoint:** `GET /soporte/ayuda/faqs-categorias`
+**Endpoint:** `GET /soporte/faqs-categorias`
 **Descripción:** Lista todas las categorías de preguntas frecuentes
 **Autenticación:** Bearer token (Todos los roles)
 
@@ -5384,7 +5384,7 @@ Content-Disposition: attachment; filename="nombre_original.pdf"
 
 ### **117. Obtener Guías de Ayuda**
 
-**Endpoint:** `GET /soporte/ayuda/guias`
+**Endpoint:** `GET /soporte/guias`
 **Descripción:** Lista guías de ayuda disponibles
 **Autenticación:** Bearer token (Todos los roles)
 
@@ -5431,7 +5431,7 @@ Content-Disposition: attachment; filename="nombre_original.pdf"
 
 ### **118. Obtener Detalle de Guía**
 
-**Endpoint:** `GET /soporte/ayuda/guias/:id`
+**Endpoint:** `GET /soporte/guias/:id`
 **Descripción:** Obtiene detalles de una guía específica
 **Autenticación:** Bearer token (Todos los roles)
 
@@ -5467,7 +5467,7 @@ Content-Disposition: attachment; filename="nombre_original.pdf"
 
 ### **119. Obtener Categorías de Guías**
 
-**Endpoint:** `GET /soporte/ayuda/guias-categorias`
+**Endpoint:** `GET /soporte/guias-categorias`
 **Descripción:** Lista todas las categorías de guías
 **Autenticación:** Bearer token (Todos los roles)
 
@@ -5508,7 +5508,7 @@ Content-Disposition: attachment; filename="nombre_original.pdf"
 
 ### **120. Búsqueda General en Centro de Ayuda**
 
-**Endpoint:** `GET /soporte/ayuda/buscar`
+**Endpoint:** `GET /soporte/buscar`
 **Descripción:** Busca en todo el centro de ayuda (FAQs y guías)
 **Autenticación:** Bearer token (Todos los roles)
 
@@ -5570,7 +5570,7 @@ Content-Disposition: attachment; filename="nombre_original.pdf"
 
 ### **121. Obtener Contenido Destacado**
 
-**Endpoint:** `GET /soporte/ayuda/destacado`
+**Endpoint:** `GET /soporte/destacado`
 **Descripción:** Obtiene contenido más visitado y descargado
 **Autenticación:** Bearer token (Todos los roles)
 
